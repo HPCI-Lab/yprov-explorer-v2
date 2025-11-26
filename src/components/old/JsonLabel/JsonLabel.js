@@ -10,7 +10,7 @@ Line displayed separately. If no file was uploaded, a default message is shown.
 import React, { useState, useEffect} from "react";
 import "./jsonLabel.css";
 import FileUploadButton from "../FileUploadButton/FileUploadButton";
-import { unifiedFileLoader } from '../../server/unified-loader';
+import { unifiedFileLoader } from '../../../server/unified-loader';
 
 /*
  - setGraphData: Function to set the graph data in the parent component

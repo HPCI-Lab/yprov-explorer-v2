@@ -5,8 +5,8 @@ the fullscreen mode for the graph.
 
 import React, { useState } from "react";
 import "./fullscreenButton.css";
-import fullscreenMax from "../../assets/images/fullscreen-max.png";
-import fullscreenMin from "../../assets/images/fullscreen-min.png";
+import fullscreenMax from "../../../assets/images/fullscreen-max.png";
+import fullscreenMin from "../../../assets/images/fullscreen-min.png";
 
 const FullscreenButton = () => {
   // State for the fullscreen mode (true if active, false otherwise)

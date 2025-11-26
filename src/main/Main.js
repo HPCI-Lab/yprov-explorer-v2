@@ -7,14 +7,25 @@ Includes functionality to synchronize nodes with browser history and supports UR
 
 import React, { useState, useEffect } from "react";
 import "./main.css";
-import GraphContainer from "../components/GraphContainer/GraphContainer.js";
-import NodeInfo from "../components/NodeInfo/NodeInfo.js";
-import JsonLabel from "../components/JsonLabel/JsonLabel.js";
-import DownloadsButton from "../components/DownloadsButton/DownloadsButton.js";
-import { configureSearchNode } from "../components/SearchNode/SearchNode";
+//import GraphContainer from "../components/GraphContainer/GraphContainer.js";
+import NodeInfo from "../components/old/NodeInfo/NodeInfo.js";
+import JsonLabel from "../components/old/JsonLabel/JsonLabel.js";
+import DownloadsButton from "../components/old/DownloadsButton/DownloadsButton.js";
+import { configureSearchNode } from "../components/old/SearchNode/SearchNode";
 import { unifiedFileLoader } from "../server/unified-loader.js";
 
+import { Flex } from "@chakra-ui/react";
+import Sidebar from "../components/layout/sidebar/Sidebar";
+import SidePanelManager from "../components/layout/sidebar/SidePanelManager";
+import TopBar from "../components/layout/TopBar";
+import CodePanel from "../components/layout/CodePanel";
+import GraphContainer from "../components/layout/GraphContainer";
+import Timeline from "../components/layout/Timeline";
+import {Resizable} from "re-resizable";
+
+
 const Main = () => {
+  /*
   // State for the selected node
   const [selectedNode, setSelectedNode] = useState(null);
   // State for the highlighted node
@@ -161,6 +172,8 @@ const Main = () => {
          *    "prov:activity": ""
          * },
          */
+
+        /*
         ...Object.values(graphData.wasDerivedFrom || {}).map((rel) => ({
           source: nodeMap.get(rel["prov:generatedEntity"]),
           target: nodeMap.get(rel["prov:usedEntity"]),
@@ -342,8 +355,10 @@ const Main = () => {
 
     return null; // Return null if the node details are not found
   };
-
+  */
   return (
+      <></>
+      /*
     <div className="main-container">
       <div className="high-row">
         {configureSearchNode({
@@ -379,6 +394,7 @@ const Main = () => {
         <DownloadsButton />
       </div>
     </div>
+       */
   );
 };
 
