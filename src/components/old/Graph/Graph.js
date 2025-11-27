@@ -33,8 +33,7 @@ const Graph = ({
   alphaDecay, // Alpha decay for the simulation
 }) => {
   let svg; // SVG variable to draw and manipulate the graph with D3.js
-  const width = 1200; // Width of the graph
-  const height = 800; // Height of the graph
+  const containerRef = useRef(null);
   let nodes = []; // Array to store nodes ()
   const svgRef = useRef(null); // React reference to access and manipulate the SVG element 
   const zoomBehaviorRef = useRef(null); // Stores the zoom configuration for the graph
@@ -113,7 +112,9 @@ const Graph = ({
   // 1° useEffect to initialize the graph
   useEffect(() => {
     if (!graphData) return; // Exit if no graph data is provided
-
+    const container = d3.select("#graphFrame").node();
+    const width = container.clientWidth;
+    const height = container.clientHeight;
     // Function to initialize the graph
     const initializeGraph = () => {
       d3.select("#graphFrame").selectAll("svg").remove(); // Clear the container of any existing SVG
@@ -593,6 +594,20 @@ const Graph = ({
         g.select(".node-labels").raise();
 
       });
+      const handleResize = () => {
+        const container = d3.select("#graphFrame").node();
+        const newWidth = container.clientWidth;
+        const newHeight = container.clientHeight;
+
+        svg.attr("width", newWidth).attr("height", newHeight);
+        simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+        simulation.alpha(1).restart();
+      };
+
+      window.addEventListener("resize", handleResize);
+      handleResize();
+      return () => window.removeEventListener("resize", handleResize);
+
     };
 
     // Initialize the graph
@@ -601,6 +616,7 @@ const Graph = ({
     return () => {
       d3.select("#graphFrame").selectAll("svg").remove(); // Pulisci tutto il contenitore
     };
+
   }, [graphData, nodeDistance, nodeRepulsion, nodeCollision, alphaDecay]);
 
   // 2° useEffect to manage interactions with the graph (show/hide labels and links)
@@ -715,12 +731,18 @@ const Graph = ({
           }
 
           // Create a new transformation with the target zoom level
+          const container = d3.select("#graphFrame").node();
+          if (!container) return;
+
+          const width = container.clientWidth;
+          const height = container.clientHeight;
+
           const transform = d3.zoomIdentity
-            .translate(
-              width / 2 - nodeData.x * targetZoom,
-              height / 2 - nodeData.y * targetZoom
-            )
-            .scale(targetZoom); // Zoom level
+              .translate(
+                  width / 2 - nodeData.x * targetZoom,
+                  height / 2 - nodeData.y * targetZoom
+              )
+              .scale(targetZoom);
 
           // Apply the transformation with a smooth transition
           d3.select(svgRef.current)

@@ -10,11 +10,11 @@ import SideSettings from "./panels/SideSettings";
 SidePanelManager.js: panel manager for managing all the feature panels
  */
 
-export default function SidePanelManager({ activePanel, isOpen}) {
+export default function SidePanelManager({ activePanel, isOpen, setGraphData, jsonContent, setJsonContent}) {
     const renderPanel = () => {
         switch (activePanel) {
             //case "home": return;
-            case "input": return <SideInput/>;
+            case "input": return <SideInput setGraphData={setGraphData} jsonContent={jsonContent} setJsonContent={setJsonContent}/>;
             case "code": return <SideCode/>;
             case "timeline": return <SideTimeline/>;
             case "layers": return <SideLayers/>;
@@ -34,7 +34,7 @@ export default function SidePanelManager({ activePanel, isOpen}) {
             overflow="hidden"
             bg="gray.800"
             borderRadius="xl"
-            transition="width 0.1s linear"
+            transition="none"
             zIndex={10}
             p={isOpen ? "4" : "0"}
         >

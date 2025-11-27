@@ -1,15 +1,16 @@
 import { Box, Heading} from "@chakra-ui/react";
+import JsonLabel from "../../../old/JsonLabel/JsonLabel";
+import React from "react";
 /*
 SideInput.js: Input panel for controlling inputs:
 - Api input
 - Json input
 - Others
  */
-export default function SideInput() {
+export default function SideInput({setGraphData, jsonContent, setJsonContent}) {
     return (
         <Box color="white">
-            <Heading size="md" mb="4">Input Panel</Heading>
-            <p>Contenuto della sezione Input...</p>
+            <JsonLabel setGraphData={setGraphData} jsonContent={jsonContent} setJsonContent={setJsonContent}/>;
         </Box>
     );
 }

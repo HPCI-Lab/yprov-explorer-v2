@@ -25,7 +25,7 @@ import {Resizable} from "re-resizable";
 
 
 const Main = () => {
-  /*
+
   // State for the selected node
   const [selectedNode, setSelectedNode] = useState(null);
   // State for the highlighted node
@@ -173,7 +173,7 @@ const Main = () => {
          * },
          */
 
-        /*
+
         ...Object.values(graphData.wasDerivedFrom || {}).map((rel) => ({
           source: nodeMap.get(rel["prov:generatedEntity"]),
           target: nodeMap.get(rel["prov:usedEntity"]),
@@ -355,10 +355,8 @@ const Main = () => {
 
     return null; // Return null if the node details are not found
   };
-  */
+
   return (
-      <></>
-      /*
     <div className="main-container">
       <div className="high-row">
         {configureSearchNode({
@@ -394,7 +392,7 @@ const Main = () => {
         <DownloadsButton />
       </div>
     </div>
-       */
+
   );
 };
 

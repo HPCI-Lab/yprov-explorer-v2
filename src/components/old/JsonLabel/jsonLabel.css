@@ -1,3 +1,4 @@
+/*
 .json-label-container {
   width: 400px;
   height: 800px;
@@ -29,7 +30,6 @@
   padding: 15px;
 }
 
-/* Riga JSON */
 .json-line {
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -99,3 +99,4 @@
   width: 100%;
   box-sizing: border-box;
 }
+*/

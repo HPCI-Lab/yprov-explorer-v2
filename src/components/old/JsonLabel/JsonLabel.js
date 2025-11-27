@@ -15,9 +15,9 @@ import { unifiedFileLoader } from '../../../server/unified-loader';
 /*
  - setGraphData: Function to set the graph data in the parent component
 */
-const JsonLabel = ({ setGraphData }) => {
+const JsonLabel = ({ setGraphData, jsonContent, setJsonContent }) => {
   const [fileName, setFileName] = useState(null); // State to store the name of the uploaded file
-  const [jsonContent, setJsonContent] = useState(null); // State to store the JSON content
+  //const [jsonContent, setJsonContent] = useState(null); // State to store the JSON content
   const [showUploadBox, setShowUploadBox] = useState(false); // State to manage the visibility of the upload window
 
   const getQueryParam = (param) => {
@@ -40,8 +40,7 @@ const JsonLabel = ({ setGraphData }) => {
       }
     }
     setFileName(name); // Save the file name in the state
-    setJsonContent(content); // Save the JSON content in the state
-    setShowUploadBox(false); // Hide the upload window  
+    setShowUploadBox(false); // Hide the upload window
     setJsonContent(JSON.stringify(content, null, 2).split("\n")); // Format the JSON content and split it by line 
     setGraphData(content); // Update the graph data in the parent component 
     const encodedUrl = encodeURIComponent(name); // Encode the file name to handle special characters
@@ -118,7 +117,6 @@ const JsonLabel = ({ setGraphData }) => {
       {showUploadBox && (
         <div className="upload-overlay">
           <div className="upload-box">
-            <h3>Upload a JSON file</h3>
             <input
               type="file"
               accept=".json"
@@ -142,14 +140,13 @@ const JsonLabel = ({ setGraphData }) => {
           </div>
         </div>
       )}
-
       <div
-        className="json-content-container"
-        dangerouslySetInnerHTML={{
-          __html: jsonContent
-            ? jsonContent.map((line) => `<pre>${line}</pre>`).join("") 
-            : "Carica un file JSON per visualizzarlo qui.",
-        }}
+          className="json-content-container"
+          dangerouslySetInnerHTML={{
+            __html: Array.isArray(jsonContent)
+                ? jsonContent.map((line) => `<pre>${line}</pre>`).join("")
+                : "Carica un file JSON per visualizzarlo qui.",
+          }}
       ></div>
     </div>
   );
