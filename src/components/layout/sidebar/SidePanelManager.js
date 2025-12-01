@@ -5,12 +5,27 @@ import SideTimeline from "./panels/SideTimeline";
 import SideLayers from "./panels/SideLayers"
 import SideInfo from "./panels/SideInfo";
 import SideSettings from "./panels/SideSettings";
+import NodeInfo from "./panels/SideInfo";
+import React from "react";
 
 /*
 SidePanelManager.js: panel manager for managing all the feature panels
  */
 
-export default function SidePanelManager({ activePanel, isOpen, setGraphData, jsonContent, setJsonContent}) {
+export default function SidePanelManager({
+                                             activePanel,
+                                             isOpen,
+                                             setGraphData,
+                                             jsonContent,
+                                             setJsonContent,
+                                             selectedNode,
+                                             setSelectedNode,
+                                             setHighlightedNode,
+                                             graphData,
+                                             searchQuery,
+                                             handleSearch,
+                                             findNodeDetails,
+                                         }) {
     const renderPanel = () => {
         switch (activePanel) {
             //case "home": return;
@@ -18,7 +33,18 @@ export default function SidePanelManager({ activePanel, isOpen, setGraphData, js
             case "code": return <SideCode/>;
             case "timeline": return <SideTimeline/>;
             case "layers": return <SideLayers/>;
-            case "info": return <SideInfo/>;
+            case "info": return <NodeInfo
+                nodeInfo={selectedNode}
+                searchQuery={searchQuery}
+                onHighlightNode={(nodeId) => {
+                    setHighlightedNode(nodeId);
+
+                    // Fetch updated node details for the label
+                    const nodeDetails = findNodeDetails(nodeId, graphData);
+                    if (nodeDetails) setSelectedNode(nodeDetails);
+                }}
+                onSearch={handleSearch}
+            />;
             case "settings": return <SideSettings/>;
             default: return null;
         }

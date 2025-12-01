@@ -381,6 +381,13 @@ function App() {
                     setGraphData={setGraphData}
                     jsonContent={jsonContent}
                     setJsonContent={setJsonContent}
+                    selectedNode={selectedNode}
+                    setSelectedNode={setSelectedNode}
+                    setHighlightedNode={setHighlightedNode}
+                    graphData={graphData}
+                    searchQuery={searchQuery}
+                    handleSearch={handleSearch}
+                    findNodeDetails={findNodeDetails}
                 />
                 {/*Main content area*/}
                 <Flex flex="1" position="relative" overflow="hidden" minWidth={0}>
