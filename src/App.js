@@ -10,7 +10,7 @@ import { Resizable } from "re-resizable";
 import { unifiedFileLoader } from "./server/unified-loader";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CatalogPage from "./components/catalog/catalog.js";
-import MapPage from "./components/catalog/MapView.js";
+import MapPage from "./components/catalog/Map/MapPage.js";
 import theme from "./theme";
 
 function App() {
@@ -428,17 +428,12 @@ function App() {
         />
         <Route path="/catalog" element={
           <Center minH="100vh" minW = "100vw" >
-            <Box
-            >
               <CatalogPage />
-            </Box>
           </Center>
         }/>
         <Route path="/map" element={
-          <Center minH="100vh" minW = "100vw" bgColor="black">
-            <Box>
-              <MapPage />
-            </Box>
+          <Center minH="100vh" minW = "100vw" bgColor="black">   
+              <MapPage /> 
           </Center>
         }/>
       </Routes>

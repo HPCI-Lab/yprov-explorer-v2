@@ -7,7 +7,7 @@ export default function BubbleMap({
   data = [],
   onBubbleClick = () => {},
   labelMode = "single",
-  variant = "small"
+  variant
 }) {
   const containerRef = useRef(null);
   const svgRef = useRef(null);
@@ -185,16 +185,16 @@ export default function BubbleMap({
 
   const mapSizes = {
     small: {
-      width: "450px",
-      height: "200px"
+      width: "400px",
+      height: "150px"
     },
     large: {
-      width: "2000px",
-      height: "1400px"
+      width: "100%",
+      height: "100%"
     }
   };
 
-  const finalSize = mapSizes[variant] || mapSizes.small;
+  const finalSize = mapSizes[variant];
 
   return (
     <Box

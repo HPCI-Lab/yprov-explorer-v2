@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Grid, GridItem, Button } from "@chakra-ui/react";
+import { Box, Button } from "@chakra-ui/react";
 import BubbleMap from "./BubbleMap";
 import { useNavigate } from "react-router-dom";
 import ZoomableCirclePacking from "./ZoomableCirclePacking";
@@ -47,10 +47,12 @@ export const sampleData = [
 ];
 
 const MapPage = () => {
+  //trucks the bubble current selected/expanded
   const [selectedBubble, setSelectedBubble] = useState(null);
 
   const navigate = useNavigate();
 
+  //compute the size of the bubble map
   const handleBubbleClick = (bubble) => {
     const scaleFactor = 3;
     const size = Math.max(80, bubble.r * 2 * scaleFactor); 
@@ -63,75 +65,59 @@ const MapPage = () => {
   const closePacking = () => setSelectedBubble(null);
 
   return (
-    <Box 
-      flex="1"      
-      borderRadius="xl"
-      position="relative"
-      overflowY="hidden"
-      bg="gray.700"
-      borderRight="5px solid black"
-      color="white"
-      display="flex" 
-      justifyContent="space-between" 
-      alignItems="stretch"  
-      p="4" 
-      borderLeft="5px solid black"
+    <Box position = "relative">
+      <Button
+        position = "absolute"
+        bottom= "20px"
+        right = "20px"
+        zIndex="100"
+        color="black"
+        colorScheme="blue"
+        borderRadius="20px"
+        px={6}
+        size="md"
+        onClick={() => navigate("/catalog")}
       >
-      <Grid>
-        <GridItem position="absolute"  >
-          <Button
-            color="black"
-            bg="gray.300"
-            borderRadius="20px"
-            px={6}
-            size="md"
-            onClick={() => navigate("/")}
-          >
-            BACK TO HOME
-          </Button>
-        </GridItem>
+        BACK TO HOME
+      </Button>
 
-        <GridItem position="center">
-          <Box
-            bg="white"
-            w= "1200px"
-            borderRadius="md"
-            boxShadow="md"
-            overflow="hidden"
-            position="relative"
-            onClick={() => navigate("/map")} 
-            _hover={{ borderColor: "blue.400" }}
-          >
-            <BubbleMap data={sampleData} onBubbleClick={handleBubbleClick} size="large"  />
-          </Box>
-          
-          {selectedBubble && (
-            <Box
-              position="absolute"
-              left={`${selectedBubble.cx - selectedBubble.size / 2}px`}
-              top={`${selectedBubble.cy - selectedBubble.size / 2}px`}
-              width={`${selectedBubble.size}px`}
-              height={`${selectedBubble.size}px`}
-              zIndex={30}
-              pointerEvents="auto"
-              sx={{
-                transformOrigin: "center center",
-                animation: "scaleIn 220ms ease",
-              }}
-            >
-              <ZoomableCirclePacking
-                data={{ name: selectedBubble.name, children: selectedBubble.children || [] }}
-                width={selectedBubble.size}
-                height={selectedBubble.size}
-                onClose={closePacking}
-                parentColor={selectedBubble.color}
-                pointerEvents="auto"
-              />
-            </Box>
-          )}
-        </GridItem>
-      </Grid>
-    </Box>
+      <Box
+        bg="white"
+        w= "90vw"
+        h = "90vh"
+        borderRadius="md"
+        boxShadow="md"
+        overflow="hidden"
+      >
+        <BubbleMap data={sampleData} onBubbleClick={handleBubbleClick} variant="large" />
+      </Box>
+      
+      {selectedBubble && (
+        <Box
+          position="absolute"
+          left={`${selectedBubble.cx - selectedBubble.size / 2}px`}
+          top={`${selectedBubble.cy - selectedBubble.size / 2}px`}
+          width={`${selectedBubble.size}px`}
+          height={`${selectedBubble.size}px`}
+          zIndex={30}
+          pointerEvents="auto"
+          sx={{
+            transformOrigin: "center center",
+            animation: "scaleIn 220ms ease",
+          }}
+        >
+          <ZoomableCirclePacking
+            data={{ name: selectedBubble.name, children: selectedBubble.children || [] }}
+            width={selectedBubble.size}
+            height={selectedBubble.size}
+            onClose={closePacking}
+            parentColor={selectedBubble.color}
+            pointerEvents="auto"
+          />
+        </Box>
+      )}
+    
+  </Box>
   );
 };
 

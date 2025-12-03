@@ -1,6 +1,6 @@
 import { Box, VStack, IconButton } from "@chakra-ui/react";
-import { SettingsIcon, InfoIcon } from "@chakra-ui/icons";
-import { Home, Paperclip, Code2, Activity, Layers } from "lucide-react";
+import { SettingsIcon } from "@chakra-ui/icons";
+import { Home, Paperclip } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 /*
@@ -39,34 +39,7 @@ export default function Sidebar({ onOpenPanel, homeRoute }) {
             navigate("/");
             onOpenPanel("input");}}
         />
-        <IconButton
-          icon={<Code2 />}
-          aria-label="code"
-          bg="gray.700"
-          borderRadius="xl"
-          onClick={() => onOpenPanel("code")}
-        />
-        <IconButton
-          icon={<Activity />}
-          aria-label="timeline"
-          bg="gray.700"
-          borderRadius="xl"
-          onClick={() => onOpenPanel("timeline")}
-        />
-        <IconButton
-          icon={<Layers />}
-          aria-label="layers"
-          bg="gray.700"
-          borderRadius="xl"
-          onClick={() => onOpenPanel("layers")}
-        />
-        <IconButton
-          icon={<InfoIcon />}
-          aria-label="settings"
-          bg="gray.700"
-          borderRadius="xl"
-          onClick={() => onOpenPanel("info")}
-        />
+       
       </VStack>
       <IconButton
         icon={<SettingsIcon />}

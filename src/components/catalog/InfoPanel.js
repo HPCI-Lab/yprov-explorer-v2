@@ -5,11 +5,15 @@ import {
   Text,
   Image,
   useColorModeValue,
+  Button, 
+  Flex
 } from "@chakra-ui/react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 
-export default function Sidebar({ file }) {
+export default function InfoPanel({ file }) {
  
+  const navigate = useNavigate();
   const textColor = useColorModeValue("black", "whiteAlpha.900");
 
   if (!file) return null;
@@ -22,8 +26,8 @@ export default function Sidebar({ file }) {
       borderLeft="5px solid black"
       color="white"
       borderRadius="xl"
-      borderRight="5px solid black"
       height="100%"
+      
       overflowY="auto"
     >
       <Heading 
@@ -88,12 +92,26 @@ export default function Sidebar({ file }) {
       <Text color={textColor}>
         <Text as="span" fontWeight="700">yPrv ISTANCE: </Text>
         <Text as="span" fontWeight="400">{file.yprovistance ?? "-"}</Text>
-      </Text> 
+      </Text>
+
+      <Flex  justify="center" p = "4">
+        <Button
+          colorScheme="blue"
+          size="sm"
+          borderRadius="full"
+          w="50%" 
+          onClick={() => navigate("/")} 
+        >
+          OPEN
+        </Button> 
+      </Flex>
+
+      
     </Box>
   );
 }
 
-Sidebar.propTypes = {
+InfoPanel.propTypes = {
   file: PropTypes.shape({
     name: PropTypes.string,
     preview: PropTypes.string,

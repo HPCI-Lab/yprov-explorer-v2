@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from "react";
 import {Flex, Box} from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "./SideBar";
+import InfoPanel from "./InfoPanel";
 import Filter from "./Filter";
 import DocumentList from "./DocumentList";
 import Img from "./img.png";
 import TopBar from "../layout/TopBar"
-import SidebarR from "../layout/sidebar/Sidebar";
+import SidebarH from "./SideBarHome/SidebarH";
 import BubbleMap from "./Map/BubbleMap";
 import { sampleData } from "./Map/MapPage";
 
+//data for testing the UI
 const SAMPLE_FILES = [ 
   {
     id: "21. T11961/9d96blfd-2433-4abc-9e75-2d09247936f4",
@@ -170,7 +171,7 @@ const SAMPLE_FILES = [
 
 export default function Catalog() {
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   //State for sidebar activation
   const [activePanel, setActivePanel] = useState(null);
@@ -193,17 +194,21 @@ export default function Catalog() {
     setActivePanel(null);
   };
 
+  //file list state
   const [files] = useState(SAMPLE_FILES);
   const [selectedId, setSelectedId] = useState(files[0]?.id ?? null);
   const [filters, setFilters] = useState({ author: "", dateFrom: null, dateTo: null, node: "" });
 
   const handleApplyFilters = (f) => setFilters(f);
   const handleSelect = (id) => setSelectedId(id);
+  
+  //update the selected file
   const handleOpen = (id) => {
     console.log("Open file", id);
     setSelectedId(id);
   };
 
+  //filtering logic execution for performance
   const filteredFiles = useMemo(() => {
     const qAuthor = (filters.author || "").trim().toLowerCase();
     const node = filters.node || "";
@@ -218,13 +223,15 @@ export default function Catalog() {
 
   return (
     <Flex direction="column" h="100vh" w="100vw" bg="black" overflowY="hidden">
+      {/* top navigation bar */}
       <TopBar />
       <Flex flex="1" position="relative" minWidth={0} minH={0}>
-        <SidebarR onOpenPanel={onOpenPanel} />
+        {/* left sidebar */}
+        <SidebarH onOpenPanel={onOpenPanel} />
         <Flex flex="1" direction="column" minWidth={0} minH={0}>
           <Filter onApplyFilters={handleApplyFilters} />
-          <Flex flex="1" position="relative" minWidth={0} p="1" minH={0}>
-            {/*left column: document list and detail panel */}
+          <Flex flex="1" position="relative" minWidth={0} p="2" minH={0}>
+            {/*left column: document list */}
             <Box
               flex="1" 
               borderRadius="xl" 
@@ -248,58 +255,37 @@ export default function Catalog() {
               />
             </Box>
 
-              <Box
-                overflowY="hidden" 
-                display="flex" 
-                flexDirection="column" 
-                minH={0} 
-                alignItems="stretch"
-              >
-                <Box
-                  Box flex="3" 
-                  width="450px" 
-                  minWidth="450px" 
-                  maxWidth="450px" 
-                  overflowY="auto" 
-                  borderRight="1px solid black" 
-                  p= "1"
-                >
-                  <Sidebar file={selectedFile} onClose={() => setSelectedId(null)} />
-                </Box>
-              
-
-            <Box
-              flex="1"
-              minW={0}
-              borderRadius="xl"
-              overflow="hidden"
-              bg="gray.900"
-              borderLeft={{ base: "none", md: "5px solid black" }}
-              borderRight="5px solid black"
-              p="0"
-              display="flex"
-              flexDirection="column"
+            {/* right column: file details and map */}
+            <Flex
+              overflowY="hidden" 
+              display="flex" 
+              flexDirection="column" 
+              alignItems="center"
             >
-      
-              <Flex 
-                flex = "1" 
-                bg="white" 
+              <Box
+                flex="3" 
+                width="450px" 
+                overflowY="auto" 
+              >
+                <InfoPanel file={selectedFile} onClose={() => setSelectedId(null)} />
+              </Box>
+
+              <Flex p = "1" justify="center" >
+              <Flex  
                 borderRadius="md" 
                 boxShadow="md" 
-                overflow="hidden" 
-                position="relative" 
+                w = "400px"
+                h= "170px" 
+                p = "2"
                 onClick={() => navigate("/map")} 
               >
-                <Box position="absolute" inset="0">
-                  <BubbleMap data={sampleData}/>
-                </Box>
+                <BubbleMap data={sampleData} variant="small"/>
               </Flex>
-              </Box>
-            
-            </Box>
+              </Flex>     
             </Flex>
           </Flex>
         </Flex>
       </Flex>
+    </Flex>
   );
 }
