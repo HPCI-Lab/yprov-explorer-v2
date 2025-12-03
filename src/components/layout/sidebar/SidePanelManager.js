@@ -1,4 +1,5 @@
 import { Box } from "@chakra-ui/react";
+import SideHome from "./panels/SideHome";
 import SideInput from "./panels/SideInput";
 import SideCode from "./panels/SideCode";
 import SideTimeline from "./panels/SideTimeline";
@@ -13,7 +14,7 @@ SidePanelManager.js: panel manager for managing all the feature panels
 export default function SidePanelManager({ activePanel, isOpen, setGraphData, jsonContent, setJsonContent}) {
     const renderPanel = () => {
         switch (activePanel) {
-            //case "home": return;
+            case "home": return <SideHome/>;
             case "input": return <SideInput setGraphData={setGraphData} jsonContent={jsonContent} setJsonContent={setJsonContent}/>;
             case "code": return <SideCode/>;
             case "timeline": return <SideTimeline/>;

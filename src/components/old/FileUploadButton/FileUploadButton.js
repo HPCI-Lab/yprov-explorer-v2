@@ -1,11 +1,14 @@
-/*
-FileUploadButton.js: Component that allows the user to upload JSON files in various ways: by direct upload from the computer, 
-by providing a URL, or by specifying an API endpoint. Handles reading, validation, and parsing of JSON content.
-*/
-
 import React, { useState, useRef } from "react";
-import "./fileUploadButton.css";
-import attachIcon from "./Attach.png";
+import {
+  Box,
+  Button,
+  Input,
+  Text,
+  VStack,
+  Heading,
+  Spinner,
+  Divider
+} from "@chakra-ui/react";
 
 const FileUploadButton = ({ onFileUpload }) => {
   const [showUploadSection, setShowUploadSection] = useState(false);
@@ -144,88 +147,84 @@ const FileUploadButton = ({ onFileUpload }) => {
   };
 
   return (
-    <div className="file-upload-container" style={{ position: "relative" }}>
-      <button className="upload-button" onClick={handleButtonClick}>
-        <img src={attachIcon} alt="Attach Icon" className="attach-icon" />
-      </button>
+    <Box
+      bg="gray.300"
+      p={5}
+      borderRadius="md"
+      boxShadow="md"
+      w="100%"
+      color="gray.800"
+    >
+      <Heading size="md" mb={4}>
+        Upload a JSON file
+      </Heading>
 
-      {showUploadSection && (
-        <div className="upload-section">
-          <h3>Upload a JSON file</h3>
+      {/* UPLOAD FILE */}
+      <VStack align="stretch" spacing={3} mb={4}>
+        <Text fontWeight="semibold">Upload from Computer</Text>
+        <Input
+          fontSize={11}
+          type="file"
+          accept=".json"
+          onChange={handleFileChange}
+          bg="white"
+        />
+      </VStack>
 
-          {/* File Upload Section */}
-          <div className="upload-method">
-            <h4>Upload from Computer</h4>
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleFileChange}
-              className="file-input"
-            />
-          </div>
+      <Divider my={3} />
 
-          {/* URL Upload Section */}
-          <div className="upload-method">
-            <h4>Upload from URL</h4>
-            <input
-              type="text"
-              value={linkInput}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                console.log("URL changed to:", newValue);
-                setLinkInput(newValue);
-                // Aggiorna anche il ref
-                linkInputRef.current = newValue;
-              }}
-              onBlur={(e) => {
-                // Assicurati che il ref sia aggiornato quando l'input perde il focus
-                linkInputRef.current = e.target.value;
-              }}
-              placeholder="Enter JSON file URL"
-              className="link-input"
-            />
-            <button
-              onClick={handleLinkUpload}
-              disabled={loading}
-              className="upload-btn"
-            >
-              {loading ? "Loading..." : "Upload from URL"}
-            </button>
-          </div>
+      {/* URL */}
+      <VStack align="stretch" spacing={3} mb={4}>
+        <Text fontWeight="semibold">Upload from URL</Text>
+        <Input
+          placeholder="enter JSON file form URL"
+          fontSize={11}
+          value={linkInput}
+          onChange={(e) => {
+            setLinkInput(e.target.value);
+            linkInputRef.current = e.target.value;
+          }}
+          bg="white"
+        />
+        <Button
+          colorScheme="blue"
+          onClick={handleLinkUpload}
+          isDisabled={loading}
+        >
+          {loading ? <Spinner size="sm" /> : "upload form URL"}
+        </Button>
+      </VStack>
 
-          {/* API Upload Section */}
-          <div className="upload-method">
-            <h4>Enter from API</h4>
-            <input
-              type="text"
-              value={apiInput}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                console.log("API endpoint changed to:", newValue);
-                setApiInput(newValue);
-                // Aggiorna anche il ref
-                apiInputRef.current = newValue;
-              }}
-              onBlur={(e) => {
-                // Assicurati che il ref sia aggiornato quando l'input perde il focus
-                apiInputRef.current = e.target.value;
-              }}
-              placeholder="Enter API endpoint"
-              className="link-input"
-            />
-            <button
-              onClick={handleApiUpload}
-              disabled={loading}
-              className="upload-btn"
-            >
-              {loading ? "Loading..." : "Upload from API"}
-            </button>
-          </div>
+      <Divider my={3} />
 
-          {error && <p className="error-message">{error}</p>}
-        </div>
+      {/* API */}
+      <VStack align="stretch" spacing={3}>
+        <Text fontWeight="semibold"> Enter from API</Text>
+        <Input
+          fontSize={11}
+          placeholder="enter API endpoint"
+          value={apiInput}
+          onChange={(e) => {
+            setApiInput(e.target.value);
+            apiInputRef.current = e.target.value;
+          }}
+          bg="white"
+        />
+        <Button
+          colorScheme="blue"
+          onClick={handleApiUpload}
+          isDisabled={loading}
+        >
+          {loading ? <Spinner size="sm" /> : "upload form API"}
+        </Button>
+      </VStack>
+
+      {error && (
+        <Text mt={4} color="red.500" fontWeight="medium">
+          {error}
+        </Text>
       )}
-    </div>
+    </Box>
   );
 };
 
