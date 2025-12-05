@@ -15,7 +15,7 @@ To use accurate location information instead of sample location information, set
 ### Credentials
 Email: **yprov@unitn.it**
 
-Password **yprov123**
+Password: **yprov123**
 
 ### Sample data
 To prevent the dashboard from using sample data, delete the file located at ```services/database/init/1-sample.sql```
