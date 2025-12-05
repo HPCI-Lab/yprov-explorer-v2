@@ -50,3 +50,8 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Docker
+services/database/data/
+services/metabase/data/metabase.db/metabase.db.trace.db
+!services/.env

@@ -1,0 +1,77 @@
+name: yProv
+
+services:
+  explorer:
+    container_name: explorer
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_SERVER_HOST: http://localhost:8081
+        REACT_APP_USE_SAMPLE_LOCATION_INFO: 1
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - database
+      - api
+
+  api:
+    container_name: api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    # flask requires SIGINT to stop gracefully (default stop signal from Compose is SIGTERM)
+    stop_signal: SIGINT
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8081:8000"
+    restart: always
+    depends_on:
+      - database
+
+  database:
+    container_name: database
+    image: mysql:8.0.44-debian
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d
+      - ./database/data:/var/lib/mysql
+    env_file:
+      - .env
+    restart: always
+
+  metabase:
+    container_name: metabase
+    image: metabase/metabase:latest
+    env_file:
+      - .env
+    ports:
+      - 8082:3000
+    volumes:
+      - ./metabase/data:/metabase-data
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+    restart: always
+    depends_on:
+      - database
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    env_file:
+      - .env
+    ports:
+      - 8083:80
+    environment:
+      PMA_ARBITRARY: 0
+      PMA_HOST: ${DB_HOST}
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASSWORD}
+    restart: always
+    depends_on:
+      - database

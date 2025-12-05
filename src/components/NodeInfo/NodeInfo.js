@@ -77,7 +77,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {nodeInfo.used.split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault(); // Avoids the default behavior of the browser.
                       window.history.pushState(
@@ -103,7 +103,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {nodeInfo.wasGeneratedBy.split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(
@@ -129,7 +129,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {nodeInfo.wasDerivedFrom.split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(
@@ -155,7 +155,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {(nodeInfo.generated || "None").split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(
@@ -181,7 +181,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {(nodeInfo.wasUsedBy || "None").split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(
@@ -207,7 +207,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {(nodeInfo.derives || "None").split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(
@@ -232,7 +232,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {(nodeInfo.wasInformedBy || "None").split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(
@@ -260,7 +260,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
                 .map((link) => (
                   <div key={link}>
                     <a
-                      href="#"
+                      href="/#"
                       onClick={(e) => {
                         e.preventDefault();
                         window.history.pushState(
@@ -286,7 +286,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {(nodeInfo.hadMember || "None").split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(
@@ -312,7 +312,7 @@ const NodeInfo = ({ nodeInfo, searchQuery, onHighlightNode, onSearch }) => {
               {(nodeInfo.wasStartedBy || "None").split(", ").map((link) => (
                 <div key={link}>
                   <a
-                    href="#"
+                    href="/#"
                     onClick={(e) => {
                       e.preventDefault();
                       window.history.pushState(

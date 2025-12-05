@@ -31,3 +31,15 @@ svg {
 #graphFrame {
   background-color: white; /* Cambia lo sfondo in bianco */
 }
+
+.link-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.node-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

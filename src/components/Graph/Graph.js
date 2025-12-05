@@ -230,73 +230,145 @@ const Graph = ({
       // Create a map of nodes for easy access by ID
       const nodeMap = new Map(nodes.map((node) => [node.id, node]));
 
-      // Create an array of links based on the graph data
-      const links = [
-        /**
-         * The wasDerivedFrom relationship can be splitted into three: wasDerivedFrom, wasGeneratedBy and used
-         * "wasDerivedFrom": {
-         *  "": {
-         *    "prov:generatedEntity": "",
-         *    "prov:usedEntity": "",
-         *    "prov:activity": ""
-         * },
-         */
-        ...Object.values(graphData.wasDerivedFrom || {}).map((rel) => ({
+
+      // Graph.js — deterministic link ids (no collisions with node ids)
+      let links = [];
+
+      // helper to create deterministic link ids
+      const mkLinkId = (type, relKey) => `link-${type}-${relKey}`;
+
+      // wasDerivedFrom (create the three relationships derived from a wasDerivedFrom record)
+      Object.entries(graphData.wasDerivedFrom || {}).forEach(([relKey, rel]) => {
+        // entity → entity (wasDerivedFrom)
+        links.push({
+          id: mkLinkId("wasDerivedFrom", relKey),
           source: nodeMap.get(rel["prov:generatedEntity"]),
           target: nodeMap.get(rel["prov:usedEntity"]),
           type: "wasDerivedFrom",
-        })),
-        ...Object.values(graphData.wasDerivedFrom || {}).map((rel) => ({
+          actId: rel["prov:activity"],
+          entId: rel["prov:usedEntity"],
+        });
+
+        // entity → activity (wasGeneratedBy) — derived from wasDerivedFrom
+        links.push({
+          id: mkLinkId("wasGeneratedBy-fromWDF", relKey),
           source: nodeMap.get(rel["prov:generatedEntity"]),
           target: nodeMap.get(rel["prov:activity"]),
           type: "wasGeneratedBy",
-        })),
-        ...Object.values(graphData.wasDerivedFrom || {}).map((rel) => ({
+          actId: rel["prov:activity"],
+          entId: rel["prov:generatedEntity"],
+        });
+
+        // activity → entity (used) — derived from wasDerivedFrom
+        links.push({
+          id: mkLinkId("used-fromWDF", relKey),
           source: nodeMap.get(rel["prov:activity"]),
           target: nodeMap.get(rel["prov:usedEntity"]),
           type: "used",
-        })),
-        ...Object.values(graphData.wasGeneratedBy || {}).map((rel) => ({
+          actId: rel["prov:activity"],
+          entId: rel["prov:usedEntity"],
+        });
+      });
+
+      // wasGeneratedBy (standalone)
+      Object.entries(graphData.wasGeneratedBy || {}).forEach(([relKey, rel]) => {
+        links.push({
+          id: mkLinkId("wasGeneratedBy", relKey),
           source: nodeMap.get(rel["prov:entity"]),
           target: nodeMap.get(rel["prov:activity"]),
           type: "wasGeneratedBy",
-        })),
-        ...Object.values(graphData.used || {}).map((rel) => ({
+          actId: rel["prov:activity"],
+          entId: rel["prov:entity"],
+        });
+      });
+
+      // used (standalone)
+      Object.entries(graphData.used || {}).forEach(([relKey, rel]) => {
+        links.push({
+          id: mkLinkId("used", relKey),
           source: nodeMap.get(rel["prov:activity"]),
           target: nodeMap.get(rel["prov:entity"]),
           type: "used",
-        })),
-        ...Object.values(graphData.wasInformedBy || {}).map((rel) => ({
+          actId: rel["prov:activity"],
+          entId: rel["prov:entity"],
+        });
+      });
+
+      // wasInformedBy (activity → activity)
+      Object.entries(graphData.wasInformedBy || {}).forEach(([relKey, rel]) => {
+        links.push({
+          id: mkLinkId("wasInformedBy", relKey),
           source: nodeMap.get(rel["prov:informed"]),
           target: nodeMap.get(rel["prov:informant"]),
           type: "wasInformedBy",
-        })),
-        ...Object.values(graphData.hadMember || {}).map((rel) => ({
+          actId: rel["prov:informed"],
+          entId: rel["prov:informant"],
+        });
+      });
+
+      // hadMember (collection → entity)
+      Object.entries(graphData.hadMember || {}).forEach(([relKey, rel]) => {
+        links.push({
+          id: mkLinkId("hadMember", relKey),
           source: nodeMap.get(rel["prov:collection"]),
           target: nodeMap.get(rel["prov:entity"]),
           type: "hadMember",
-        })),
-        ...Object.values(graphData.wasStartedBy || {}).map((rel) => ({
+          actId: rel["prov:collection"],
+          entId: rel["prov:entity"],
+        });
+      });
+
+      // wasStartedBy (activity → trigger)
+      Object.entries(graphData.wasStartedBy || {}).forEach(([relKey, rel]) => {
+        links.push({
+          id: mkLinkId("wasStartedBy", relKey),
           source: nodeMap.get(rel["prov:activity"]),
           target: nodeMap.get(rel["prov:trigger"]),
           type: "wasStartedBy",
-        })),
-        ...Object.values(graphData.wasAssociatedWith || {}).map((rel) => ({
+          actId: rel["prov:activity"],
+          entId: rel["prov:trigger"],
+        });
+      });
+
+      // wasAssociatedWith and plan (activity → agent / plan)
+      Object.entries(graphData.wasAssociatedWith || {}).forEach(([relKey, rel]) => {
+        // activity -> agent (wasAssociatedWith)
+        links.push({
+          id: mkLinkId("wasAssociatedWith", relKey),
           source: nodeMap.get(rel["prov:activity"]),
           target: nodeMap.get(rel["prov:agent"]),
           type: "wasAssociatedWith",
-        })),
-        ...Object.values(graphData.wasAssociatedWith || {}).map((rel) => ({
-          source: nodeMap.get(rel["prov:activity"]),
-          target: nodeMap.get(rel["prov:plan"]),
-          type: "plan",
-        })),
-        ...Object.values(graphData.wasAttributedTo || {}).map((rel) => ({
+          actId: rel["prov:activity"],
+          entId: rel["prov:agent"],
+        });
+
+        // activity -> plan (plan) — only if prov:plan exists
+        if (rel["prov:plan"]) {
+          links.push({
+            id: mkLinkId("plan", relKey),
+            source: nodeMap.get(rel["prov:activity"]),
+            target: nodeMap.get(rel["prov:plan"]),
+            type: "plan",
+            actId: rel["prov:activity"],
+            entId: rel["prov:plan"],
+          });
+        }
+      });
+
+      // wasAttributedTo (entity → agent)
+      Object.entries(graphData.wasAttributedTo || {}).forEach(([relKey, rel]) => {
+        links.push({
+          id: mkLinkId("wasAttributedTo", relKey),
           source: nodeMap.get(rel["prov:entity"]),
           target: nodeMap.get(rel["prov:agent"]),
           type: "wasAttributedTo",
-        })),
-      ].filter((link) => link.source && link.target);
+          actId: rel["prov:entity"],
+          entId: rel["prov:agent"],
+        });
+      });
+
+      // final filter — keep only links with both ends present
+      links = links.filter(l => l.source && l.target);
 
       // Create the D3 force simulation for the graph
       const simulation = d3
@@ -320,6 +392,8 @@ const Graph = ({
         .selectAll("path")
         .data(links)
         .join("path")
+        .attr("id", d => d.id)
+        .attr("class", "link")
         .attr("stroke", (d) =>
           d.type === "used"
             ? "#FDED00"
@@ -361,7 +435,7 @@ const Graph = ({
         .attr("text-shadow", "1px 1px 2px white")
         .attr("text-anchor", "middle")
         .text( d => d.id.length <= 18 ? d.id : `${d.id.slice(0, 10)}...${d.id.slice(-5)}` ) // Truncate long IDs
-        // .style("display", "none");
+        .style("display", "none");
 
       // Add labels to the links (initially hidden)
       const linkLabels = g
@@ -376,7 +450,7 @@ const Graph = ({
         .attr("text-shadow", "1px 1px 2px white")
         .attr("text-anchor", "middle")
         .text((d) => d.type)
-        // .style("display", "none");
+        .style("display", "none");
 
       // Add the nodes to the graph with different shapes based on the group (entity, activity, agent)
       const node = g
@@ -617,40 +691,21 @@ const Graph = ({
       showLinkLabels ? "block" : "none"
     );
 
-    // Toggle link visibility based on the state
-    d3.selectAll('path[data-type="used"]').style(
-      "opacity",
-      showUsedLinks ? 0 : 1
-    );
-    d3.selectAll('path[data-type="wasDerivedFrom"]').style(
-      "opacity",
-      showWasDerivedFromLinks ? 0 : 1
-    );
-    d3.selectAll('path[data-type="wasGeneratedBy"]').style(
-      "opacity",
-      showWasGeneratedByLinks ? 0 : 1
-    );
-    d3.selectAll('path[data-type="wasInformedBy"]').style(
-      "opacity",
-      showWasInformedByLinks ? 0 : 1
-    );
-    d3.selectAll('path[data-type="wasAssociatedWith"]').style(
-      "opacity",
-      showWasAssociatedWithLinks ? 0 : 1
-    );
-    d3.selectAll('path[data-type="wasStartedBy"]').style(
-      "opacity",
-      showWasStartedByLinks ? 0 : 1
-    );
-    d3.selectAll('path[data-type="hadMember"]').style(
-      "opacity",
-      showHadMemberLinks ? 0 : 1
-    );
-    d3.selectAll('path[data-type="wasAttributedTo"]').style(
-      "opacity",
-      showWasAttributedTo ? 0 : 1
-    );
+    // Scope selection to the graph container to be safe
+    const graphContainer = d3.select("#graphFrame");
+
+    // Use classes to mark links hidden or visible. Animation will respect these classes.
+    graphContainer.selectAll('path[data-type="used"]').classed('link-hidden', showUsedLinks);
+    graphContainer.selectAll('path[data-type="wasDerivedFrom"]').classed('link-hidden', showWasDerivedFromLinks);
+    graphContainer.selectAll('path[data-type="wasGeneratedBy"]').classed('link-hidden', showWasGeneratedByLinks);
+    graphContainer.selectAll('path[data-type="wasInformedBy"]').classed('link-hidden', showWasInformedByLinks);
+    graphContainer.selectAll('path[data-type="wasAssociatedWith"]').classed('link-hidden', showWasAssociatedWithLinks);
+    graphContainer.selectAll('path[data-type="wasStartedBy"]').classed('link-hidden', showWasStartedByLinks);
+    graphContainer.selectAll('path[data-type="hadMember"]').classed('link-hidden', showHadMemberLinks);
+    graphContainer.selectAll('path[data-type="wasAttributedTo"]').classed('link-hidden', showWasAttributedTo);
+
   }, [
+    graphData,
     showNodeLabels,
     showLinkLabels,
     showUsedLinks,
@@ -662,6 +717,7 @@ const Graph = ({
     showHadMemberLinks,
     showWasAttributedTo,
   ]);
+
 
   // 3° useEffect to center the graph on the highlighted node
   useEffect(() => {

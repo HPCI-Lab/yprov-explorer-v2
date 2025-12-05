@@ -7,7 +7,7 @@ via setGraphData. The JSON content is displayed in a readable format within a sl
 Line displayed separately. If no file was uploaded, a default message is shown.
 */
 
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import "./jsonLabel.css";
 import FileUploadButton from "../FileUploadButton/FileUploadButton";
 import { unifiedFileLoader } from '../../server/unified-loader';
@@ -15,10 +15,21 @@ import { unifiedFileLoader } from '../../server/unified-loader';
 /*
  - setGraphData: Function to set the graph data in the parent component
 */
-const JsonLabel = ({ setGraphData }) => {
+const JsonLabel = forwardRef(({ setGraphData, setCurrentFileName }, ref) => {
   const [fileName, setFileName] = useState(null); // State to store the name of the uploaded file
   const [jsonContent, setJsonContent] = useState(null); // State to store the JSON content
   const [showUploadBox, setShowUploadBox] = useState(false); // State to manage the visibility of the upload window
+
+  // Allow external update of JSON + file name from MultiLevel
+  useImperativeHandle(ref, () => ({
+    updateJson: (newJson, newName = null) => {
+      setJsonContent(JSON.stringify(newJson, null, 2).split("\n"));
+      if (newName) {
+        setFileName(newName);
+      }
+      setGraphData(newJson);
+    },
+  }));
 
   const getQueryParam = (param) => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -39,20 +50,17 @@ const JsonLabel = ({ setGraphData }) => {
         return;
       }
     }
-    setFileName(name); // Save the file name in the state
-    setJsonContent(content); // Save the JSON content in the state
-    setShowUploadBox(false); // Hide the upload window  
-    setJsonContent(JSON.stringify(content, null, 2).split("\n")); // Format the JSON content and split it by line 
-    setGraphData(content); // Update the graph data in the parent component 
-    const encodedUrl = encodeURIComponent(name); // Encode the file name to handle special characters
-    window.history.replaceState(null, "", `?file=${encodedUrl}`); // Update the URL with the file name
-  };
 
-  const truncateText = (text, maxLength) => {
-    if (text.length > maxLength) {
-      return `${text.substring(0, maxLength)}...`; // Truncate the text if it's longer than the max length
+    setFileName(name);
+    //setJsonContent(parsedContent);
+    setShowUploadBox(false);
+    if (setCurrentFileName) {
+      setCurrentFileName(name);
     }
-    return text;
+    setJsonContent(JSON.stringify(parsedContent, null, 2).split("\n"));
+    setGraphData(parsedContent);
+    const encodedUrl = encodeURIComponent(name);
+    window.history.replaceState(null, "", `?file=${encodedUrl}`);
   };
 
   // Load the JSON content from the URL parameter when the component is mounted 
@@ -85,6 +93,9 @@ const JsonLabel = ({ setGraphData }) => {
         // Set the file name
         setFileName(decodedUrl);
         
+        if (setCurrentFileName) {
+          setCurrentFileName(decodedUrl);
+        }
         // Format the JSON content and split it by line
         const formattedContent = JSON.stringify(result.data, null, 2).split("\n");
         setJsonContent(formattedContent);
@@ -100,18 +111,18 @@ const JsonLabel = ({ setGraphData }) => {
     };
   
     loadContent();
-  }, [setGraphData]);
-  
-  
+  }, [setGraphData, setCurrentFileName]);
+
+  const truncateText = (text, maxLength) => text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+
   return (
     <div className="json-label-container">
       <div className="json-label-header">
-      <span>
-        <strong>My File:</strong> {fileName ? truncateText(fileName, 30) : "Nessun file caricato"}
-      </span>
-
+        <span>
+          <strong>My File:</strong> {fileName ? truncateText(fileName, 30) : "Nessun file caricato"}
+        </span>
         <div className="upload-button-container">
-        <FileUploadButton onFileUpload={(fileNameOrUrl, content) => handleFileUpload(fileNameOrUrl, content)} />
+          <FileUploadButton onFileUpload={handleFileUpload} />
         </div>
       </div>
 
@@ -153,6 +164,6 @@ const JsonLabel = ({ setGraphData }) => {
       ></div>
     </div>
   );
-};
+});
 
 export default JsonLabel;

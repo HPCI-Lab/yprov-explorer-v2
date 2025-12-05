@@ -20,9 +20,9 @@ import GraphInfo from "../GraphInfo/GraphInfo";
 */
 const GraphContainer = ({ onNodeClick, highlightedNode, graphData }) => {
   // State to control the visibility of node labels, initially not visible (false).
-  const [showNodeLabelsState, setShowNodeLabelsState] = useState(true);
+  const [showNodeLabelsState, setShowNodeLabelsState] = useState(false);
   // State to control the visibility of link labels, initially not visible (false).
-  const [showLinkLabels, setShowLinkLabels] = useState(true);
+  const [showLinkLabels, setShowLinkLabels] = useState(false);
   // State to control the visibility of "used" links, initially not visible (false).
   const [showUsedLinks, setShowUsedLinks] = useState(false);
   // State to control the visibility of "wasDerivedFrom" links, initially not visible (false).

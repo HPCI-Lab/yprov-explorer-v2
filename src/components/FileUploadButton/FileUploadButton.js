@@ -7,6 +7,9 @@ import React, { useState, useRef } from "react";
 import "./fileUploadButton.css";
 import attachIcon from "./Attach.png";
 
+// custom logging
+import { upload_log } from '../../logging.js';
+
 const FileUploadButton = ({ onFileUpload }) => {
   const [showUploadSection, setShowUploadSection] = useState(false);
   const [linkInput, setLinkInput] = useState("");
@@ -61,6 +64,9 @@ const FileUploadButton = ({ onFileUpload }) => {
           const processedContent = processJsonData(initialContent);
           onFileUpload(uploadedFile.name, processedContent);
           setError(null);
+
+          // upload log
+          upload_log(uploadedFile.name, uploadedFile.size);
         } catch (error) {
           setError(error.message);
         }
