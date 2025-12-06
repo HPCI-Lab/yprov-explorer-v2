@@ -1,3 +1,9 @@
+/*
+DocumentList.js: displays a collection of DocumentFile items in a responsive grid.
+It supports selection of a single document, filtering by name, author, or type, and triggering callbacks on select or open.
+The grid layout adapts to the number of columns and handles empty states gracefully.
+*/
+
 import React, { useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
@@ -16,9 +22,11 @@ export default function DocumentList({
   onOpen,
   initialSelectedId = null,
 }) {
+  // Tracks which document is currently selected
   const [selectedId, setSelectedId] = useState(initialSelectedId);
   const [query] = useState("");
 
+  // Updates selection state and triggers optional callback
   const handleSelect = (id) => {
     setSelectedId(id);
     onSelect && onSelect(id);
@@ -28,6 +36,7 @@ export default function DocumentList({
     onOpen && onOpen(id);
   };
 
+  // Filters documents based on the search query
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return files;

@@ -1,9 +1,16 @@
+/* 
+  ZoomableCirclePacking.js
+  A React component that renders a zoomable circle packing visualization using D3.js.
+  It accepts hierarchical data and allows users to zoom in and out of the circles.
+*/
+
 import React, { useRef, useEffect } from "react";
 import * as d3 from "d3";
 import { Box, IconButton } from "@chakra-ui/react";
 import { CloseIcon } from "@chakra-ui/icons";
 
 export default function ZoomableCirclePacking({
+  /* Props */
   data = [],
   width = 300,
   height = 300,
@@ -13,6 +20,7 @@ export default function ZoomableCirclePacking({
 }) {
   const svgRef = useRef(null);
 
+  /* D3.js code to create the zoomable circle packing */
   useEffect(() => {
     if (!data) return;
     const svgEl = svgRef.current;
@@ -21,6 +29,7 @@ export default function ZoomableCirclePacking({
     d3.select(svgEl).selectAll("*").remove();
 
     const root =
+    /* Create a D3 hierarchy from the data */
       Array.isArray(data)
         ? d3.hierarchy({ name: "root", children: data }).sum(d => d.value || 1)
         : d3.hierarchy(data).sum(d => d.value || 1);
@@ -28,6 +37,7 @@ export default function ZoomableCirclePacking({
     const pack = d3.pack().size([width, height]).padding(4);
     pack(root);
 
+   /* Set up the SVG element */
     const svg = d3
       .select(svgEl)
       .attr("viewBox", `0 0 ${width} ${height}`)
@@ -38,10 +48,12 @@ export default function ZoomableCirclePacking({
 
     const g = svg.append("g").attr("class", "packing-root");
 
+    /* Color scale based on depth */
     const light = d3.color(parentColor).brighter(1.6).formatHex();
     const dark = d3.color(parentColor).darker(0.8).formatHex();
     const color = d3.scaleLinear().domain([0, root.height]).range([light, dark]);
 
+    /* Create nodes */
     const node = g
       .selectAll("g")
       .data(root.descendants())
@@ -71,6 +83,7 @@ export default function ZoomableCirclePacking({
       .text(d => (d.data && d.data.name ? d.data.name : ""));
     const view = { x: width / 2, y: height / 2, k: 1 };
 
+    /* Zooming function */
     function zoomTo(v) {
       const k = width / (v.r * 2);
       view.x = v.x;
@@ -135,7 +148,8 @@ export default function ZoomableCirclePacking({
           boxShadow="sm"
         />
       </Box>
-
+      
+      {/* SVG element for D3.js rendering */}
       <svg ref={svgRef} style={{ width: "100%", height: "100%", display: "block" }} />
     </Box>
   );

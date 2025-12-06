@@ -1,3 +1,8 @@
+/* Filter.js  
+Component for filtering catalog items based on author, date range, and node type.
+Utilizes Chakra UI for styling and layout.
+*/
+
 import React, { useState } from "react";
 import {
   Box,
@@ -12,11 +17,14 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 const Filter = ({ onApplyFilters }) => {
+  
+  // Track filters input
   const [author, setAuthor] = useState("");
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
   const [nodeType, setNodeType] = useState("");
 
+  // Calls parent callback with current filter values
   const handleApply = () => {
     const filters = {
       author: author.trim(),
@@ -68,6 +76,7 @@ const Filter = ({ onApplyFilters }) => {
         >
           <FormLabel> Date FROM </FormLabel>
 
+          {/* DatePicker for selecting the start date */}
           <DatePicker
             selected={dateFrom}
             onChange={(date) => setDateFrom(date)}
@@ -113,7 +122,8 @@ const Filter = ({ onApplyFilters }) => {
           ml={10}
         >
           <FormLabel> Type </FormLabel>
-
+          
+          {/* Select dropdown for node type */}
           <Select
             value={nodeType}
             onChange={(e) => setNodeType(e.target.value)}

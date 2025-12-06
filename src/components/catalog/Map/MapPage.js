@@ -1,3 +1,8 @@
+/* MapPage.js
+   A React component that displays a BubbleMap with interactive bubbles.
+   Clicking a bubble opens a ZoomableCirclePacking visualization.
+*/
+
 import React, { useState } from "react";
 import { Box, Button } from "@chakra-ui/react";
 import BubbleMap from "./BubbleMap";
@@ -89,9 +94,11 @@ const MapPage = () => {
         boxShadow="md"
         overflow="hidden"
       >
+        {/* Render the BubbleMap component */}
         <BubbleMap data={sampleData} onBubbleClick={handleBubbleClick} variant="large" />
       </Box>
       
+      {/* Render the ZoomableCirclePacking when a bubble is selected */}
       {selectedBubble && (
         <Box
           position="absolute"

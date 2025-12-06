@@ -1,3 +1,8 @@
+/* Catalog Component
+  This component displays a catalog of documents with filtering options,
+  a document list, and a detail panel. It also includes a small bubble map preview.
+*/  
+
 import React, { useState, useMemo } from "react";
 import {Flex, Box} from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";

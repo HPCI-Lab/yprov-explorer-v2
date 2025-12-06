@@ -1,3 +1,8 @@
+/* InfoPanel.js
+Displays detailed information about a selected file in the catalog.
+Utilizes Chakra UI for styling and layout.    
+*/
+
 import React, { useState } from "react";
 import {
   Box,
@@ -11,6 +16,7 @@ import OpenButton from "./OpenButton";
 
 export default function InfoPanel({ file }) {
  
+  {/* Set text color based on the current color mode */}
   const textColor = useColorModeValue("black", "whiteAlpha.900");
   const [setGraphData] = useState(null);
   
@@ -35,7 +41,8 @@ export default function InfoPanel({ file }) {
       </Heading>
 
       <Image src={file.preview}/>
-      
+
+      {/* Display file attributes with labels and values */}
       <Text color={textColor}>
         <Text as="span" fontWeight="700">TITLE: </Text>
         <Text as="span" fontWeight="400">{file.title ?? "-"}</Text>
@@ -97,6 +104,7 @@ export default function InfoPanel({ file }) {
   );
 }
 
+// Define prop types for the InfoPanel component
 InfoPanel.propTypes = {
   file: PropTypes.shape({
     name: PropTypes.string,

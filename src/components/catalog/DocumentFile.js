@@ -1,3 +1,9 @@
+/*
+DocumentFile.js: single document item in a list.
+It displays a preview image, the file name, and handles selection via click or keyboard.
+The visual appearance changes when the item is selected, using background color, shadow, and transform effects.
+*/
+
 import React from "react";
 import PropTypes from "prop-types";
 import {
@@ -9,6 +15,7 @@ import {
 } from "@chakra-ui/react";
 
 export default function DocumentFile({ file, selected, onSelect }) {
+  // Calls the parent callback when this document is selected
   const handleSelect = () => onSelect && onSelect(file.id);
 
   const bg = useColorModeValue("#909492ff", "rgba(255,255,255,0.02)");
@@ -44,6 +51,7 @@ export default function DocumentFile({ file, selected, onSelect }) {
   );
 }
 
+// Prop validation for safety
 DocumentFile.propTypes = {
   file: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,

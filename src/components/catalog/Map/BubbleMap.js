@@ -1,3 +1,13 @@
+/* BubbleMap.js
+   A React component that renders a bubble map using D3.js and TopoJSON.
+   Bubbles are sized based on data values and can display labels.
+   Props:
+   - data: Array of objects with { id, name, lat, lon, value, color, children }
+   - onBubbleClick: Function called when a bubble is clicked
+   - labelMode: "single" or "twoLines" for label formatting
+   - variant: "small" or "large" for map size
+*/
+
 import React, { useRef, useEffect, useState } from "react";
 import * as d3 from "d3";
 import * as topojson from "topojson-client";
