@@ -40,13 +40,11 @@ export default function DocumentList({
     });
   }, [files, query]);
 
-  const Color2= useColorModeValue("black", "rgba(0, 0, 0, 0.5)");
-
   return (
-      <Stack h="100%" >
+      <Stack h="100%">
 
         {filtered.length === 0 ? (
-          <Box  className="dl-empty" textAlign="center" color={Color2}  >
+          <Box  className="dl-empty" textAlign="center" color="black"  >
             No document found.
           </Box>
 

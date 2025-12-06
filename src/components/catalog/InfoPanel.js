@@ -1,33 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Heading,
   Text,
   Image,
-  useColorModeValue,
-  Button, 
-  Flex
+  useColorModeValue, 
 } from "@chakra-ui/react";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import OpenButton from "./OpenButton";
 
 export default function InfoPanel({ file }) {
  
-  const navigate = useNavigate();
   const textColor = useColorModeValue("black", "whiteAlpha.900");
-
-  if (!file) return null;
+  const [setGraphData] = useState(null);
   
+  if (!file) return null;
+
   return (
 
     <Box 
-      p="4"
+      p="2"
       bg="gray.700"
       borderLeft="5px solid black"
       color="white"
       borderRadius="xl"
       height="100%"
-      
       overflowY="auto"
     >
       <Heading 
@@ -75,8 +72,8 @@ export default function InfoPanel({ file }) {
       </Text>
 
       <Text color={textColor}>
-        <Text as="span" fontWeight="700">STORAGE URI: </Text>
-        <Text as="span" fontWeight="400">{file.storage_uri ?? "-"}</Text>
+        <Text as="span" fontWeight="700">STORAGE URL: </Text>
+        <Text as="span" fontWeight="400">{file.storage_url ?? "-"}</Text>
       </Text>
 
       <Text color={textColor}>
@@ -93,19 +90,8 @@ export default function InfoPanel({ file }) {
         <Text as="span" fontWeight="700">yPrv ISTANCE: </Text>
         <Text as="span" fontWeight="400">{file.yprovistance ?? "-"}</Text>
       </Text>
-
-      <Flex  justify="center" p = "4">
-        <Button
-          colorScheme="blue"
-          size="sm"
-          borderRadius="full"
-          w="50%" 
-          onClick={() => navigate("/")} 
-        >
-          OPEN
-        </Button> 
-      </Flex>
-
+    
+      <OpenButton fileUrl={file.storage_url} setGraphData={setGraphData}/> 
       
     </Box>
   );
@@ -121,7 +107,7 @@ InfoPanel.propTypes = {
     score: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), 
     version: PropTypes.string,
     owner_email: PropTypes.string,
-    storage_uri: PropTypes.string,
+    storage_url: PropTypes.string,
     parent_document_pid: PropTypes.string,
     date: PropTypes.string,
     yprovistance: PropTypes.string,

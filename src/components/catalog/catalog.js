@@ -17,7 +17,7 @@ const SAMPLE_FILES = [
     score: "7.757325",
     version: "1",
     owner_email: "user@example.com",
-    storage_uri: "http://127.0.0.1:8080/documents/21.T11961/996b1fd-2433-4abc-9e75-2d092479364/download",
+    storage_url: "http://yprov.disi.unitn.it:8000/documents/21.T11961/760d7a89-3eb9-4b82-ac91-85ff93783cf1/download",
     parent_document_pid: null,
     description: "At this stage, I would focus on expanding my knowledge in two areas: motor development and the game itself. I can achieve this by reading books and articles, attending courses, and engaging in dialogue with more experienced colleagues. In short, I aim to enhance the quality of my feedback by broadening my knowledge base. Having identified my areas for improvement and outlined several strategies for development, it is now time to put myself to the test and work toward these goals.",
     author: null,
@@ -222,7 +222,7 @@ export default function Catalog() {
   const selectedFile = files.find((f) => f.id === selectedId) || null;
 
   return (
-    <Flex direction="column" h="100vh" w="100vw" bg="black" overflowY="hidden">
+    <Flex direction="column" h="100vh" w="100vw" bg="black" overflowY="hidden" >
       {/* top navigation bar */}
       <TopBar />
       <Flex flex="1" position="relative" minWidth={0} minH={0}>
@@ -230,7 +230,7 @@ export default function Catalog() {
         <SidebarH onOpenPanel={onOpenPanel} />
         <Flex flex="1" direction="column" minWidth={0} minH={0}>
           <Filter onApplyFilters={handleApplyFilters} />
-          <Flex flex="1" position="relative" minWidth={0} p="2" minH={0}>
+          <Flex flex="1" position="relative"  minH={0} px={0} pt={2} pb={0} >
             {/*left column: document list */}
             <Box
               flex="1" 
@@ -245,6 +245,7 @@ export default function Catalog() {
               alignItems="stretch" 
               p="4" 
               borderLeft="5px solid black"
+              mb = {0}
             >
               <DocumentList
                 files={filteredFiles}
@@ -260,7 +261,7 @@ export default function Catalog() {
               overflowY="hidden" 
               display="flex" 
               flexDirection="column" 
-              alignItems="center"
+              pr = "1.5"
             >
               <Box
                 flex="3" 

@@ -1,4 +1,4 @@
-import { ChakraProvider, Flex, Box, Center} from "@chakra-ui/react";
+import { ChakraProvider, Flex, Center} from "@chakra-ui/react";
 import Sidebar from "./components/layout/sidebar/Sidebar";
 import SidePanelManager from "./components/layout/sidebar/SidePanelManager";
 import TopBar from "./components/layout/TopBar";
@@ -364,7 +364,7 @@ function App() {
   };
 
   return (
-     <ChakraProvider theme={theme}> 
+    <ChakraProvider theme={theme}> 
     <Router>
       <Routes>
         <Route
@@ -386,7 +386,7 @@ function App() {
                   setJsonContent={setJsonContent}
                 />
                 {/*Main content area*/}
-                <Flex flex="1" position="relative" overflow="hidden" minWidth={0}>
+                <Flex flex="1" position="relative" overflow="hidden" minWidth={0} minH={0}>
                   {/* Graph canvas */}
                   <GraphContainer
                     onNodeClick={handleNodeClick}
@@ -427,7 +427,7 @@ function App() {
           }
         />
         <Route path="/catalog" element={
-          <Center minH="100vh" minW = "100vw" >
+          <Center minH="100vh" minW = "100vw" bgColor="black">
               <CatalogPage />
           </Center>
         }/>
