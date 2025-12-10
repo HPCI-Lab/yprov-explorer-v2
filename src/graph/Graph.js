@@ -1,0 +1,336 @@
+/*
+Graph.js: Generates the graph from the d3 Adapter and manage the functions and events from the GraphController
+*/
+
+import * as d3 from "d3";
+import { useEffect, useRef } from "react";
+
+export default function Graph({ graph, controller }) {
+    const ref = useRef(null);
+    let selectedNode = null;
+
+    //Web worker for off thread simulation
+    const worker = new Worker(new URL("./d3Worker.js", import.meta.url), {
+        type: "module"
+    });
+
+    //Graph initialization
+    useEffect(() => {
+        if (!graph) return;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        d3.select(ref.current).selectAll("*").remove();
+        const svg = d3.select(ref.current)
+            .attr("width", width)
+            .attr("height", height);
+
+        const g = svg.append("g");
+        const markerTypes = [
+            "used",
+            "wasGeneratedBy",
+            "wasDerivedFrom",
+        ];
+
+        const markerColors = {
+            used: "#FDED00",
+            wasGeneratedBy: "red",
+            wasDerivedFrom: "#00E572",
+        };
+
+        const defs = svg.append("defs");
+
+        markerTypes.forEach(type => {
+            defs.append("marker")
+                .attr("id", `arrow-${type}`)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 15)
+                .attr("refY", 0)
+                .attr("markerWidth", 7)
+                .attr("markerHeight", 7)
+                .attr("orient", "auto-start-reverse")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", markerColors[type]);
+        });
+
+        //Zoom management
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 10])
+            .on("zoom", event => g.attr("transform", event.transform));
+        svg.call(zoom);
+
+        //Random positions
+        graph.nodes.forEach(n => {
+            n.x = Math.random() * width;
+            n.y = Math.random() * height;
+        });
+
+        //D3 FORCE Configuration
+        const simulation = d3.forceSimulation(graph.nodes)
+            .force("link",
+                d3.forceLink(graph.links)
+                    .id(d => d.id)
+                    .distance(180)
+                    .strength(2)
+            )
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("collide", d3.forceCollide().radius(25))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .alphaDecay(0.005);
+
+        //Adaptive collision: start strong, fade out
+        const initialCollideForce = simulation.force("collide");
+
+        let tickCount = 0;
+        const MAX_COLLIDE_TICKS = 100; // dopo ~1-2s smettiamo
+
+        //Begins the simulation
+        simulation.on("tick", () => {
+            tickCount++;
+
+            // Reducing collision during the time
+            if (tickCount === MAX_COLLIDE_TICKS) {
+                simulation.force("collide", null);
+            }
+        });
+
+        //Draw links
+        const link = g.append("g")
+            .selectAll("line")
+            .data(graph.links)
+            .join("line")
+            .attr("stroke", d =>
+                d.type === "used" ? "#FDED00"
+                    : d.type === "wasGeneratedBy" ? "red"
+                        : d.type === "wasDerivedFrom" ? "#00E572"
+                            : "#999"
+            )
+            .attr("stroke-width", 2)
+            .attr("marker-end", d =>
+                markerTypes.includes(d.type)
+                    ? `url(#arrow-${d.type})`
+                    : null
+            );
+
+        //Nodes drawing and properties
+        const node = g.append("g")
+            .selectAll("circle")
+            .data(graph.nodes)
+            .join("circle")
+            .attr("r", 15)
+            .attr("stroke", "#000")
+            .attr("stroke-width", 1.5)
+            .attr("fill", d =>
+                d.type === "entity" ? "#fdfd66"
+                    : d.type === "activity" ? "#9898fd"
+                        : "#FF5733"
+            )
+            .call(d3.drag()
+                .on("start", event => {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    event.subject.fx = event.x;
+                    event.subject.fy = event.y;
+                })
+                .on("drag", event => {
+                    event.subject.fx = event.x;
+                    event.subject.fy = event.y;
+                })
+                .on("end", event => {
+                    if (!event.active) simulation.alphaTarget(0);
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                })
+            );
+
+        //Node labels
+        const MAX_NODE_LABEL = 18;
+        const nodeLabel = g.append("g")
+            .selectAll("text")
+            .data(graph.nodes)
+            .join("text")
+            .attr("font-size", 12)
+            .attr("text-anchor", "middle")
+            .attr("dy", 4) // centrato verticalmente
+            .text(d =>
+                d.label.length > MAX_NODE_LABEL
+                    ? d.label.slice(0, 10) + "..." + d.label.slice(-3)
+                    : d.label
+            )
+            .attr("pointer-events", "none")
+            .attr("fill", "#000")
+            .style("user-select", "none");
+
+        //Link labels
+        const linkLabel = g.append("g")
+            .selectAll("text")
+            .data(graph.links)
+            .join("text")
+            .attr("font-size", 10)
+            .attr("text-anchor", "middle")
+            .attr("dy", -5)
+            .text(d => d.type)
+            .attr("pointer-events", "none")
+            .attr("fill", "#000")
+            .style("user-select", "none");
+
+        //Tick update, managing the visibility for performaces
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+            nodeLabel
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+            linkLabel
+                .attr("x", d => (d.source.x + d.target.x) / 2)
+                .attr("y", d => (d.source.y + d.target.y) / 2);
+            updateVisibility();
+        });
+
+        //Function visibility culling
+        function updateVisibility() {
+            const transform = d3.zoomTransform(svg.node());
+            const scale = transform.k;
+
+            //Limits of drawing
+            const minX = -transform.x / scale - 100;
+            const minY = -transform.y / scale - 100;
+            const maxX = (width - transform.x) / scale + 100;
+            const maxY = (height - transform.y) / scale + 100;
+
+            node.style("display", d =>
+                d.x >= minX && d.x <= maxX && d.y >= minY && d.y <= maxY
+                    ? "block" : "none");
+
+            nodeLabel.style("display", d =>
+                scale > 0.7 && d.x >= minX && d.x <= maxX && d.y >= minY && d.y <= maxY
+                    ? "block" : "none");
+
+            link.style("display", d =>
+                d.source.x >= minX && d.source.x <= maxX &&
+                d.source.y >= minY && d.source.y <= maxY &&
+                d.target.x >= minX && d.target.x <= maxX &&
+                d.target.y >= minY && d.target.y <= maxY
+                    ? "block" : "none");
+
+            linkLabel.style("display", d =>
+                scale > 1.2 &&
+                d.source.x >= minX && d.source.x <= maxX &&
+                d.source.y >= minY && d.source.y <= maxY &&
+                d.target.x >= minX && d.target.x <= maxX &&
+                d.target.y >= minY && d.target.y <= maxY
+                    ? "block" : "none");
+        }
+
+        //Zoom rendering of labels, for performance managing
+        zoom.on("zoom", event => {
+            g.attr("transform", event.transform);
+            updateVisibility();
+            const scale = event.transform.k;
+            nodeLabel.style("display", scale > 0.7 ? "block" : "none");
+            linkLabel.style("display", scale > 1.2 ? "block" : "none");
+        });
+
+        //simulation managing for performance
+        simulation.on("end", () => {
+            graph.nodes.forEach(n => {
+                n.fx = n.x;
+                n.fy = n.y;
+            });
+            simulation.force("collide", null);
+            simulation.stop();
+        });
+
+        //Register API to Controller, creates a public API for the graph
+        controller.registerGraphAPI({
+            selectNode: (id) => {
+                node.attr("stroke", "#000").attr("stroke-width", 1.5);
+                node.filter(d => d.id === id)
+                    .attr("stroke", "#fff")
+                    .attr("stroke-width", 3);
+            },
+            focusNode: (id) => {
+                const n = graph.nodes.find(x => x.id === id);
+                if (!n) return;
+                svg.transition().duration(600)
+                    .call(zoom.transform, d3.zoomIdentity.translate(width / 2 - n.x, height / 2 - n.y).scale(1.5));
+            },
+            resetView: () => {
+                svg.transition().duration(600)
+                    .call(zoom.transform, d3.zoomIdentity);
+            }
+        });
+
+        node.on("click", (event, d) => {
+            node.attr("stroke", "#000").attr("stroke-width", 1.5);
+
+            //Highlighting the selected node
+            d3.select(event.currentTarget)
+                .attr("stroke", "#000")
+                .attr("stroke-width", 3);
+
+            selectedNode = d.id;
+            //Sends the info to the controller
+            controller.emitNodeClick({
+                id: d.id,
+                type: d.type,
+                label: d.label,
+                attributes: d.attributes
+            });
+        });
+
+        //Function for redrawing
+        function redraw() {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+            nodeLabel
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+            linkLabel
+                .attr("x", d => (d.source.x + d.target.x) / 2)
+                .attr("y", d => (d.source.y + d.target.y) / 2);
+            updateVisibility();
+        }
+
+        //Send graph to worker, Worker sends tick and stops. Used for better performances
+        worker.postMessage({
+            nodes: graph.nodes.map(n => ({ id: n.id })),
+            links: graph.links.map(l => ({
+                source: l.source,
+                target: l.target
+            }))
+        });
+
+        worker.onmessage = (event) => {
+            const msg = event.data;
+
+            if (msg.type === "tick") {
+                msg.nodes.forEach(updated => {
+                    const n = graph.nodes.find(n => n.id === updated.id);
+                    if (!n) return;
+                    n.x = updated.x;
+                    n.y = updated.y;
+                });
+                redraw();   //graph make the redrawing
+            }
+        };
+
+    }, [graph]);
+
+    return (
+        <svg ref={ref} style={{ width: "100%", height: "100%" }}></svg>
+    );
+}
+

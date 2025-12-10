@@ -619,6 +619,7 @@ const Graph = ({
 
   }, [graphData, nodeDistance, nodeRepulsion, nodeCollision, alphaDecay]);
 
+  /*
   // 2° useEffect to manage interactions with the graph (show/hide labels and links)
   useEffect(() => {
     // Toggle node labels
@@ -678,7 +679,8 @@ const Graph = ({
     showHadMemberLinks,
     showWasAttributedTo,
   ]);
-
+   */
+  /*
   // 3° useEffect to center the graph on the highlighted node
   useEffect(() => {
     // Function to focus on a specific node in the graph
@@ -764,6 +766,7 @@ const Graph = ({
       focusOnNode(highlightedNode);
     }
   }, [highlightedNode, svgRef, zoomBehaviorRef]);
+   */
 
   return null;
 };
