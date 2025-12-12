@@ -14,6 +14,9 @@ function App() {
     const [activePanel, setActivePanel] = useState(null);
     //State for closing the sidebar
     const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+    //State for opening the code tab
+    const [isCodePanelVisible, setIsCodePanelVisible] = useState(false);
+
 
     //Function for ovening the sidebar panel
     const onOpenPanel = (panel) => {
@@ -30,6 +33,7 @@ function App() {
         setIsSidePanelOpen(false);
         setActivePanel(null);
     };
+
 
 //------------------------------------------------------------------------------------------
     const [graphData, setGraphData] = useState(null);
@@ -58,32 +62,35 @@ function App() {
                 <Flex flex="1" position="relative" overflow="hidden" minWidth={0}>
                     {/* Graph canvas */}
                     <GraphContainer graphData={graphData}/>
-                    <Resizable
-                        defaultSize={{
-                            width: 300,
-                        }}
-                        minWidth={300}
-                        maxWidth={500}
-                        enable={{
-                            left: true,
-                        }}
-                        handleStyles={{
-                            left: {
-                                width: "6px",
-                                left: "-3px",
-                                background: "transparent",
-                                cursor: "col-resize",
-                            }
-                        }}
-                        style={{
-                            height: "100%",
-                            maxHeight: "100%",
-                            display: "flex",
-                        }}
-                    >
-                        {/*Code panel for viewing the code*/}
-                        <CodePanel />
-                    </Resizable>
+                    {isCodePanelVisible && (
+                            <Resizable
+                                defaultSize={{
+                                    width: 300,
+                                }}
+                                minWidth={300}
+                                maxWidth={500}
+                                enable={{
+                                    left: true,
+                                }}
+                                handleStyles={{
+                                    left: {
+                                        width: "6px",
+                                        left: "-3px",
+                                        background: "transparent",
+                                        cursor: "col-resize",
+                                    }
+                                }}
+                                style={{
+                                    height: "100%",
+                                    maxHeight: "100%",
+                                    display: "flex",
+                                }}
+                            >
+                                {/*Code panel for viewing the code*/}
+                                <CodePanel />
+                            </Resizable>
+                        )
+                    }
                 </Flex>
             </Flex>
             {/*Timeline bar*/}

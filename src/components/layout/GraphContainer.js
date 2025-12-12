@@ -30,12 +30,15 @@ export default function GraphContainer({ graphData }) {
 
     return (
         <Box
+            w="100%"
+            h="100%"
             flex="1"
             bg="white"
             borderRadius="xl"
             position="relative"
             overflow="hidden"
             id="graphFrame"
+            borderRight="5px solid black"
         >
             <Box
                 position="absolute"

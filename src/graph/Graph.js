@@ -198,11 +198,15 @@ export default function Graph({ graph, controller }) {
             const transform = d3.zoomTransform(svg.node());
             const scale = transform.k;
 
+            const bbox = svg.node().getBoundingClientRect();
+            const newWidth = bbox.width;
+            const newHeight = bbox.height;
+
             //Limits of drawing
             const minX = -transform.x / scale - 100;
             const minY = -transform.y / scale - 100;
-            const maxX = (width - transform.x) / scale + 100;
-            const maxY = (height - transform.y) / scale + 100;
+            const maxX = (newWidth - transform.x) / scale + 100;
+            const maxY = (newHeight - transform.y) / scale + 100;
 
             node.style("display", d =>
                 d.x >= minX && d.x <= maxX && d.y >= minY && d.y <= maxY
@@ -267,6 +271,8 @@ export default function Graph({ graph, controller }) {
             }
         });
 
+        const linksData = graph.links;
+
         node.on("click", (event, d) => {
             node.attr("stroke", "#000").attr("stroke-width", 1.5);
 
@@ -275,12 +281,53 @@ export default function Graph({ graph, controller }) {
                 .attr("stroke", "#000")
                 .attr("stroke-width", 3);
 
-            selectedNode = d.id;
-            //Sends the info to the controller
+            //Graph info mapped to send to the sideInfo
+            const group =
+                d.type === "entity" ? "Entity" :
+                d.type === "activity" ? "Activity" :
+                d.type === "agent" ? "Agent" : "Unknown";
+
+            const typeInfo = d.attributes?.["prov:type"] || "Unknown";
+
+            const relOut = (relType) =>
+                linksData
+                    .filter(l => l.type === relType && l.source.id === d.id)
+                    .map(l => l.target.id)
+                    .join(", ") || "None";
+
+            const relIn = (relType) =>
+                linksData
+                    .filter(l => l.type === relType && l.target.id === d.id)
+                    .map(l => l.source.id)
+                    .join(", ") || "None";
+
+            const wasGeneratedBy   = relOut("wasGeneratedBy");
+            const used             = relOut("used");
+            const wasDerivedFrom   = relOut("wasDerivedFrom");
+            const wasInformedBy    = relOut("wasInformedBy");
+            const wasAssociatedWith= relOut("wasAssociatedWith");
+            const wasStartedBy     = relOut("wasStartedBy");
+            const hadMember        = relOut("hadMember");
+            const wasAttributedTo  = relOut("wasAttributedTo");
+            const generated        = relIn("wasGeneratedBy");
+            const wasUsedBy        = relIn("used");
+            const derives          = relIn("wasDerivedFrom");
+
             controller.emitNodeClick({
                 id: d.id,
-                type: d.type,
-                label: d.label,
+                group,
+                type: typeInfo,
+                used,
+                wasGeneratedBy,
+                wasDerivedFrom,
+                wasInformedBy,
+                wasAssociatedWith,
+                wasStartedBy,
+                hadMember,
+                wasAttributedTo,
+                generated,
+                wasUsedBy,
+                derives,
                 attributes: d.attributes
             });
         });
@@ -325,6 +372,25 @@ export default function Graph({ graph, controller }) {
                 });
                 redraw();   //graph make the redrawing
             }
+        };
+
+        //Resize handler for managing the browser page resizing and the graph
+        function handleResize() {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+
+            svg.attr("width", newWidth).attr("height", newHeight);
+            svg.call(zoom.transform, d3.zoomIdentity);
+            simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+
+            redraw();
+            updateVisibility();
+        }
+
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
         };
 
     }, [graph]);
