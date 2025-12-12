@@ -1,3 +1,7 @@
+/*  TopbarSearch.js
+    Search bar component with filter suggestions and timeline filter.
+*/
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Flex,

@@ -8,10 +8,13 @@ import { Box, Image, Text, VStack, HStack, Badge, Icon, Tooltip } from "@chakra-
 import { FileText } from "lucide-react";
 
 export default function DocumentFile({ file, selected, onSelect }) {
+  // Handler for selecting the document
   const handleSelect = () => onSelect && onSelect(file.id);
 
+  // Number of linked files
   const linkedFile = file.linked_files ;
 
+  // Function to count linked documents
   const LinkedDocument = (file) => {
     if (!file.linked_documents || !Array.isArray(file.linked_documents)) {
       return 0;

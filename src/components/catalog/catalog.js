@@ -267,12 +267,12 @@ export default function Catalog() {
     // timeline filter
     if (fileYear < yearMin || fileYear > yearMax) return false;
 
-    // filtri specifici
+    //specific filters
     if (author && !file.author?.toLowerCase().includes(author.toLowerCase())) return false;
     if (pid && !file.pid?.toLowerCase().includes(pid.toLowerCase())) return false;
     if (type && !file.type?.toLowerCase().includes(type.toLowerCase())) return false;
 
-    // ricerca generica se non ci sono filtri specifici
+    // general query filter
     if (!author && !pid && !type && q) {
       const haystack = [
         file.name || "",
@@ -303,7 +303,7 @@ export default function Catalog() {
           
           {/* document list */}
           <Box
-            flex={selectedFile ? 2 : 1} // più piccolo se InfoPanel aperto
+            flex={selectedFile ? 2 : 1} 
             borderRadius="xl"
             overflow="hidden"
             bg="gray.700"
@@ -314,7 +314,7 @@ export default function Catalog() {
             flexDirection="column"
             transition="all 0.3s ease-in-out"
             p={4}
-            minW={0} // evita overflow orizzontale
+            minW={0} 
           >
             <DocumentList
               files={filteredFiles}
@@ -322,7 +322,7 @@ export default function Catalog() {
               onSelect={handleSelect}
               onOpen={handleOpen}
               initialSelectedId={selectedId}
-              panelOpen={!!selectedFile} // prop per adattarsi
+              panelOpen={!!selectedFile} 
             />
           </Box>
 

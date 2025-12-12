@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from "react";
 
 function TimeLine({ onFilter }) {
+  // Get current year
   const today = new Date();
   const currentYear = today.getFullYear();
 
@@ -45,6 +46,7 @@ function TimeLine({ onFilter }) {
             value={yearRange}
             onChange={(val) => setYearRange(val)}
           >
+            {/* Year slider track */}
             <RangeSliderTrack>
               <RangeSliderFilledTrack bg="blue.600" />
             </RangeSliderTrack>

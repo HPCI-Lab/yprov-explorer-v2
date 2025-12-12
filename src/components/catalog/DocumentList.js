@@ -1,3 +1,8 @@
+/*  DocumentList.js
+    Component to display a list of document files in a grid layout.
+    Adapts its size based on whether an info panel is open.
+*/
+
 import React, { useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box, Grid, GridItem, Flex } from "@chakra-ui/react";
@@ -9,7 +14,7 @@ export default function DocumentList({
   onSelect,
   onOpen,
   initialSelectedId = null,
-  panelOpen = false, // nuova prop per sapere se InfoPanel è aperto
+  panelOpen = false, 
 }) {
   const [selectedId, setSelectedId] = useState(initialSelectedId);
   const [query] = useState("");
@@ -38,9 +43,9 @@ export default function DocumentList({
   return (
     <Flex
       direction="column"
-      flex={panelOpen ? 2 : 3} // si riduce se InfoPanel aperto
-      minW={0} // per evitare overflow
-      transition="all 0.3s ease-in-out" // animazione fluida
+      flex={panelOpen ? 2 : 3} 
+      minW={0} 
+      transition="all 0.3s ease-in-out"
       overflow="hidden"
     >
       {filtered.length === 0 ? (

@@ -1,3 +1,7 @@
+/* InfoPanel.js   
+    Component to display detailed information about a selected document file, 
+    including metadata, linked files, and linked documents.
+*/
 import React, { useState } from "react";
 import {
   Box,
