@@ -1,125 +1,154 @@
-/* InfoPanel.js
-Displays detailed information about a selected file in the catalog.
-Utilizes Chakra UI for styling and layout.    
-*/
-
 import React, { useState } from "react";
 import {
   Box,
   Heading,
   Text,
   Image,
-  useColorModeValue, 
+  HStack,
+  VStack,
+  Button,
+  Collapse,
+  Link,
+  CloseButton,
+  ScaleFade,
 } from "@chakra-ui/react";
 import PropTypes from "prop-types";
 import OpenButton from "./OpenButton";
 
-export default function InfoPanel({ file }) {
- 
-  {/* Set text color based on the current color mode */}
-  const textColor = useColorModeValue("black", "whiteAlpha.900");
+export default function InfoPanel({ file, onClose }) {
   const [setGraphData] = useState(null);
-  
+  const [linkedFilesVisible, setLinkedFilesVisible] = useState(false);
+  const [linkedDocumentsVisible, setLinkedDocumentsVisible] = useState(false);
+
   if (!file) return null;
 
-  return (
+  const ButtonStyle = (colorScheme) => ({
+    borderRadius: "full",
+    px: 6,
+    py: 2,
+    _hover: { transform: "scale(1.05)" },
+    transition: "all 0.2s",
+    colorScheme,
+  });
 
-    <Box 
-      p="2"
-      bg="gray.700"
-      borderLeft="5px solid black"
-      color="white"
-      borderRadius="xl"
-      height="100%"
-      overflowY="auto"
+  const FileCard = ({ f, color }) => (
+    <Box
+      p={3}
+      borderRadius="md"
+      bg={color}
+      w="100%"
+      _hover={{ transform: "scale(1.03)", shadow: "md" }}
+      transition="all 0.2s"
     >
-      <Heading 
-        whiteSpace="normal"
-        wordBreak="break-word"
-      >
-        {file.name}
-      </Heading>
+      <Link href={f.storage_url} isExternal fontWeight="semibold">
+        {f.name}
+      </Link>
+    </Box>
+  );
 
-      <Image src={file.preview}/>
+  return (
+    <Box p={6} borderRadius="2xl" boxShadow="2xl" overflowY="auto" height="100%" position="relative">
+      {/* Close button */}
+      {onClose && (
+        <CloseButton
+          position="absolute"
+          top={4}
+          right={4}
+          onClick={onClose}
+          color="whiteAlpha.800"
+          _hover={{ color: "white" }}
+        />
+      )}
 
-      {/* Display file attributes with labels and values */}
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">TITLE: </Text>
-        <Text as="span" fontWeight="400">{file.title ?? "-"}</Text>
-      </Text>
+      {/* Main title */}
+      <Box w="100%" textAlign="center" mb={6} p={3} borderRadius="xl">
+        <Heading size="xl" color="white">{file.name}</Heading>
+      </Box>
 
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">AUTHOR: </Text>
-        <Text as="span" fontWeight="400">{file.author ?? "-"}</Text>
-      </Text>
+      {/* Preview image */}
+      {file.preview && (
+        <Image src={file.preview} alt={file.name} borderRadius="3xl" mb={4} opacity={0.8} />
+      )}
 
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">ID/PID: </Text>
-        <Text as="span" fontWeight="400">{file.id ?? "-"}</Text>
-      </Text>
+      {/* Metadata */}
+      <VStack align="start" spacing={1} mb={2} wordBreak="break-word">
+        {Object.entries({
+          TITLE: file.title,
+          AUTHOR: file.author,
+          "ID/PID": file.id,
+          DESCRIPTION: file.description,
+          SCORE: file.score,
+          VERSION: file.version,
+          "OWNER EMAIL": file.owner_email,
+          "STORAGE URL": file.storage_url,
+          "PARENT DOCUMENT PID": file.parent_document_pid,
+          DATE: file.date,
+          "YPRV ISTANCE": file.yprovistance,
+        }).map(([label, value]) => (
+          <Box key={label} w="100%" bg="gray.700" borderRadius="md" p={3} boxShadow="sm">
+            <Text color="blue.400" fontWeight="bold" textTransform="uppercase" mb={1}>
+              {label}
+            </Text>
+            <Text color="white">{value ?? "-"}</Text>
+          </Box>
+        ))}
+      </VStack>
 
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">DESCRIPTION: </Text>
-        <Text as="span" fontWeight="400">{file.description ?? "-"}</Text>
-      </Text>
+      {/* Open button */}
+      <OpenButton fileUrl={file.storage_url} setGraphData={setGraphData} />
 
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">SCORE: </Text>
-        <Text as="span" fontWeight="400">{file.score ?? "-"}</Text>
-      </Text>
+      {/* Action buttons */}
+      <HStack spacing={4} mb={4} mt={4}>
+        <Button
+          {...ButtonStyle("blue")}
+          onClick={() => setLinkedFilesVisible(!linkedFilesVisible)}
+          w="170px"
+        >
+          Linked files
+        </Button>
+        <Button
+          {...ButtonStyle("green")}
+          onClick={() => setLinkedDocumentsVisible(!linkedDocumentsVisible)}
+          w="170px"
+        >
+          Linked documents
+        </Button>
+      </HStack>
 
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">VERSION: </Text>
-        <Text as="span" fontWeight="400">{file.version ?? "-"}</Text>
-      </Text>
+      {/* Linked files */}
+      <Collapse in={linkedFilesVisible} animateOpacity>
+        <VStack spacing={2} mt={2}>
+          {file.attached_files?.length ? (
+            file.attached_files.map(f => (
+              <ScaleFade in={linkedFilesVisible} key={f.id}>
+                <FileCard f={f} color="gray.700" />
+              </ScaleFade>
+            ))
+          ) : (
+            <Text color="white">No linked files</Text>
+          )}
+        </VStack>
+      </Collapse>
 
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">OWNER_EMAIL: </Text>
-        <Text as="span" fontWeight="400">{file.owner_email ?? "-"}</Text>
-      </Text>
-
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">STORAGE URL: </Text>
-        <Text as="span" fontWeight="400">{file.storage_url ?? "-"}</Text>
-      </Text>
-
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">PARENT DOCUMENT PID: </Text>
-        <Text as="span" fontWeight="400">{file.parent_document_pid ?? "-"}</Text>
-      </Text>
-
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">DATE: </Text>
-        <Text as="span" fontWeight="400">{file.date ?? "-"}</Text>
-      </Text>
-
-      <Text color={textColor}>
-        <Text as="span" fontWeight="700">yPrv ISTANCE: </Text>
-        <Text as="span" fontWeight="400">{file.yprovistance ?? "-"}</Text>
-      </Text>
-    
-      <OpenButton fileUrl={file.storage_url} setGraphData={setGraphData}/> 
-      
+      {/* Linked documents */}
+      <Collapse in={linkedDocumentsVisible} animateOpacity>
+        <VStack spacing={2} mt={2}>
+          {file.linked_files?.length ? (
+            file.linked_files.map(f => (
+              <ScaleFade in={linkedDocumentsVisible} key={f.id}>
+                <FileCard f={f} color="gray.600" />
+              </ScaleFade>
+            ))
+          ) : (
+            <Text color="white">No linked documents</Text>
+          )}
+        </VStack>
+      </Collapse>
     </Box>
   );
 }
 
-// Define prop types for the InfoPanel component
 InfoPanel.propTypes = {
-  file: PropTypes.shape({
-    name: PropTypes.string,
-    preview: PropTypes.string,
-    title: PropTypes.string,
-    author: PropTypes.string,
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    score: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), 
-    version: PropTypes.string,
-    owner_email: PropTypes.string,
-    storage_url: PropTypes.string,
-    parent_document_pid: PropTypes.string,
-    date: PropTypes.string,
-    yprovistance: PropTypes.string,
-    description: PropTypes.string,
-  }),
+  file: PropTypes.object.isRequired,
   onClose: PropTypes.func,
 };

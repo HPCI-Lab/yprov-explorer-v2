@@ -5,15 +5,11 @@
 
 import React, { useState, useMemo } from "react";
 import {Flex, Box} from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
 import InfoPanel from "./InfoPanel";
-import Filter from "./Filter";
+import TopbarSearch from "./TopbarSearch";
 import DocumentList from "./DocumentList";
 import Img from "./img.png";
-import TopBar from "../layout/TopBar"
 import SidebarH from "./SideBarHome/SidebarH";
-import BubbleMap from "./Map/BubbleMap";
-import { sampleData } from "./Map/MapPage";
 
 //data for testing the UI
 const SAMPLE_FILES = [ 
@@ -31,6 +27,12 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 825, activity: 800 },
     Provistance: "825- //172.162.13167-800-",
+    linked_files: 3,
+    linked_documents: [
+      "19. T11961/3e2f4b7c-5f4d-4f6a-8f4e-1c2d3e4f5g6h",
+      "20. T11961/4f5g6h7i-8j9k-0l1m-2n3o-4p5q6r7s8t9u",
+      "22. T11961/5g6h7i8j-9k0l-1m2n-3o4p-5q6r7s8t9u0v"
+    ],
   },
   {
     id: "sample-1",
@@ -40,6 +42,7 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 312, activity: 120 },
     type: "activity",
+    linked_files: 0,
   },
   {
     id: "sample-2",
@@ -49,6 +52,10 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 128, activity: 60 },
     type: "entity",
+    linked_files: 1,
+    linked_documents: [
+      "18. T11961/1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p"
+    ],  
   },
   {
     id: "sample-3",
@@ -58,6 +65,7 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 128, activity: 60 },
     type: "entity",
+    linked_files: 2,
   },
   {
     id: "sample-4",
@@ -67,6 +75,7 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 128, activity: 60 },
     type: "entity",
+    linked_files: 0,
   },
   {
     id: "sample-5",
@@ -76,6 +85,7 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 128, activity: 60 },
     type: "entity",
+    linked_files: 0,
   },
   {
     id: "sample-6",
@@ -85,6 +95,8 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 128, activity: 60 },
     type: "entity",
+    linked_files: 0,
+    linked_documents: [],
   }, {
     id: "sample-7",
     name: "network_sample_2.json",
@@ -93,6 +105,7 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 128, activity: 60 },
     type: "entity",
+    linked_files: 0,
   },
   {
     id: "sample-8",
@@ -102,7 +115,15 @@ const SAMPLE_FILES = [
     preview: Img,
     metrics: { nodes: 128, activity: 60 },
     type: "entity",
+    linked_files: 4,
+    linked_documents: [
+      "23. T11961/6h7i8j9k-0l1m-2n3o-4p5q-6r7s8t9u0v1w",
+      "24. T11961/7i8j9k0l-1m2n-3o4p-5q6r-7s8t9u0v1w2x",
+      "25. T11961/8j9k0l1m-2n3o-4p5q-6r7s-8t9u0v1w2x3y",
+      "26. T11961/9k0l1m2n-3o4p-5q6r-7s8t-9u0v1w2x3y4z"
+    ],
   }, {
+
     id: "sample-9",
     name: "network_sample_2.json",
     author: "Mario Rossi",
@@ -176,8 +197,6 @@ const SAMPLE_FILES = [
 
 export default function Catalog() {
 
-  const navigate = useNavigate();
-
   //State for sidebar activation
   const [activePanel, setActivePanel] = useState(null);
   //State for closing the sidebar
@@ -202,10 +221,22 @@ export default function Catalog() {
   //file list state
   const [files] = useState(SAMPLE_FILES);
   const [selectedId, setSelectedId] = useState(files[0]?.id ?? null);
-  const [filters, setFilters] = useState({ author: "", dateFrom: null, dateTo: null, node: "" });
+  const [filters, setFilters] = useState({
+    query: "",
+    yearRange: [2020, new Date().getFullYear()]
+  });
 
-  const handleApplyFilters = (f) => setFilters(f);
   const handleSelect = (id) => setSelectedId(id);
+
+  // Callback timeline
+  const handleTimeline = (range) => {
+    if (Array.isArray(range)) {
+    setFilters(prev => ({
+      ...prev,
+      yearRange: range
+    }));
+  }
+  };
   
   //update the selected file
   const handleOpen = (id) => {
@@ -213,83 +244,104 @@ export default function Catalog() {
     setSelectedId(id);
   };
 
-  //filtering logic execution for performance
-  const filteredFiles = useMemo(() => {
-    const qAuthor = (filters.author || "").trim().toLowerCase();
-    const node = filters.node || "";
-    return files.filter((file) => {
-      if (qAuthor && !(file.author?.toLowerCase().includes(qAuthor))) return false;
-      if (node && node !== "" && file.type !== node) return false;
-      return true;
-    });
-  }, [files, filters]);
+  // Callback searchbar
+  const handleSearch = (searchFilters) => {
+    setFilters(prev => ({
+      ...prev,
+      ...searchFilters
+    }));
+  };
 
-  const selectedFile = files.find((f) => f.id === selectedId) || null;
+  // Memoized filtered files based on current filters
+  const filteredFiles = useMemo(() => {
+  if (!files) return [];
+
+  const { query, yearRange, author, pid, type } = filters;
+  const q = (query || "").trim().toLowerCase();
+  const [yearMin, yearMax] = yearRange;
+
+  return files.filter(file => {
+    const fileDate = new Date(file.date || file.created_at);
+    const fileYear = fileDate.getFullYear();
+
+    // timeline filter
+    if (fileYear < yearMin || fileYear > yearMax) return false;
+
+    // filtri specifici
+    if (author && !file.author?.toLowerCase().includes(author.toLowerCase())) return false;
+    if (pid && !file.pid?.toLowerCase().includes(pid.toLowerCase())) return false;
+    if (type && !file.type?.toLowerCase().includes(type.toLowerCase())) return false;
+
+    // ricerca generica se non ci sono filtri specifici
+    if (!author && !pid && !type && q) {
+      const haystack = [
+        file.name || "",
+        file.author || "",
+        file.pid || "",
+        file.type || "",
+        file.description || "",
+      ].join(" ").toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+
+    return true;
+  });
+}, [files, filters]);
+
+  
+  const selectedFile = files.find((f) => f.id === selectedId);
 
   return (
-    <Flex direction="column" h="100vh" w="100vw" bg="black" overflowY="hidden" >
-      {/* top navigation bar */}
-      <TopBar />
-      <Flex flex="1" position="relative" minWidth={0} minH={0}>
+    <Flex direction="column" h="100vh" w="100vw" bg="black" overflow="hidden">
+      <TopbarSearch onSearch={handleSearch} onTime={handleTimeline} />
+      <Flex flex="1" minH={0} minW={0} overflow="hidden">
         {/* left sidebar */}
         <SidebarH onOpenPanel={onOpenPanel} />
-        <Flex flex="1" direction="column" minWidth={0} minH={0}>
-          <Filter onApplyFilters={handleApplyFilters} />
-          <Flex flex="1" position="relative"  minH={0} px={0} pt={2} pb={0} >
-            {/*left column: document list */}
+
+        {/* main content */}
+        <Flex flex="1" minH={0} minW={0} overflow="hidden">
+          
+          {/* document list */}
+          <Box
+            flex={selectedFile ? 2 : 1} // più piccolo se InfoPanel aperto
+            borderRadius="xl"
+            overflow="hidden"
+            bg="gray.700"
+            borderLeft="5px solid black"
+            borderRight="5px solid black"
+            color="white"
+            display="flex"
+            flexDirection="column"
+            transition="all 0.3s ease-in-out"
+            p={4}
+            minW={0} // evita overflow orizzontale
+          >
+            <DocumentList
+              files={filteredFiles}
+              columns={5}
+              onSelect={handleSelect}
+              onOpen={handleOpen}
+              initialSelectedId={selectedId}
+              panelOpen={!!selectedFile} // prop per adattarsi
+            />
+          </Box>
+
+          {/* InfoPanel */}
+          {selectedFile && (
             <Box
-              flex="1" 
-              borderRadius="xl" 
-              position="relative" 
-              overflowY="hidden" 
-              bg="gray.700" 
-              borderRight="5px solid black" 
-              color="white" 
-              display="flex" 
-              justifyContent="space-between" 
-              alignItems="stretch" 
-              p="4" 
-              borderLeft="5px solid black"
-              mb = {0}
+              flex="1"
+              maxW="450px"
+              overflowY="auto"
+              transition="all 0.3s ease-in-out"
             >
-              <DocumentList
-                files={filteredFiles}
-                columns={5} 
-                onSelect={handleSelect}
-                onOpen={handleOpen}
-                initialSelectedId={selectedId}
+              <InfoPanel
+                file={selectedFile}
+                onClose={() => setSelectedId(null)}
+                onFilter={(linked) => setFilters(prev => ({ ...prev, linkedFiles: linked }))}
               />
             </Box>
-
-            {/* right column: file details and map */}
-            <Flex
-              overflowY="hidden" 
-              display="flex" 
-              flexDirection="column" 
-              pr = "1.5"
-            >
-              <Box
-                flex="3" 
-                width="450px" 
-                overflowY="auto" 
-              >
-                <InfoPanel file={selectedFile} onClose={() => setSelectedId(null)} />
-              </Box>
-
-              <Flex p = "1" justify="center" >
-              <Flex  
-                borderRadius="md" 
-                boxShadow="md" 
-                w = "400px"
-                h= "170px" 
-                p = "2"
-                onClick={() => navigate("/map")} 
-              >
-                <BubbleMap data={sampleData} variant="small"/>
-              </Flex>
-              </Flex>     
-            </Flex>
-          </Flex>
+          )}
+          
         </Flex>
       </Flex>
     </Flex>

@@ -1,18 +1,6 @@
-/*
-DocumentList.js: displays a collection of DocumentFile items in a responsive grid.
-It supports selection of a single document, filtering by name, author, or type, and triggering callbacks on select or open.
-The grid layout adapts to the number of columns and handles empty states gracefully.
-*/
-
 import React, { useState, useMemo } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Grid,
-  GridItem,
-  useColorModeValue,
-  Stack,
-} from "@chakra-ui/react";
+import { Box, Grid, GridItem, Flex } from "@chakra-ui/react";
 import DocumentFile from "./DocumentFile";
 
 export default function DocumentList({
@@ -21,12 +9,11 @@ export default function DocumentList({
   onSelect,
   onOpen,
   initialSelectedId = null,
+  panelOpen = false, // nuova prop per sapere se InfoPanel è aperto
 }) {
-  // Tracks which document is currently selected
   const [selectedId, setSelectedId] = useState(initialSelectedId);
   const [query] = useState("");
 
-  // Updates selection state and triggers optional callback
   const handleSelect = (id) => {
     setSelectedId(id);
     onSelect && onSelect(id);
@@ -36,7 +23,6 @@ export default function DocumentList({
     onOpen && onOpen(id);
   };
 
-  // Filters documents based on the search query
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return files;
@@ -50,41 +36,41 @@ export default function DocumentList({
   }, [files, query]);
 
   return (
-      <Stack h="100%">
-
-        {filtered.length === 0 ? (
-          <Box  className="dl-empty" textAlign="center" color="black"  >
-            No document found.
-          </Box>
-
-        ) : (
-
-          <Grid
-            className="dl-grid"
-            gap={5}
-            rowGap={20}
-            templateColumns={{ base: "repeat(1, 1fr)", md: `repeat(${columns}, 1fr)` }} 
-            overflowY="auto"
-            overflowX="hidden"
-            height="100%"
-          >
-            {filtered.map((f) => (
-              <GridItem key={f.id} className="dl-grid-item" display="flex" flexDirection="column" minW={10}>
-                <DocumentFile
-                  file={f}
-                  selected={f.id === selectedId}
-                  onSelect={handleSelect}
-                  onOpen={handleOpen}
-                />
-              </GridItem>
-            ))}
-          </Grid>
-        )}
-      </Stack>
- 
+    <Flex
+      direction="column"
+      flex={panelOpen ? 2 : 3} // si riduce se InfoPanel aperto
+      minW={0} // per evitare overflow
+      transition="all 0.3s ease-in-out" // animazione fluida
+      overflow="hidden"
+    >
+      {filtered.length === 0 ? (
+        <Box textAlign="center" color="gray.600" mt={4}>
+          No document found.
+        </Box>
+      ) : (
+        <Grid
+          gap={5}
+          rowGap={20}
+          templateColumns={{ base: "repeat(1, 1fr)", md: `repeat(${columns}, 1fr)` }}
+          overflowY="auto"
+          overflowX="hidden"
+          flex="1"
+        >
+          {filtered.map((f) => (
+            <GridItem key={f.id} display="flex" flexDirection="column" minW={10}>
+              <DocumentFile
+                file={f}
+                selected={f.id === selectedId}
+                onSelect={handleSelect}
+                onOpen={handleOpen}
+              />
+            </GridItem>
+          ))}
+        </Grid>
+      )}
+    </Flex>
   );
 }
-
 
 DocumentList.propTypes = {
   files: PropTypes.array.isRequired,
@@ -92,5 +78,5 @@ DocumentList.propTypes = {
   onSelect: PropTypes.func,
   onOpen: PropTypes.func,
   initialSelectedId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  className: PropTypes.string,
+  panelOpen: PropTypes.bool,
 };

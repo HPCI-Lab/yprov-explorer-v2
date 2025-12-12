@@ -1,25 +1,28 @@
-/*
-DocumentFile.js: single document item in a list.
-It displays a preview image, the file name, and handles selection via click or keyboard.
-The visual appearance changes when the item is selected, using background color, shadow, and transform effects.
+/* DocumentFile.js: represents a single document file in the catalog. It displays a preview image, name, author, and indicators for linked files and attached documents.
+It supports selection and highlights when selected.
 */
 
 import React from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Image,
-  Text,
-  useColorModeValue,
-  VisuallyHidden,
-} from "@chakra-ui/react";
+import { Box, Image, Text, VStack, HStack, Badge, Icon, Tooltip } from "@chakra-ui/react";
+import { FileText } from "lucide-react";
 
 export default function DocumentFile({ file, selected, onSelect }) {
-  // Calls the parent callback when this document is selected
   const handleSelect = () => onSelect && onSelect(file.id);
 
-  const bg = useColorModeValue("#909492ff", "rgba(255,255,255,0.02)");
-  const shadow = selected ? "0 12px 28px rgba(2,6,23,0.6)" : "none";
+  const linkedFile = file.linked_files ;
+
+  const LinkedDocument = (file) => {
+    if (!file.linked_documents || !Array.isArray(file.linked_documents)) {
+      return 0;
+    }
+    return file.linked_documents.length;
+  };
+  const linkedCount = LinkedDocument(file);
+  const hasAttached = linkedCount > 0;
+
+  const bg = "rgba(0,0,0,0.5)";
+
   return (
     <Box
       as="article"
@@ -27,44 +30,76 @@ export default function DocumentFile({ file, selected, onSelect }) {
       onClick={handleSelect}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleSelect()}
       aria-pressed={selected}
-      aria-label={`${file.name} by ${file.author}`}
-      bg={bg}
-      borderRadius="10px"
-      borderWidth="1px"
-      padding="10px"
-      borderColor={bg}
-      transform={selected ? "translateY(-4px)" : "none"}
-      boxShadow={shadow}
-      display="row"
-      alignItems="flex-start"
-      userSelect="none"
-      overflow="auto"
-     
+      borderRadius="16px"
+      overflow="hidden"
+      position="relative"
+      boxShadow={selected ? "0 8px 24px rgba(0,0,0,0.4)" : "0 2px 8px rgba(0,0,0,0.1)"}
+      transform={selected ? "scale(1.02)" : "scale(1)"}
+      transition="all 0.2s"
+      cursor="pointer"
     >
-      <Image src={file.preview} />  
-      <Text> {file.name} </Text>
+      <Image src={file.preview} alt={file.name} objectFit="cover" width="100%" height="200px"  opacity={0.8}/>
 
-      <VisuallyHidden>
-        {selected ? "Selected" : "Not selected"}
-      </VisuallyHidden>
+      <Box
+        position="absolute"
+        bottom="0"
+        left="0"
+        width="100%"
+        bg={bg}
+        color="white"
+        px={3}
+        py={2}
+      >
+        <VStack align="flex-start" spacing={1}>
+          <Text fontWeight="bold" wordBreak="break-word">{file.name}</Text>
+          <Text fontSize="sm" opacity={0.8} wordBreak="break-word">{file.author}</Text>
+        </VStack>
+      </Box>
+
+      <HStack position="absolute" top="8px" right="8px" spacing={2}>
+        {linkedFile > 0 && (
+          <Tooltip label="linked files">
+            <Badge 
+              px={2} 
+              py={0.5} 
+              borderRadius="6px" 
+              bg="black" 
+              color="white"
+            >
+              {linkedFile}
+            </Badge>
+          </Tooltip>
+        )}
+        {hasAttached && (
+          <Tooltip label="linked documents">
+            <Badge
+              px={2}
+              py={1.5}
+              borderRadius="6px"
+              bg="green"
+              color="white"
+              display="flex"
+              alignItems="center"
+            >
+              <Icon as={FileText} boxSize={3} />
+            </Badge>
+          </Tooltip>
+        )}
+      </HStack>
     </Box>
   );
 }
 
-// Prop validation for safety
+
 DocumentFile.propTypes = {
   file: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     name: PropTypes.string.isRequired,
     author: PropTypes.string,
-    pid: PropTypes.string,
     preview: PropTypes.string,
-    metrics: PropTypes.shape({
-      nodes: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      activity: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-      entities: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    }),
   }).isRequired,
   selected: PropTypes.bool,
   onSelect: PropTypes.func,
+  linkedCount: PropTypes.number,
+  hasAttached: PropTypes.bool,
 };
