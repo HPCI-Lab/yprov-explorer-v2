@@ -1,6 +1,7 @@
-import {Box, Flex, Heading, Input, VStack, Tooltip, Text, Divider} from "@chakra-ui/react";
+import {Box, Flex, Heading, Input, VStack, Tooltip, Text, Divider, HStack, InputGroup, InputLeftElement} from "@chakra-ui/react";
 import React, {useEffect, useState} from "react";
 import controller from "../../../../graph/GraphController"
+import {SearchIcon} from "@chakra-ui/icons";
 /*
 SideInfo.js: shows detailed information about a selected node in a graph. Each section displays data as a group,
 Node ID, type and relationships (e.g. "Used", "Generated", "wasDerivedFrom"), with clickable links to
@@ -20,14 +21,24 @@ export default function SideInfo() {
 
     if (!nodeInfo) {
         return (
-            <Flex flex="1" justify="center" gap="5">
-                <VStack spacing={3} align="stretch" w="100%">
-                    <Box color="white">
-                        <Heading size="md" mb="4">Select a Node!</Heading>
-                    </Box>
-
-                </VStack>
-            </Flex>
+            <Box
+                pb="2"
+                borderBottom="1px solid"
+                borderColor="whiteAlpha.200"
+            >
+                <HStack spacing={2} align="center">
+                    <HStack>
+                        <Box>
+                            <Box fontSize="md" fontWeight="semibold">
+                                Select a node to see the details
+                            </Box>
+                            <Box fontSize="xs" opacity={0.6}>
+                                Node · #
+                            </Box>
+                        </Box>
+                    </HStack>
+                </HStack>
+            </Box>
         );
     }
 
@@ -71,20 +82,36 @@ export default function SideInfo() {
     return (
         <Flex flex="1" justify="center" gap="5">
             <VStack spacing={3} align="stretch" w="100%">
-                <Box color="white">
-                    <Heading size="md" mb="4">Node Information</Heading>
+                <Box
+                    pb="2"
+                    borderBottom="1px solid"
+                    borderColor="whiteAlpha.200"
+                >
+                    <HStack spacing={2} align="center">
+                        <HStack>
+                            <Box>
+                                <Box fontSize="md" fontWeight="semibold">
+                                    Node information
+                                </Box>
+                                <Box fontSize="xs" opacity={0.6}>
+                                    Node · {infoItems.id}
+                                </Box>
+                            </Box>
+                        </HStack>
+                    </HStack>
                 </Box>
-                <Input
-                    placeholder="Search Node Info"
-                    bg="white"
-                    color="black"
-                    borderRadius="xl"
-                    _placeholder={{ color: "gray.400" }}
-                    _focus={{
-                        borderColor: "blue.400",
-                        boxShadow: "0 0 0 1px #4299e1",
-                    }}
-                />
+                <InputGroup size="sm">
+                    <InputLeftElement pointerEvents="none">
+                        <SearchIcon color="whiteAlpha.600" />
+                    </InputLeftElement>
+                    <Input
+                        placeholder="Search node information"
+                        bg="gray.750"
+                        border="1px solid"
+                        borderColor="whiteAlpha.200"
+                        _placeholder={{ color: "black" }}
+                    />
+                </InputGroup>
                 <Box
                     overflowY="auto"
                     maxH="70vh"

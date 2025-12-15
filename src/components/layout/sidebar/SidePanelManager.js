@@ -55,12 +55,11 @@ export default function SidePanelManager({
             position="absolute"
             top="0"
             bottom="0"
-            left="70px"
+            left="48px"
             w={isOpen ? "280px" : "0px"}
             overflow="hidden"
             bg="gray.800"
-            borderRadius="xl"
-            transition="none"
+            transition="width 0s linear"
             zIndex={10}
             p={isOpen ? "4" : "0"}
         >

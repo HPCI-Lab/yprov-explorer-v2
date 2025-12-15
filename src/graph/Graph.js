@@ -4,6 +4,7 @@ Graph.js: Generates the graph from the d3 Adapter and manage the functions and e
 
 import * as d3 from "d3";
 import { useEffect, useRef } from "react";
+import {scale} from "framer-motion";
 
 export default function Graph({ graph, controller }) {
     const ref = useRef(null);
@@ -141,6 +142,7 @@ export default function Graph({ graph, controller }) {
                     event.subject.fx = null;
                     event.subject.fy = null;
                 })
+
             );
 
         //Node labels
@@ -262,8 +264,18 @@ export default function Graph({ graph, controller }) {
             focusNode: (id) => {
                 const n = graph.nodes.find(x => x.id === id);
                 if (!n) return;
+
+                const t = d3.zoomTransform(svg.node());
+                const zoomFactor = 1.3;
+                const targetZoom = Math.min(t.k * zoomFactor, 6);
+
                 svg.transition().duration(600)
-                    .call(zoom.transform, d3.zoomIdentity.translate(width / 2 - n.x, height / 2 - n.y).scale(1.5));
+                    .call(
+                        zoom.transform,
+                        d3.zoomIdentity.
+                        translate(width / 2 - n.x * targetZoom, height / 2 - n.y * targetZoom)
+                            .scale(targetZoom)
+                    );
             },
             resetView: () => {
                 svg.transition().duration(600)
@@ -278,8 +290,28 @@ export default function Graph({ graph, controller }) {
 
             //Highlighting the selected node
             d3.select(event.currentTarget)
-                .attr("stroke", "#000")
-                .attr("stroke-width", 3);
+                .attr("stroke", "grey")
+                .attr("stroke-width", 5);
+
+            const currentTransform = d3.zoomTransform(svg.node());
+            const currentZoom = currentTransform.k;
+            let targetZoom;
+            if (currentZoom < 0.5) {
+                targetZoom = 1.5;
+            } else if (currentZoom > 2) {
+                targetZoom = currentZoom;
+            } else {
+                targetZoom = currentZoom * 1.2;
+            }
+
+            svg.transition().duration(600)
+                .call(
+                    zoom.transform,
+                    d3.zoomIdentity.
+                    translate(width / 2 - d.x * targetZoom, height / 2 - d.y * targetZoom)
+                    .scale(targetZoom)
+                );
+
 
             //Graph info mapped to send to the sideInfo
             const group =

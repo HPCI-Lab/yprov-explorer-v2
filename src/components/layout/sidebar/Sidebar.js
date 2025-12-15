@@ -1,69 +1,68 @@
 import { Box, VStack, IconButton } from "@chakra-ui/react";
 import { SettingsIcon, InfoIcon  } from "@chakra-ui/icons";
 import { Home, Folder, Code2, Activity, Layers  } from "lucide-react";
-/*
-Sidebar.js: Sidebar component for representing all the panels feature
- */
+
 export default function Sidebar({onOpenPanel}) {
     return (
         <Box
-            w="70px"
+            w="48px"
             bg="gray.900"
-            borderRight="5px solid black"
             color="white"
             display="flex"
             flexDirection="column"
             justifyContent="space-between"
             alignItems="center"
-            p="4"
-            borderRadius="xl"
-            borderLeft="5px solid black"
+            py="2"
+            borderRight="1px solid"
+            borderColor="whiteAlpha.200"
         >
-            <VStack spacing="4">
+            <VStack spacing="2">
                 <IconButton
-                    icon={<Home/>}
+                    icon={<Home size={18}/>}
                     aria-label="menu"
+                    size="sm"
                     bg="gray.700"
-                    borderRadius="xl"
                     onClick={() => onOpenPanel("home")}
                 />
                 <IconButton
-                    icon={<Folder/>}
+                    icon={<Folder size={18}/>}
                     aria-label="input"
+                    size="sm"
                     bg="gray.700"
-                    borderRadius="xl"
                     onClick={() => onOpenPanel("input")}
                 />
                 <IconButton
-                    icon={<Code2 />}
+                    icon={<Code2 size={18}/>}
                     aria-label="code"
+                    size="sm"
                     bg="gray.700"
-                    borderRadius="xl"
                     onClick={() => onOpenPanel("code")}
                 />
                 <IconButton
-                    icon={<Activity />}
+                    icon={<Activity size={18}/>}
                     aria-label="timeline"
+                    size="sm"
                     bg="gray.700"
-                    borderRadius="xl"
                     onClick={() => onOpenPanel("timeline")}
                 />
                 <IconButton
-                    icon={<Layers />}
+                    icon={<Layers size={18}/>}
                     aria-label="layers"
+                    size="sm"
                     bg="gray.700"
-                    borderRadius="xl"
                     onClick={() => onOpenPanel("layers")}
                 />
                 <IconButton
-                    icon={<InfoIcon />}
+                    icon={<InfoIcon boxSize={4}/>}
                     aria-label="settings"
+                    size="sm"
                     bg="gray.700"
-                    borderRadius="xl"
                     onClick={() => onOpenPanel("info")}
                 />
+
             </VStack>
-            <IconButton icon={<SettingsIcon />} aria-label="bottom-settings" bg="gray.700" borderRadius="xl" onClick={() => onOpenPanel("settings")}/>
+
+            <IconButton icon={<SettingsIcon boxSize={4}/>} size="sm" aria-label="bottom-settings" bg="gray.700" onClick={() => onOpenPanel("settings")}/>
         </Box>
     );
 }
