@@ -5,20 +5,27 @@ Node details and search tools. Uses states to plot selected, highlighted nodes a
 Includes functionality to synchronize nodes with browser history and supports URL browsing. 
 */
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import "./main.css";
-import 'bootstrap-icons/font/bootstrap-icons.css';
-import GraphContainer from "../components/GraphContainer/GraphContainer.js";
-import NodeInfo from "../components/NodeInfo/NodeInfo.js";
-import JsonLabel from "../components/JsonLabel/JsonLabel.js";
-//import DownloadsButton from "../components/DownloadsButton/DownloadsButton.js";
-import { configureSearchNode } from "../components/SearchNode/SearchNode";
+//import GraphContainer from "../components/GraphContainer/GraphContainer.js";
+import NodeInfo from "../components/old/NodeInfo/NodeInfo.js";
+import JsonLabel from "../components/old/JsonLabel/JsonLabel.js";
+import DownloadsButton from "../components/old/DownloadsButton/DownloadsButton.js";
+import { configureSearchNode } from "../components/old/SearchNode/SearchNode";
 import { unifiedFileLoader } from "../server/unified-loader.js";
-import Animation from "../components/Animation/Animation.js";
-import AnimationOverviewPanel from "../components/AnimationOverviewPanel/AnimationOverviewPanel.js";
-import MultiLevel from "../components/MultiLevel/MultiLevel.js";
+
+import { Flex } from "@chakra-ui/react";
+import Sidebar from "../components/layout/sidebar/Sidebar";
+import SidePanelManager from "../components/layout/sidebar/SidePanelManager";
+import TopBar from "../components/layout/TopBar";
+import CodePanel from "../components/layout/CodePanel";
+import GraphContainer from "../components/layout/GraphContainer";
+import Timeline from "../components/layout/Timeline";
+import {Resizable} from "re-resizable";
+
 
 const Main = () => {
+
   // State for the selected node
   const [selectedNode, setSelectedNode] = useState(null);
   // State for the highlighted node
@@ -29,11 +36,6 @@ const Main = () => {
   const [graphData, setGraphData] = useState(null);
   // State for the file URL
   const [fileUrl, setFileUrl] = useState(null);
-
-  const [animationState, setAnimationState] = useState({ currentIndex: 0, currentTime: 0 });
-  const linksByActivityRef = useRef({});
-  const jsonLabelRef = useRef(null);
-  const [currentFileName, setCurrentFileName] = useState("main.json");
 
   // Function to handle node click
   const handleNodeClick = (nodeInfo) => {
@@ -170,6 +172,8 @@ const Main = () => {
          *    "prov:activity": ""
          * },
          */
+
+
         ...Object.values(graphData.wasDerivedFrom || {}).map((rel) => ({
           source: nodeMap.get(rel["prov:generatedEntity"]),
           target: nodeMap.get(rel["prov:usedEntity"]),
@@ -352,100 +356,6 @@ const Main = () => {
     return null; // Return null if the node details are not found
   };
 
-  // Build activities array once graphData loaded
-  const activities = useMemo(() => {
-    if (!graphData || !graphData.activity) return [];
-
-    const arr = Object.entries(graphData.activity).map(([id, a], index) => ({
-      id,
-      start: a["prov:startTime"] ? new Date(a["prov:startTime"]).getTime() : null,
-      end: a["prov:endTime"] ? new Date(a["prov:endTime"]).getTime() : null,
-      originalIndex: index
-    }));
-
-    // Handle missing / invalid timestamps
-    // Sequentially fill missing times so untimed activities still animate correctly.
-
-    let lastValidTime = Date.now();
-    //let lastValidTime = 0;
-
-    for (const a of arr) {
-      if (isNaN(a.start) || a.start == null) {
-        a.start = lastValidTime + 1;
-      }
-      if (isNaN(a.end) || a.end == null || a.end < a.start) {
-        a.end = a.start + 1;
-      }
-      lastValidTime = a.end;
-    }
-
-    // Sort by start time (null/undefined → end). Stable sort by original index if same start
-    arr.sort((A, B) => {
-      if (A.start == null && B.start == null) return A.originalIndex - B.originalIndex;
-      if (A.start == null) return 1;
-      if (B.start == null) return -1;
-      if (A.start === B.start) return A.originalIndex - B.originalIndex;
-      return A.start - B.start;
-    });
-
-    // Assign sorted order index (0..n-1)
-    return arr.map((a, i) => ({ ...a, index: i }));
-  }, [graphData]);
-
-  // Build linksByActivityRef whenever graphData changes
-  useEffect(() => {
-    if (!graphData) return;
-
-    const mkLinkId = (type, relKey) => `link-${type}-${relKey}`;
-    const list = [];
-
-    // wasDerivedFrom produced three link entries per relKey
-    Object.entries(graphData.wasDerivedFrom || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("wasDerivedFrom", relKey), actId: rel["prov:activity"], entId: rel["prov:usedEntity"] });
-      list.push({ id: mkLinkId("wasGeneratedBy-fromWDF", relKey), actId: rel["prov:activity"], entId: rel["prov:generatedEntity"] });
-      list.push({ id: mkLinkId("used-fromWDF", relKey), actId: rel["prov:activity"], entId: rel["prov:usedEntity"] });
-    });
-
-    Object.entries(graphData.wasGeneratedBy || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("wasGeneratedBy", relKey), actId: rel["prov:activity"], entId: rel["prov:entity"] });
-    });
-
-    Object.entries(graphData.used || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("used", relKey), actId: rel["prov:activity"], entId: rel["prov:entity"] });
-    });
-
-    Object.entries(graphData.wasInformedBy || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("wasInformedBy", relKey), actId: rel["prov:informed"], entId: rel["prov:informant"] });
-    });
-
-    Object.entries(graphData.hadMember || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("hadMember", relKey), actId: rel["prov:collection"], entId: rel["prov:entity"] });
-    });
-
-    Object.entries(graphData.wasStartedBy || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("wasStartedBy", relKey), actId: rel["prov:activity"], entId: rel["prov:trigger"] });
-    });
-
-    Object.entries(graphData.wasAssociatedWith || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("wasAssociatedWith", relKey), actId: rel["prov:activity"], entId: rel["prov:agent"] });
-      if (rel["prov:plan"]) list.push({ id: mkLinkId("plan", relKey), actId: rel["prov:activity"], entId: rel["prov:plan"] });
-    });
-
-    Object.entries(graphData.wasAttributedTo || {}).forEach(([relKey, rel]) => {
-      list.push({ id: mkLinkId("wasAttributedTo", relKey), actId: rel["prov:entity"], entId: rel["prov:agent"] });
-    });
-
-    // pack into the map by activity id
-    const newLinksByActivity = {};
-    list.forEach(l => {
-      if (!l.actId) return;
-      if (!newLinksByActivity[l.actId]) newLinksByActivity[l.actId] = [];
-      newLinksByActivity[l.actId].push({ id: l.id, entId: l.entId });
-    });
-
-    linksByActivityRef.current = newLinksByActivity;
-  }, [graphData]);
-
   return (
     <div className="main-container">
       <div className="high-row">
@@ -458,23 +368,7 @@ const Main = () => {
       </div>
 
       <div className="central-row">
-        <AnimationOverviewPanel
-          activities={activities}
-          currentIndex={animationState.currentIndex}
-          currentTime={animationState.currentTime}
-          subset={animationState.subset}
-          onHighlightNode={(nodeId) => {
-            setHighlightedNode(nodeId);
-            const nodeDetails = findNodeDetails(nodeId, graphData);
-            if (nodeDetails) setSelectedNode(nodeDetails);
-          }}
-        />
-        <MultiLevel
-          mainGraphData={graphData}
-          mainFileName={currentFileName}
-          setGraphData={setGraphData}
-          updateJsonLabel={(json, name) => jsonLabelRef.current?.updateJson(json, name)}
-        />
+        <JsonLabel setGraphData={setGraphData} />
         <GraphContainer
           onNodeClick={handleNodeClick}
           highlightedNode={highlightedNode}
@@ -492,23 +386,13 @@ const Main = () => {
           }}
           onSearch={handleSearch}
         />
-        <JsonLabel ref={jsonLabelRef} setGraphData={setGraphData} setCurrentFileName={setCurrentFileName} />
       </div>
-
-      {/* <div className="low-row">
-        <DownloadsButton />
-      </div> */}
 
       <div className="low-row">
-        <Animation
-          activities={activities}
-          linksByActivityRef={linksByActivityRef}
-          onIndexChange={(update) =>
-            setAnimationState(prev => ({ ...prev, ...update }))
-          }
-        />
+        <DownloadsButton />
       </div>
     </div>
+
   );
 };
 

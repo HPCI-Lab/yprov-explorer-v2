@@ -10,9 +10,9 @@ import { visit_log } from './logging.js';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <ChakraProvider>
-    <App />
-  </ChakraProvider>
+    <ChakraProvider>
+        <App />
+    </ChakraProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

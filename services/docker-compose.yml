@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
       args:
         REACT_APP_API_SERVER_HOST: http://localhost:8081
-        REACT_APP_USE_SAMPLE_LOCATION_INFO: 1
+        REACT_APP_USE_SAMPLE_LOCATION_INFO: 0
     ports:
       - "8080:8080"
     restart: always

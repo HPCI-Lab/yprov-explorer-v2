@@ -1,0 +1,206 @@
+/* --- MultiLevel Panel Container --- */
+.ml-panel {
+  width: 100%;
+  height: 100%;
+  margin-right: 20px;
+  border-radius: 14px;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+/* Panel Title */
+.ml-title {
+  font-size: 1.2rem;
+  margin: 0;
+  text-align: left;
+  padding-bottom: 6px;
+  font-weight: bold;
+}
+
+/* Section Titles */
+.ml-subtitle {
+  font-size: 1rem;
+  margin-bottom: 6px;
+  /* color: #1e293b; */
+  font-weight: bold;
+}
+
+/* Sections Wrapper */
+.ml-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* --- Tooltip Styles --- */
+.ml-tooltip-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* color: #000; */
+}
+
+.ml-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.ml-tooltip-text {
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background-color: #fff;
+  color: #000;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  width: max-content;
+  max-width: 240px;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 10;
+  pointer-events: none;
+  font-weight: bold;
+}
+
+.ml-tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #fff transparent transparent transparent;
+}
+
+.ml-tooltip-wrapper:hover .ml-tooltip-text {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- File Input --- */
+.ml-file-input {
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* --- Button --- */
+button.ml-button {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background-color: #1a73e8;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+button.ml-button:hover {
+  background-color: #155ab6;
+}
+
+button.ml-button:disabled,
+button.ml-button:disabled:hover {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Advanced Options Toggle Button */
+button.ml-advanced-toggle {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #e1e7ff;
+  color: #000;
+  border: 1px solid #b8c3ff;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+button.ml-advanced-toggle:hover {
+  background: #d4dcff;
+}
+
+/* --- Alerts --- */
+.ml-alert {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.ml-alert-success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.ml-alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.ml-alert-warning {
+  background-color: #fef9c3;
+  color: #92400e;
+}
+
+/* --- Level Selector Container --- */
+.ml-select {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 8px;
+}
+
+/* Individual level items */
+.ml-level-item {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #2d3748;
+  border: 1px solid #4a5568;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+}
+
+/* Hover */
+.ml-level-item:hover {
+  background: #374151;
+  border-color: #63b3ed;
+}
+
+/* Selected */
+.ml-level-item.selected {
+  background: #1a73e8;
+  border-color: #155ab6;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Active click feedback */
+.ml-level-item:active {
+  transform: scale(0.9);
+}

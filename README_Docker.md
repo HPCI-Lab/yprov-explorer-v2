@@ -9,7 +9,7 @@
 | phpMyAdmin      | 8083     | http://localhost:8083     |
 
 ## API Server
-To use accurate location information instead of sample location information, set the build argument to ```REACT_APP_USE_SAMPLE_LOCATION_INFO: 0``` in the file located at ```services/docker-compose.yml```
+To use sample location information instead of accurate location information, set the build argument to ```REACT_APP_USE_SAMPLE_LOCATION_INFO: 1``` in the file located at ```services/docker-compose.yml```
 
 ## Metabase
 ### Credentials
