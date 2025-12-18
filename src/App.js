@@ -15,7 +15,7 @@ function App() {
     //State for closing the sidebar
     const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
     //State for opening the code tab
-    const [isCodePanelVisible, setIsCodePanelVisible] = useState(false);
+    const [isCodePanelVisible, setIsCodePanelVisible] = useState(true);
 
 
     //Function for ovening the sidebar panel
@@ -45,7 +45,7 @@ function App() {
             {/* Top navigation bar for search and others*/}
             <TopBar />
 
-            <Flex flex="1" position="relative" bg="black">
+            <Flex flex="1" position="relative" bg="black" minH="0">
                 {/* Sidebar */}
                 <Sidebar onOpenPanel={onOpenPanel}/>
                 {/*Panel manager for helping the panels opening*/}
@@ -59,16 +59,16 @@ function App() {
                 />
 
                 {/*Main content area*/}
-                <Flex flex="1" position="relative" overflow="hidden" minWidth={0}>
+                <Flex flex="1" position="relative" overflow="hidden" minWidth={0} minH="0">
                     {/* Graph canvas */}
                     <GraphContainer graphData={graphData}/>
                     {isCodePanelVisible && (
                             <Resizable
                                 defaultSize={{
-                                    width: 300,
+                                    width: 400,
                                 }}
-                                minWidth={300}
-                                maxWidth={500}
+                                minWidth={400}
+                                maxWidth={600}
                                 enable={{
                                     left: true,
                                 }}

@@ -1,5 +1,5 @@
 import {Box, IconButton} from "@chakra-ui/react";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import parseProvJSON from "../../graph/parseProvenance";
 import {d3Adapter} from "../../graph/d3Adapter";
 import controller from "../../graph/GraphController";
@@ -15,6 +15,10 @@ as a container for all these components.
 
 export default function GraphContainer({ graphData }) {
     const [graph, setGraph] = useState(null);
+    // State for the fullscreen mode (true if active, false otherwise)
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const frameRef = useRef(null);
+    const [isInfoVisible, setIsInfoVisible] = useState(false); // State to control the visibility of the info panel
 
     useEffect(() => {
         if (!graphData) return;
@@ -30,6 +34,25 @@ export default function GraphContainer({ graphData }) {
         }
     }, [graphData]);
 
+    // Function to toggle the fullscreen mode
+    const toggleFullscreen = () => {
+        const frame = frameRef.current;
+        if (!frame) return;
+
+        if (!document.fullscreenElement) {
+            frame.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    useEffect(() => {
+        const handler = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener("fullscreenchange", handler);
+        return () => document.removeEventListener("fullscreenchange", handler);
+    }, []);
+
+
     return (
         <Box
             w="100%"
@@ -38,7 +61,8 @@ export default function GraphContainer({ graphData }) {
             bg="white"
             position="relative"
             overflow="hidden"
-            id="graphFrame"
+            ref={frameRef}
+            zIndex={isFullscreen ? 9999 : "auto"}
         >
             <IconButton
                 aria-label="Settings"
@@ -48,6 +72,7 @@ export default function GraphContainer({ graphData }) {
                 left="3"
                 size="sm"
                 variant="ghost"
+                zIndex="10"
             />
 
             <IconButton
@@ -58,6 +83,8 @@ export default function GraphContainer({ graphData }) {
                 right="3"
                 size="sm"
                 variant="ghost"
+                onClick={toggleFullscreen}
+                zIndex="10"
             />
 
             <IconButton
@@ -68,6 +95,7 @@ export default function GraphContainer({ graphData }) {
                 left="3"
                 size="sm"
                 variant="ghost"
+                zIndex="10"
             />
             <Box
                 position="absolute"

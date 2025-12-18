@@ -4,6 +4,7 @@ import SideCode from "./panels/SideCode";
 import SideTimeline from "./panels/SideTimeline";
 import SideLayers from "./panels/SideLayers"
 import SideInfo from "./panels/SideInfo";
+import SidePattern from "./panels/SidePattern";
 import SideSettings from "./panels/SideSettings";
 import NodeInfo from "./panels/SideInfo";
 import React from "react";
@@ -33,6 +34,7 @@ export default function SidePanelManager({
             case "code": return <SideCode/>;
             case "timeline": return <SideTimeline/>;
             case "layers": return <SideLayers/>;
+            case "pattern": return <SidePattern/>;
             case "info": return <NodeInfo
                 nodeInfo={selectedNode}
                 searchQuery={searchQuery}
@@ -62,8 +64,11 @@ export default function SidePanelManager({
             transition="width 0s linear"
             zIndex={10}
             p={isOpen ? "4" : "0"}
+            display="flex"
+            flexDirection="column"
         >
             {renderPanel()}
         </Box>
+
     );
 }

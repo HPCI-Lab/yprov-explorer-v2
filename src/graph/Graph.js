@@ -280,6 +280,25 @@ export default function Graph({ graph, controller }) {
             resetView: () => {
                 svg.transition().duration(600)
                     .call(zoom.transform, d3.zoomIdentity);
+            },
+            //Dask based filtering
+            applyFilter: ({ cells = [], workers = [], chunks = [] }) => {
+                const applyOpacity = d => {
+                    const attr = d.attributes || {};
+                    const cell = attr["yprov4wfs:jupyter_cell_index"];
+                    const worker = attr["yprov4wfs:processed_on"];
+
+                    const cellMatch = cells.length === 0 || (cell && cells.includes(cell));
+                    const workerMatch = workers.length === 0 || (worker && workers.includes(worker));
+
+                    if(cellMatch && workerMatch ) {
+                        return 1;
+                    }else{
+                        return 0.15;
+                    }
+                }
+                node.style("opacity", applyOpacity);
+                nodeLabel.style("opacity", applyOpacity);
             }
         });
 
@@ -424,6 +443,9 @@ export default function Graph({ graph, controller }) {
         return () => {
             window.removeEventListener("resize", handleResize);
         };
+
+
+
 
     }, [graph]);
 

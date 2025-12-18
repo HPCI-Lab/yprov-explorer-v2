@@ -53,6 +53,12 @@ export default function Sidebar({onOpenPanel}) {
                     onClick={() => onOpenPanel("layers")}
                 />
                 <IconButton
+                    aria-label="pattern"
+                    size="sm"
+                    bg="gray.700"
+                    onClick={() => onOpenPanel("pattern")}
+                />
+                <IconButton
                     icon={<InfoIcon boxSize={4}/>}
                     aria-label="settings"
                     size="sm"
