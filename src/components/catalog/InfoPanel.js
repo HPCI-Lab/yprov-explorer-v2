@@ -18,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import PropTypes from "prop-types";
 import OpenButton from "./OpenButton";
+import GraphPreview from "./GraphPreview/GraphPreview";
 
 export default function InfoPanel({ file, onClose }) {
   const [setGraphData] = useState(null);
@@ -70,8 +71,8 @@ export default function InfoPanel({ file, onClose }) {
       </Box>
 
       {/* Preview image */}
-      {file.preview && (
-        <Image src={file.preview} alt={file.name} borderRadius="3xl" mb={4} opacity={0.8} />
+      {file.storage_url && (
+        <GraphPreview url={file.storage_url} width={450} height={250} />
       )}
 
       {/* Metadata */}
@@ -101,7 +102,7 @@ export default function InfoPanel({ file, onClose }) {
       {/* Open button */}
       <OpenButton fileUrl={file.storage_url} setGraphData={setGraphData} />
 
-      {/* Action buttons */}
+      {/* Action buttons 
       <HStack spacing={4} mb={4} mt={4}>
         <Button
           {...ButtonStyle("blue")}
@@ -117,9 +118,9 @@ export default function InfoPanel({ file, onClose }) {
         >
           Linked documents
         </Button>
-      </HStack>
+      </HStack>*/}
 
-      {/* Linked files */}
+      {/* Linked files 
       <Collapse in={linkedFilesVisible} animateOpacity>
         <VStack spacing={2} mt={2}>
           {file.attached_files?.length ? (
@@ -132,9 +133,9 @@ export default function InfoPanel({ file, onClose }) {
             <Text color="white">No linked files</Text>
           )}
         </VStack>
-      </Collapse>
+      </Collapse> */}
 
-      {/* Linked documents */}
+      {/* Linked documents 
       <Collapse in={linkedDocumentsVisible} animateOpacity>
         <VStack spacing={2} mt={2}>
           {file.linked_files?.length ? (
@@ -147,7 +148,8 @@ export default function InfoPanel({ file, onClose }) {
             <Text color="white">No linked documents</Text>
           )}
         </VStack>
-      </Collapse>
+      </Collapse>*/}
+
     </Box>
   );
 }

@@ -8,192 +8,98 @@ import {Flex, Box} from "@chakra-ui/react";
 import InfoPanel from "./InfoPanel";
 import TopbarSearch from "./TopbarSearch";
 import DocumentList from "./DocumentList";
-import Img from "./img.png";
 import SidebarH from "./SideBarHome/SidebarH";
+import Img1 from "./21.T11961_07cf7367-4e0a-427b-8d79-1c24be59e663.json"; 
+
 
 //data for testing the UI
-const SAMPLE_FILES = [ 
+const SAMPLE_FILES = [
   {
-    id: "21. T11961/9d96blfd-2433-4abc-9e75-2d09247936f4",
-    score: "7.757325",
-    version: "1",
+    id: "21.T11961/a932e8d9-bb05-4398-b81f-30ec8054a8e0",
+    score: null,
+    version: 2,
     owner_email: "user@example.com",
-    storage_url: "http://yprov.disi.unitn.it:8000/documents/21.T11961/760d7a89-3eb9-4b82-ac91-85ff93783cf1/download",
-    parent_document_pid: null,
-    description: "At this stage, I would focus on expanding my knowledge in two areas: motor development and the game itself. I can achieve this by reading books and articles, attending courses, and engaging in dialogue with more experienced colleagues. In short, I aim to enhance the quality of my feedback by broadening my knowledge base. Having identified my areas for improvement and outlined several strategies for development, it is now time to put myself to the test and work toward these goals.",
+    storage_url: {Img1},
+    parent_document_pid: "21.T11961/65e63e7c-76ee-4799-b772-4e10a49dab02",
+    description: "Research on unifying urban data sources to enhance city management and decision-making.",
     author: null,
-    date: "2024-06-19T07:21:14.000Z",
-    name: "example_file.json",
-    preview: Img,
-    metrics: { nodes: 825, activity: 800 },
-    Provistance: "825- //172.162.13167-800-",
-    linked_files: 3,
-    linked_documents: [
-      "19. T11961/3e2f4b7c-5f4d-4f6a-8f4e-1c2d3e4f5g6h",
-      "20. T11961/4f5g6h7i-8j9k-0l1m-2n3o-4p5q6r7s8t9u",
-      "22. T11961/5g6h7i8j-9k0l-1m2n-3o4p-5q6r7s8t9u0v"
-    ],
-  },
-  {
-    id: "sample-1",
-    name: "network_sample_1.json",
-    author: "Mario Rossi",
-    pid: "012345679",
-    preview: Img,
-    metrics: { nodes: 312, activity: 120 },
-    type: "activity",
-    linked_files: 0,
-  },
-  {
-    id: "sample-2",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
+    date: "2025-11-14T14:24:57.805476",
+    name: "Smart City Data Integration 2024",
+    preview: null,
+    metrics: { nodes: 0, activity: 0 },
+    Provistance: "0- //http://192.168.1.162:8000-",
     linked_files: 1,
-    linked_documents: [
-      "18. T11961/1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p"
-    ],  
+    linked_documents: ["21.T11961/65e63e7c-76ee-4799-b772-4e10a49dab02"]
   },
   {
-    id: "sample-3",
-    name: "network_sample_provalarrreeeeeerrrrrrrrrrrghezza_2.json",
-    author: "Evelin",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-    linked_files: 2,
-  },
-  {
-    id: "sample-4",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
+    id: "21.T11961/f1ec6ed4-9491-4512-9ab8-6678c11db239",
+    score: null,
+    version: 1,
+    owner_email: "user@example.com",
+    storage_url: {Img1},
+    description: "",
+    author: null,
+    date: "2025-11-14T14:24:57.805476",
+    name: "Carbon Footprint Analysis 2024",
+    preview: null,
+    metrics: { nodes: 0, activity: 0 },
+    Provistance: "0- //http://192.168.1.162:8000-",
     linked_files: 0,
+    linked_documents: []
   },
   {
-    id: "sample-5",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
+    id: "21.T11961/9d96b1fd-2433-4abc-9e75-2d09247936f4",
+    score: null,
+    version: 1,
+    owner_email: "user@example.com",
+    storage_url: {Img1},
+    parent_document_pid: null,
+    description: "",
+    author: null,
+    date: "2025-11-14T14:24:57.805476",
+    name: "Renewable Energy Transition Impact on Regional Climate Patterns",
+    preview: null,
+    metrics: { nodes: 0, activity: 0 },
+    Provistance: "0- //http://192.168.1.162:8000-",
     linked_files: 0,
+    linked_documents: []
   },
   {
-    id: "sample-6",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
+    id: "21.T11961/98ff4c0c-2354-4128-b2f1-866efb7a0f37",
+    score: null,
+    version: 1,
+    owner_email: "user@example.com",
+    storage_url: {Img1},
+    parent_document_pid: null,
+    description: "Real time monitoring system for coastal sea level changes using distributed IoT sensors and tidal gauge networks This experimental tracks millimeter level changes in sea surface height and correlates them with local weather patterns ocean temperature and ice sheet melting rates The system provides early warning capabilities for coastal communities and supports climate adaptation planning through predictive modeling",
+    author: null,
+    date: "2025-11-14T14:24:57.805476",
+    name: "Sea Level Rise Monitoring System Using IoT Sensors",
+    preview: null,
+    metrics: { nodes: 0, activity: 0 },
+    Provistance: "0- //http://192.168.1.162:8000-",
     linked_files: 0,
-    linked_documents: [],
-  }, {
-    id: "sample-7",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
+    linked_documents: []
+  },
+  {
+    id: "21.T11961/1e572bf1-0f89-46ca-a733-2d4311b14a53",
+    score: null,
+    version: 1,
+    owner_email: "user@example.com",
+    storage_url: {Img1},
+    parent_document_pid: null,
+    description: "Comprehensive study analyzing the increasing frequency and intensity of extreme weather events including hurricanes droughts floods and heatwaves This experiment combines meteorological data from the past 40 years with climate models to identify patterns and predict future extreme weather occurrences The research incorporates statistical analysis and machine learning to assess the correlation between rising global temperatures and severe weather phenomena",
+    author: "Luca Bianchi",
+    date: "2025-11-14T14:24:57.805476",
+    name: "Extreme Weather Events Frequency Analysis and Prediction",
+    preview: null,
+    metrics: { nodes: 0, activity: 0 },
+    Provistance: "0- //http://192.168.1.162:8000-",
     linked_files: 0,
-  },
-  {
-    id: "sample-8",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-    linked_files: 4,
-    linked_documents: [
-      "23. T11961/6h7i8j9k-0l1m-2n3o-4p5q-6r7s8t9u0v1w",
-      "24. T11961/7i8j9k0l-1m2n-3o4p-5q6r-7s8t9u0v1w2x",
-      "25. T11961/8j9k0l1m-2n3o-4p5q-6r7s-8t9u0v1w2x3y",
-      "26. T11961/9k0l1m2n-3o4p-5q6r-7s8t-9u0v1w2x3y4z"
-    ],
-  }, {
-
-    id: "sample-9",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  },
-  {
-    id: "sample-10",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  }, {
-    id: "sample-11",
-    name: "network_sample_2.json",
-    author: "Evelin",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  },
-  {
-    id: "sample-12",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  }, {
-    id: "sample-13",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  },
-  {
-    id: "sample-14",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  }, 
-  {
-    id: "sample-15",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  }, 
-  {
-    id: "sample-16",
-    name: "network_sample_2.json",
-    author: "Mario Rossi",
-    pid: "012345680",
-    preview: Img,
-    metrics: { nodes: 128, activity: 60 },
-    type: "entity",
-  }, 
+    linked_documents: []
+  }
 ];
+
 
 export default function Catalog() {
 
@@ -287,8 +193,7 @@ export default function Catalog() {
     return true;
   });
 }, [files, filters]);
-
-  
+ 
   const selectedFile = files.find((f) => f.id === selectedId);
 
   return (

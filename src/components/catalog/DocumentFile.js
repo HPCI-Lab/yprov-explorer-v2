@@ -6,23 +6,25 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Box, Image, Text, VStack, HStack, Badge, Icon, Tooltip } from "@chakra-ui/react";
 import { FileText } from "lucide-react";
+import GraphPreview from "./GraphPreview/GraphPreview";
 
 export default function DocumentFile({ file, selected, onSelect }) {
   // Handler for selecting the document
   const handleSelect = () => onSelect && onSelect(file.id);
 
   // Number of linked files
-  const linkedFile = file.linked_files ;
+  //const linkedFile = file.linked_files ;
 
-  // Function to count linked documents
+  /* Function to count linked documents
   const LinkedDocument = (file) => {
     if (!file.linked_documents || !Array.isArray(file.linked_documents)) {
       return 0;
     }
     return file.linked_documents.length;
   };
+
   const linkedCount = LinkedDocument(file);
-  const hasAttached = linkedCount > 0;
+  const hasAttached = linkedCount > 0; */
 
   const bg = "rgba(0,0,0,0.5)";
 
@@ -41,7 +43,7 @@ export default function DocumentFile({ file, selected, onSelect }) {
       transition="all 0.2s"
       cursor="pointer"
     >
-      <Image src={file.preview} alt={file.name} objectFit="cover" width="100%" height="200px"  opacity={0.8}/>
+      <GraphPreview url={file.storage_url} width={300} height={200} />
 
       <Box
         position="absolute"
@@ -59,6 +61,7 @@ export default function DocumentFile({ file, selected, onSelect }) {
         </VStack>
       </Box>
 
+      {/* Indicators for linked files and attached documents 
       <HStack position="absolute" top="8px" right="8px" spacing={2}>
         {linkedFile > 0 && (
           <Tooltip label="linked files">
@@ -88,7 +91,7 @@ export default function DocumentFile({ file, selected, onSelect }) {
             </Badge>
           </Tooltip>
         )}
-      </HStack>
+      </HStack> */}
     </Box>
   );
 }
