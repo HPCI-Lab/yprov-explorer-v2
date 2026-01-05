@@ -7,26 +7,28 @@ import SideInfo from "./panels/SideInfo";
 import SidePattern from "./panels/SidePattern";
 import SideSettings from "./panels/SideSettings";
 import NodeInfo from "./panels/SideInfo";
+import SideExploration from "./panels/SideExploration";
 import React from "react";
+import { BringToFront } from "lucide-react";
 
 /*
 SidePanelManager.js: panel manager for managing all the feature panels
  */
 
 export default function SidePanelManager({
-                                             activePanel,
-                                             isOpen,
-                                             setGraphData,
-                                             jsonContent,
-                                             setJsonContent,
-                                             selectedNode,
-                                             setSelectedNode,
-                                             setHighlightedNode,
-                                             graphData,
-                                             searchQuery,
-                                             handleSearch,
-                                             findNodeDetails,
-                                         }) {
+    activePanel,
+    isOpen,
+    setGraphData,
+    jsonContent,
+    setJsonContent,
+    selectedNode,
+    setSelectedNode,
+    setHighlightedNode,
+    graphData,
+    searchQuery,
+    handleSearch,
+    findNodeDetails,
+}) {
     const renderPanel = () => {
         switch (activePanel) {
             //case "home": return;
@@ -47,6 +49,7 @@ export default function SidePanelManager({
                 }}
                 onSearch={handleSearch}
             />;
+            case "exploration": return <SideExploration/>;
             case "settings": return <SideSettings/>;
             default: return null;
         }
@@ -62,10 +65,12 @@ export default function SidePanelManager({
             overflow="hidden"
             bg="gray.800"
             transition="width 0s linear"
-            zIndex={10}
+            zIndex={15}
             p={isOpen ? "4" : "0"}
             display="flex"
             flexDirection="column"
+            
+            
         >
             {renderPanel()}
         </Box>

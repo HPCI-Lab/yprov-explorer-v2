@@ -5,6 +5,7 @@ GraphController.js: Controller for Graph API. Permits to call functions from the
 class GraphController {
     nodeClickHandler = () => {};
     graphData = null;
+    currentOpacity = 1;
 
     //Graoh api
     API = {
@@ -25,6 +26,35 @@ class GraphController {
     applyFilter(filter) {
         this.graphAPI.applyFilter?.(filter);
     }
+
+    setNodeTypeOpacity(types) {
+        this.graphAPI.setNodeTypeOpacity?.(types);
+    }
+
+    highlightNodesAndLinks(id) {
+        this.graphAPI.highlightNodesAndLinks?.(id);
+    }
+
+    resetFilters() {
+        this.graphAPI.resetFilters?.();
+    }
+
+    applyDepthFilter(nodeId, depth) {
+        this.graphAPI.applyDepthFilter?.(nodeId, depth);
+    }
+
+    applyDirectionFilter(nodeId, mode) {
+        this.graphAPI.applyDirectionFilter?.(nodeId, mode);
+    }
+
+    setRelationTypeOpacity(visibleRelations, opacityHidden) {
+        this.graphAPI.setRelationTypeOpacity?.(visibleRelations, opacityHidden);
+    }
+    
+    colorNodesByDuration() {
+        this.graphAPI.colorNodesByDuration?.();
+    }
+
 
     //Graph to UI
     onNodeClick(callback) {

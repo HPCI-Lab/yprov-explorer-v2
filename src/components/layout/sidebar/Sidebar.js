@@ -1,6 +1,6 @@
 import { Box, VStack, IconButton } from "@chakra-ui/react";
 import { SettingsIcon, InfoIcon  } from "@chakra-ui/icons";
-import { Home, Folder, Code2, Activity, Layers  } from "lucide-react";
+import { Home, Folder, Code2, Activity, Layers, SlidersHorizontal } from "lucide-react";
 
 export default function Sidebar({onOpenPanel}) {
     return (
@@ -64,6 +64,13 @@ export default function Sidebar({onOpenPanel}) {
                     size="sm"
                     bg="gray.700"
                     onClick={() => onOpenPanel("info")}
+                />
+                <IconButton
+                    icon={<SlidersHorizontal boxSize={4}/>}
+                    aria-label="settings"
+                    size="sm"
+                    bg="gray.700"
+                    onClick={() => onOpenPanel("exploration")}
                 />
 
             </VStack>

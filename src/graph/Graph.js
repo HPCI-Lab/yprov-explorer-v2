@@ -8,7 +8,7 @@ import {scale} from "framer-motion";
 
 export default function Graph({ graph, controller }) {
     const ref = useRef(null);
-    let selectedNode = null;
+    let selectedNodeId = null;
 
     //Web worker for off thread simulation
     const worker = new Worker(new URL("./d3Worker.js", import.meta.url), {
@@ -17,9 +17,10 @@ export default function Graph({ graph, controller }) {
 
     //Graph initialization
     useEffect(() => {
+
         if (!graph) return;
         const width = window.innerWidth;
-        const height = window.innerHeight;
+        const height = window.innerHeight;   
 
         d3.select(ref.current).selectAll("*").remove();
         const svg = d3.select(ref.current)
@@ -99,7 +100,12 @@ export default function Graph({ graph, controller }) {
         //Draw links
         const link = g.append("g")
             .selectAll("line")
-            .data(graph.links)
+            .data(graph.links.map(l => ({
+                ...l,
+                source: typeof l.source === "string" ? graph.nodes.find(n => n.id === l.source) : l.source,
+                target: typeof l.target === "string" ? graph.nodes.find(n => n.id === l.target) : l.target
+            })))
+
             .join("line")
             .attr("stroke", d =>
                 d.type === "used" ? "#FDED00"
@@ -122,11 +128,8 @@ export default function Graph({ graph, controller }) {
             .attr("r", 15)
             .attr("stroke", "#000")
             .attr("stroke-width", 1.5)
-            .attr("fill", d =>
-                d.type === "entity" ? "#fdfd66"
-                    : d.type === "activity" ? "#9898fd"
-                        : "#FF5733"
-            )
+            .attr("fill", d => d.type === "entity" ? "#fdfd66" : d.type === "activity" ? "#9898fd" : "#FF5733" )
+            
             .call(d3.drag()
                 .on("start", event => {
                     if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -195,6 +198,37 @@ export default function Graph({ graph, controller }) {
             updateVisibility();
         });
 
+        //Building adjacency list for highlight function
+        const adjacency = new Map();
+
+        graph.nodes.forEach(n => adjacency.set(n.id, []));
+
+        // populate the adjacency list
+        graph.links.forEach(l => {
+            adjacency.get(l.source.id)?.push(l.target.id);
+            adjacency.get(l.target.id)?.push(l.source.id);
+        });
+
+        function getNodesWithinDepth(startId, maxDepth) {
+        const visited = new Set([startId]);
+        let frontier = [startId];
+
+        for (let depth = 0; depth < maxDepth; depth++) {
+            const next = [];
+            frontier.forEach(id => {
+                (adjacency.get(id) || []).forEach(n => {
+                    if (!visited.has(n)) {
+                        visited.add(n);
+                        next.push(n);
+                    }
+                });
+            });
+            frontier = next;
+            if (frontier.length === 0) break;
+        }
+
+        return visited;
+    }
         //Function visibility culling
         function updateVisibility() {
             const transform = d3.zoomTransform(svg.node());
@@ -234,6 +268,40 @@ export default function Graph({ graph, controller }) {
                     ? "block" : "none");
         }
 
+        function colorByDuration(nodes) {
+            // calcolate min and max durations
+            const durations = nodes
+            .map(n => {
+                const start = n.attributes?.["prov:startTime"];
+                const end = n.attributes?.["prov:endTime"];
+                if (start && end) {
+                    return new Date(end) - new Date(start);
+                }
+                return null;
+            })
+            .filter(d => d !== null);
+
+            const minDur = Math.min(...durations);
+            const maxDur = Math.max(...durations);
+
+            // color scale
+            const colorScale = d3.scaleLinear()
+                .domain([minDur, maxDur])
+                .range(["#3de43dff", "#e72d2dff"]); 
+
+            // apply colors
+            nodes.forEach((n, i) => {
+                const start = n.attributes?.["prov:startTime"];
+                const end = n.attributes?.["prov:endTime"];
+                if (start && end) {
+                    const duration = new Date(end) - new Date(start);
+                    n.color = colorScale(duration);
+                } else {
+                    n.color = "#0000ff"; 
+                }
+            });
+        }
+
         //Zoom rendering of labels, for performance managing
         zoom.on("zoom", event => {
             g.attr("transform", event.transform);
@@ -267,7 +335,7 @@ export default function Graph({ graph, controller }) {
 
                 const t = d3.zoomTransform(svg.node());
                 const zoomFactor = 1.3;
-                const targetZoom = Math.min(t.k * zoomFactor, 6);
+                const targetZoom = Math.min(t.k * zoomFactor, 6);          
 
                 svg.transition().duration(600)
                     .call(
@@ -299,12 +367,205 @@ export default function Graph({ graph, controller }) {
                 }
                 node.style("opacity", applyOpacity);
                 nodeLabel.style("opacity", applyOpacity);
-            }
-        });
+            },
 
+            applyDirectionFilter: (nodeId, mode) => {
+                applyDirectionFilter(nodeId, mode);
+            },
+
+            colorNodesByDuration: () => {
+                colorByDuration(graph.nodes);
+                node.attr("fill", d => d.color);
+            },
+            //Custom opacity by relation type
+            setRelationTypeOpacity: (visibleRelations, opacityHidden = 0.07) => {
+                const relSet = new Set(visibleRelations);
+
+                // link
+                link.style("opacity", d =>
+                    relSet.has(d.type) ? 1 : opacityHidden
+                );
+
+                // label link
+                linkLabel.style("opacity", d =>
+                    relSet.has(d.type) ? 1 : opacityHidden
+                );
+
+                // node - check if connected to any visible link
+                node.style("opacity", d => {
+                    const connected = graph.links.some(l =>
+                        relSet.has(l.type) &&
+                        (l.source.id === d.id || l.target.id === d.id)
+                    );
+                    return connected ? 1 : opacityHidden;
+                });
+
+                nodeLabel.style("opacity", d => {
+                    const connected = graph.links.some(l =>
+                        relSet.has(l.type) &&
+                        (l.source.id === d.id || l.target.id === d.id)
+                    );
+                    return connected ? 1 : opacityHidden;
+                });
+            },
+
+            //Custom opacity by type 
+            setNodeTypeOpacity: (visibleTypes, opacityHidden = 0.07) => {
+                // lowercase for safety
+                const visTypes = visibleTypes.map(t => t.toLowerCase());
+                
+                node.style("opacity", d => {
+                    const type = (d.type || d.attributes?.type || "").toLowerCase();
+                    return visTypes.includes(type) ? 1 : opacityHidden;
+                });
+                nodeLabel.style("opacity", d => {
+                    const type = (d.type || d.attributes?.type || "").toLowerCase();
+                    return visTypes.includes(type) ? 1 : opacityHidden;
+                });
+                link.style("opacity", d => {
+                    const sourceType = (d.source.type || d.source.attributes?.type || "").toLowerCase();
+                    const targetType = (d.target.type || d.target.attributes?.type || "").toLowerCase();
+                    return visTypes.includes(sourceType) && visTypes.includes(targetType) ? 1 : opacityHidden;
+                });
+                linkLabel.style("opacity", d => {
+                    const sourceType = (d.source.type || d.source.attributes?.type || "").toLowerCase();
+                    const targetType = (d.target.type || d.target.attributes?.type || "").toLowerCase();
+                    return visTypes.includes(sourceType) && visTypes.includes(targetType) ? 1 : opacityHidden;
+                });
+        },
+
+        highlightNodesAndLinks: (selectedId = null) => {
+            // color used for different states
+            const colors = {
+                input: "#00ff00ff",      
+                output: "#FF0000",        
+                selected: "#0000FF",     
+                connected: "#AAAAAA",    
+            };
+
+            if (!graph || !graph.nodes || !graph.links) return;
+
+            // resetting all to low opacity gray
+            node.style("opacity", 0.09).attr("fill", colors.connected);
+            link.style("opacity", 0.09).attr("stroke", colors.connected).attr("stroke-width", 2);
+
+            if (!selectedId) return;
+
+            // selected node
+            node.filter(d => d.id === selectedId)
+                .style("opacity", 1)
+                .attr("fill", colors.selected);
+
+            // connected nodes mapping
+            const connectedNodesMap = {};
+            graph.links.forEach(l => {
+                if (l.source.id === selectedId) connectedNodesMap[l.target.id] = l;
+                if (l.target.id === selectedId) connectedNodesMap[l.source.id] = l;
+            });
+
+            // highlight connected nodes
+            node.filter(d => d.id in connectedNodesMap)
+                .style("opacity", 1)
+                .attr("fill", d => {
+                    const link = connectedNodesMap[d.id];
+                    // input link
+                    if (link.target.id === selectedId && link.type === "used") return colors.input;
+                    //output link
+                    if (link.source.id === selectedId && link.type === "wasGeneratedBy") return colors.output;
+                    return colors.connected;
+                });
+
+            // highlight connected links
+            link.filter(l => l.source.id === selectedId || l.target.id === selectedId)
+                .style("opacity", 1)
+                .attr("stroke", l => {
+                    if (l.type === "used" && l.target.id === selectedId) return colors.input;
+                    if (l.type === "wasGeneratedBy" && l.source.id === selectedId) return colors.output;
+                    return colors.connected;
+                })
+                .attr("stroke-width", 3);
+
+            // all the other nodes fade
+            node.filter(d => !(d.id === selectedId || d.id in connectedNodesMap))
+                .style("opacity", 0.3)
+                .attr("fill", colors.connected);
+
+            // all the other links fade
+            link.filter(l => !(l.source.id === selectedId || l.target.id === selectedId))
+                .style("opacity", 0.3)
+                .attr("stroke", colors.connected)
+                .attr("stroke-width", 2);
+        }, 
+
+        resetFilters: () => {
+            const nodeBaseColor = d =>
+                d.type === "entity" ? "#fdfd66"
+                : d.type === "activity" ? "#9898fd"
+                : "#FF5733";
+
+            const linkBaseColor = d =>
+                d.type === "used" ? "#FDED00"
+                : d.type === "wasGeneratedBy" ? "red"
+                : d.type === "wasDerivedFrom" ? "#00E572"
+                : "#999";
+      
+        // nodi
+        node
+            .style("opacity", 1)
+            .attr("fill", d => nodeBaseColor(d))
+            .attr("stroke", "#000")
+            .attr("stroke-width", 1.5);
+
+        // label nodi
+        nodeLabel
+            .style("opacity", 1)
+            .style("display", "block");
+
+        // link
+        link
+            .style("opacity", 1)
+            .attr("stroke", d => linkBaseColor(d))
+            .attr("stroke-width", 2);
+
+        // label link
+        linkLabel
+            .style("opacity", 1)
+            .style("display", "block");
+    },
+
+    applyDepthFilter: (nodeId, depth, hiddenOpacity = 0.07) => {
+        if (!nodeId || depth == null) return;
+
+        const visible = getNodesWithinDepth(nodeId, depth);
+
+        node.style("opacity", d =>
+            visible.has(d.id) ? 1 : hiddenOpacity
+        );
+
+        nodeLabel.style("opacity", d =>
+            visible.has(d.id) ? 1 : hiddenOpacity
+        );
+
+        link.style("opacity", l =>
+            visible.has(l.source.id) && visible.has(l.target.id)
+                ? 1
+                : hiddenOpacity
+        );
+
+        linkLabel.style("opacity", l =>
+            visible.has(l.source.id) && visible.has(l.target.id)
+                ? 1
+                : hiddenOpacity
+        );
+    },
+
+ });
         const linksData = graph.links;
 
         node.on("click", (event, d) => {
+            selectedNodeId = d.id;
+            controller.selectedNodeId = d.id;
+
             node.attr("stroke", "#000").attr("stroke-width", 1.5);
 
             //Highlighting the selected node
@@ -330,7 +591,6 @@ export default function Graph({ graph, controller }) {
                     translate(width / 2 - d.x * targetZoom, height / 2 - d.y * targetZoom)
                     .scale(targetZoom)
                 );
-
 
             //Graph info mapped to send to the sideInfo
             const group =
@@ -366,8 +626,10 @@ export default function Graph({ graph, controller }) {
 
             controller.emitNodeClick({
                 id: d.id,
-                group,
-                type: typeInfo,
+                group: d.type === "entity" ? "Entity" :
+                d.type === "activity" ? "Activity" :
+                d.type === "agent" ? "Agent" : "Unknown",
+                type: d.attributes?.["prov:type"] || "Unknown",
                 used,
                 wasGeneratedBy,
                 wasDerivedFrom,
@@ -382,6 +644,48 @@ export default function Graph({ graph, controller }) {
                 attributes: d.attributes
             });
         });
+
+        //Function for direction based filtering
+        function applyDirectionFilter(nodeId, mode, hiddenOpacity = 0.07) {
+            if (!nodeId || !mode || mode === "both") {
+                node.style("opacity", 1);
+                nodeLabel.style("opacity", 1);
+                link.style("opacity", 1);
+                linkLabel.style("opacity", 1);
+                return;
+            }
+
+            const relatedNodes = new Set([nodeId]);
+
+            graph.links.forEach(l => {
+                if (mode === "out" && l.source.id === nodeId) {
+                    relatedNodes.add(l.target.id);
+                }
+                if (mode === "in" && l.target.id === nodeId) {
+                    relatedNodes.add(l.source.id);
+                }
+            });
+
+            node.style("opacity", d =>
+                relatedNodes.has(d.id) ? 1 : hiddenOpacity
+            );
+
+            nodeLabel.style("opacity", d =>
+                relatedNodes.has(d.id) ? 1 : hiddenOpacity
+            );
+
+            link.style("opacity", l => {
+                if (mode === "out") return l.source.id === nodeId ? 1 : hiddenOpacity;
+                if (mode === "in") return l.target.id === nodeId ? 1 : hiddenOpacity;
+                return 1;
+            });
+
+            linkLabel.style("opacity", l => {
+                if (mode === "out") return l.source.id === nodeId ? 1 : hiddenOpacity;
+                if (mode === "in") return l.target.id === nodeId ? 1 : hiddenOpacity;
+                return 1;
+            });
+        }
 
         //Function for redrawing
         function redraw() {
@@ -443,9 +747,6 @@ export default function Graph({ graph, controller }) {
         return () => {
             window.removeEventListener("resize", handleResize);
         };
-
-
-
 
     }, [graph]);
 
