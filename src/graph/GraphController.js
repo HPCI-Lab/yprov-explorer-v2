@@ -86,6 +86,11 @@ class GraphController {
         };
     }
 
+    // Highlights pattern nodes
+    highlightNodes(nodeIds = []) {
+        this.graphAPI.highlightNodes?.(nodeIds);
+    }
+
 }
 
 // eslint-disable-next-line import/no-anonymous-default-export

@@ -1,6 +1,6 @@
 import { Box, VStack, IconButton } from "@chakra-ui/react";
 import { SettingsIcon, InfoIcon  } from "@chakra-ui/icons";
-import { Home, Folder, Code2, Activity, Layers  } from "lucide-react";
+import { Home, Folder, Code2, Activity, Layers, Waypoints} from "lucide-react";
 
 export default function Sidebar({onOpenPanel}) {
     return (
@@ -53,6 +53,7 @@ export default function Sidebar({onOpenPanel}) {
                     onClick={() => onOpenPanel("layers")}
                 />
                 <IconButton
+                    icon={<Waypoints size={18}/>}
                     aria-label="pattern"
                     size="sm"
                     bg="gray.700"

@@ -299,6 +299,18 @@ export default function Graph({ graph, controller }) {
                 }
                 node.style("opacity", applyOpacity);
                 nodeLabel.style("opacity", applyOpacity);
+            },
+            
+            //Highlights pattern selected 
+            highlightNodes: (nodeIds) => {
+                node.attr("fill", d =>
+                    nodeIds.includes(d.id) ? "red"
+                        : d.type === "entity" ? "#fdfd66"
+                            : d.type === "activity" ? "#9898fd"
+                                : "#FF5733"
+                );
+
+                nodeLabel.style("fill", d => nodeIds.includes(d.id) ? "red" : "#000");
             }
         });
 
