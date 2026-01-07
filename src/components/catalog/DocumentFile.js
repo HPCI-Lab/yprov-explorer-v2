@@ -4,13 +4,17 @@ It supports selection and highlights when selected.
 
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Image, Text, VStack, HStack, Badge, Icon, Tooltip } from "@chakra-ui/react";
-import { FileText } from "lucide-react";
+import { Box, Text, VStack} from "@chakra-ui/react";
 import GraphPreview from "./GraphPreview/GraphPreview";
 
 export default function DocumentFile({ file, selected, onSelect }) {
   // Handler for selecting the document
   const handleSelect = () => onSelect && onSelect(file.id);
+
+  // Extract file details
+  const title = file.source?.title ?? "Untitled";
+  const author = file.source?.author ?? "Unknown";
+  const storageUrl = file.source?.storage_url ?? "";
 
   // Number of linked files
   //const linkedFile = file.linked_files ;
@@ -29,7 +33,7 @@ export default function DocumentFile({ file, selected, onSelect }) {
   const bg = "rgba(0,0,0,0.5)";
 
   return (
-    <Box
+   <Box
       as="article"
       role="button"
       onClick={handleSelect}
@@ -43,7 +47,7 @@ export default function DocumentFile({ file, selected, onSelect }) {
       transition="all 0.2s"
       cursor="pointer"
     >
-      <GraphPreview url={file.storage_url} width={300} height={200} />
+      <GraphPreview url={storageUrl} width={300} height={200} />
 
       <Box
         position="absolute"
@@ -56,8 +60,8 @@ export default function DocumentFile({ file, selected, onSelect }) {
         py={2}
       >
         <VStack align="flex-start" spacing={1}>
-          <Text fontWeight="bold" wordBreak="break-word">{file.name}</Text>
-          <Text fontSize="sm" opacity={0.8} wordBreak="break-word">{file.author}</Text>
+          <Text fontWeight="bold" wordBreak="break-word">{title}</Text>
+          <Text fontSize="sm" opacity={0.8} wordBreak="break-word">{author}</Text>
         </VStack>
       </Box>
 
@@ -95,17 +99,8 @@ export default function DocumentFile({ file, selected, onSelect }) {
     </Box>
   );
 }
-
-
 DocumentFile.propTypes = {
-  file: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    name: PropTypes.string.isRequired,
-    author: PropTypes.string,
-    preview: PropTypes.string,
-  }).isRequired,
+  file: PropTypes.object.isRequired,
   selected: PropTypes.bool,
   onSelect: PropTypes.func,
-  linkedCount: PropTypes.number,
-  hasAttached: PropTypes.bool,
-};
+};  
