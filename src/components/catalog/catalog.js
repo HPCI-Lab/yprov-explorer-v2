@@ -21,7 +21,7 @@ export default function Catalog() {
   const [files, setFiles] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
 
-  // filters
+  // Filters
   const [filters, setFilters] = useState({
     query: "",
     yearRange: [2020, new Date().getFullYear()],
@@ -40,11 +40,13 @@ export default function Catalog() {
     setActivePanel(panel);
     setIsSidePanelOpen(true);
   };
+
   const onClosePanel = () => {
     setIsSidePanelOpen(false);
     setActivePanel(null);
   };
 
+  // Search handlers
   const handleSearch = (searchFilters) => {
     setFilters((prev) => ({ ...prev, ...searchFilters }));
   };
@@ -55,27 +57,34 @@ export default function Catalog() {
     }
   };
 
+  // 🔹 Fetch catalog ONLY when filters change
   useEffect(() => {
-      const fetchData = async () => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await getCatalog(filters);
+        setFiles(response);
+
+        // Auto-select first document
+        setSelectedId(response[0]?.id ?? null);
+      } catch (err) {
+        console.error("Error call service", err);
+
         try {
-    const response = await getCatalog();
-    setFiles(response);
-    setSelectedId(response[0]?.id ?? null);
-  } catch (err) {
-    console.error("Error call service", err);
-
-    try {
-      const errorDetails = JSON.parse(err.message);
-      setError(errorDetails.detail || "An unknown error occurred.");
-    } catch {
-      setError(err.message); 
-    }
-  }
-
+          const errorDetails = JSON.parse(err.message);
+          setError(errorDetails.detail || "An unknown error occurred.");
+        } catch {
+          setError(err.message);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
-  }, [filters, selectedId]);
+  }, [filters]); 
 
   const selectedFile = files.find((f) => f.id === selectedId);
 
@@ -118,10 +127,9 @@ export default function Catalog() {
             {!loading && !error && (
               <DocumentList
                 files={files}
-                columns={5}
-                selectedId={selectedId} 
+                columns={4}
+                selectedId={selectedId}
                 onSelect={setSelectedId}
-                onOpen={setSelectedId}
                 panelOpen={!!selectedFile}
               />
             )}
@@ -129,13 +137,15 @@ export default function Catalog() {
 
           {/* Info panel */}
           {selectedFile && (
-            <Box flex="1" maxW="450px" overflowY="auto" transition="all 0.3s ease-in-out">
+            <Box
+              flex="1"
+              maxW="450px"
+              overflowY="auto"
+              transition="all 0.3s ease-in-out"
+            >
               <InfoPanel
                 file={selectedFile}
                 onClose={() => setSelectedId(null)}
-                onFilter={(linked) =>
-                  setFilters((prev) => ({ ...prev, linkedFiles: linked }))
-                }
               />
             </Box>
           )}

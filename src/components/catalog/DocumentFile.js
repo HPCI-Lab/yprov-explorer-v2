@@ -4,7 +4,7 @@ It supports selection and highlights when selected.
 
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Text, VStack} from "@chakra-ui/react";
+import { Box, Text, VStack } from "@chakra-ui/react";
 import GraphPreview from "./GraphPreview/GraphPreview";
 
 export default function DocumentFile({ file, selected, onSelect }) {
