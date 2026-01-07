@@ -262,19 +262,6 @@ export default function SideExploration() {
                                 >
                                     Incoming
                                 </Button>
-
-                                <Button
-                                    size="sm"
-                                    w="200px"
-                                    onClick={() =>
-                                        controller.applyDirectionFilter(
-                                            controller.selectedNodeId,
-                                            "both"
-                                        )
-                                    }
-                                >
-                                    Reset
-                                </Button>
  
                             </VStack>
                         </AccordionPanel>

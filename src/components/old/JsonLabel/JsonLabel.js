@@ -8,7 +8,7 @@ Line displayed separately. If no file was uploaded, a default message is shown.
 */
 
 import React, { useState, useEffect} from "react";
-import "./jsonLabel.css";
+import { Box, Flex, Text, VStack} from "@chakra-ui/react";
 import FileUploadButton from "../FileUploadButton/FileUploadButton";
 import { unifiedFileLoader } from '../../../server/unified-loader';
 
@@ -103,52 +103,55 @@ const JsonLabel = ({ setGraphData, jsonContent, setJsonContent }) => {
   
   
   return (
-    <div className="json-label-container">
-      <div className="json-label-header">
-      <span>
-        <strong>My File:</strong> {fileName ? truncateText(fileName, 30) : "Nessun file caricato"}
-      </span>
-
-        <div className="upload-button-container">
-        <FileUploadButton onFileUpload={(fileNameOrUrl, content) => handleFileUpload(fileNameOrUrl, content)} />
-        </div>
-      </div>
+    <Box w="100%" h="100%" p={4}>
+      <Text fontWeight="bold">
+          My File: {fileName ? truncateText(fileName, 30) : "Nessun file caricato"}
+        </Text>
+      <Flex justify="space-between" align="cente" >
+    
+        <FileUploadButton
+          onFileUpload={(fileNameOrUrl, content) => handleFileUpload(fileNameOrUrl, content)}
+        />
+      </Flex>
 
       {showUploadBox && (
-        <div className="upload-overlay">
-          <div className="upload-box">
+        <Flex
+          position="fixed"
+          top={0}
+          left={0}
+          w="100vw"
+          h="100vh"
+          bg="blackAlpha.00"
+          justify="center"
+          align="center"
+          zIndex={1000}
+        >
+          <VStack p={6} borderRadius="md" spacing={4}>
             <input
               type="file"
               accept=".json"
               onChange={(e) => {
-                const file = e.target.files[0]; 
-                if (file && file.type === "application/json") { 
+                const file = e.target.files[0];
+                if (file && file.type === "application/json") {
                   const reader = new FileReader();
                   reader.onload = (event) => {
                     try {
-                      const content = JSON.parse(event.target.result); 
-                      handleFileUpload(file.name, content); 
+                      const content = JSON.parse(event.target.result);
+                      handleFileUpload(file.name, content);
                     } catch (error) {
-                      console.error("Errore nel parsing del file JSON", error); 
+                      console.error("Errore nel parsing del JSON", error);
                     }
                   };
                   reader.readAsText(file);
                 }
               }}
             />
-            <button onClick={() => setShowUploadBox(false)}>Chiudi</button>
-          </div>
-        </div>
+           
+          </VStack>
+        </Flex>
       )}
-      <div
-          className="json-content-container"
-          dangerouslySetInnerHTML={{
-            __html: Array.isArray(jsonContent)
-                ? jsonContent.map((line) => `<pre>${line}</pre>`).join("")
-                : "Carica un file JSON per visualizzarlo qui.",
-          }}
-      ></div>
-    </div>
+
+    </Box>
   );
 };
 

@@ -64,7 +64,7 @@ class GraphController {
         this.nodeClickHandler(nodeInfo);
     }
 
-    //UI to Graph
+    //UI to Graph 
     selectNode(id) {
         this.graphAPI.selectNode(id);
     }
