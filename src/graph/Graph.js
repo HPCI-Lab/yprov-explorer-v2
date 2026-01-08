@@ -303,14 +303,30 @@ export default function Graph({ graph, controller }) {
             
             //Highlights pattern selected 
             highlightNodes: (nodeIds) => {
-                node.attr("fill", d =>
-                    nodeIds.includes(d.id) ? "red"
-                        : d.type === "entity" ? "#fdfd66"
-                            : d.type === "activity" ? "#9898fd"
-                                : "#FF5733"
-                );
+                const highlighted = new Set(nodeIds);
 
-                nodeLabel.style("fill", d => nodeIds.includes(d.id) ? "red" : "#000");
+                node
+                    .transition()
+                    .duration(300)
+                    .attr("fill", d =>
+                        highlighted.has(d.id) ? "red"
+                            : d.type === "entity" ? "#fdfd66"
+                                : d.type === "activity" ? "#9898fd"
+                                    : "#FF5733"
+                    )
+                    .attr("opacity", d =>
+                        highlighted.size === 0 ? 1
+                            : highlighted.has(d.id) ? 1
+                                : 0.30
+                    );
+
+                nodeLabel
+                    .style("fill", d => highlighted.has(d.id) ? "red" : "#000")
+                    .style("opacity", d =>
+                        highlighted.size === 0 ? 1
+                            : highlighted.has(d.id) ? 1
+                                : 0.15
+                    );
             }
         });
 

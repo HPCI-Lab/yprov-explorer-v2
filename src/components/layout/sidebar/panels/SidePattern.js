@@ -28,7 +28,7 @@ export default function SidePattern() {
   // useState of instances motif
   const [selectedMotif, setSelectedMotif] = useState(null);
   const [selectedInstanceByMotif, setSelectedInstanceByMotif] = useState({});
-  const [showAllInstancesByMotif, setShowAllInstancesByMotif] = useState({});
+  const [allInstancesByMotif, setAllInstancesByMotif] = useState({});
 
 
   // Load motifs when fileNumber changes
@@ -137,7 +137,7 @@ export default function SidePattern() {
               onClick={() => {
                 setSelectedMotif(motif);
 
-                setShowAllInstancesByMotif(prev => ({
+                setAllInstancesByMotif(prev => ({
                   ...prev,
                   [motif.id]: true
                 }));
@@ -183,13 +183,13 @@ export default function SidePattern() {
                     value={selectedInstanceByMotif[motif.id] ?? 0}
                     onChange={(e) => {
                       const idx = Number(e.target.value);
-
+                      
                       setSelectedInstanceByMotif(prev => ({
                         ...prev,
                         [motif.id]: idx
                       }));
 
-                      setShowAllInstancesByMotif(prev => ({
+                      setAllInstancesByMotif(prev => ({
                         ...prev,
                         [motif.id]: false
                       }));
