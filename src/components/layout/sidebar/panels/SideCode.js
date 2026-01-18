@@ -16,16 +16,15 @@ import controller from "../../../../graph/GraphController";
 import { useEffect } from "react";
 import {ExternalLinkIcon} from '@chakra-ui/icons';
 
-
-
-
-export default function SideCode() {
+export default function SideCode( {graphData} ) {
+    /*
     const cellGroup = useCheckboxGroup({ defaultValue: [] });
     const workerGroup = useCheckboxGroup({ defaultValue: [] });
     const chunkGroup = useCheckboxGroup({ defaultValue: [] });
     const { cells, workers, chunks } = controller.getAvailableFilters();
 
     useEffect(() => {
+        if (!graphData) return;
         controller.applyFilter?.({
             cells: cellGroup.value,
             workers: workerGroup.value,
@@ -141,4 +140,6 @@ export default function SideCode() {
             </VStack>
         </Flex>
     );
+
+     */
 }

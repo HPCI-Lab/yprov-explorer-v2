@@ -7,6 +7,8 @@ import GraphContainer from "./components/layout/GraphContainer";
 import Timeline from "./components/layout/Timeline";
 import React, {useEffect, useState} from "react";
 import {Resizable} from "re-resizable";
+import controller from "./graph/GraphController";
+import parseProvJSON from "./graph/parseProvenance";
 
 
 function App() {
@@ -37,13 +39,24 @@ function App() {
 
 //------------------------------------------------------------------------------------------
     const [graphData, setGraphData] = useState(null);
-    const [jsonContent, setJsonContent] = useState(null);
-    const [graph, setGraph] = useState(null);
+    //const [jsonContent, setJsonContent] = useState(null);
+    //const [graph, setGraph] = useState(null);
+
+    const [dataset, setDataset] = useState(null);
+
+    const handleDatasetLoaded = ({ provJson, notebook }) => {
+        setDataset({ provJson, notebook });
+
+        const parsed = parseProvJSON(provJson);
+        setGraphData(parsed);
+        controller.setGraphData(parsed);
+    };
+
 
     return (
         <Flex direction="column" h="100vh" w="100vw" bg="black" color="white">
             {/* Top navigation bar for search and others*/}
-            <TopBar />
+            <TopBar dataset={dataset} onDatasetLoaded={handleDatasetLoaded} />
 
             <Flex flex="1" position="relative" bg="black" minH="0">
                 {/* Sidebar */}
@@ -53,9 +66,11 @@ function App() {
                     activePanel={activePanel}
                     isOpen={isSidePanelOpen}
                     onClose={onClosePanel}
+                    /*
                     setGraphData={setGraphData}
                     jsonContent={jsonContent}
                     setJsonContent={setJsonContent}
+                     */
                 />
 
                 {/*Main content area*/}
@@ -87,7 +102,10 @@ function App() {
                                 }}
                             >
                                 {/*Code panel for viewing the code*/}
-                                <CodePanel />
+                                <CodePanel
+                                    graphData={graphData}
+                                    notebook={dataset?.notebook}
+                                />
                             </Resizable>
                         )
                     }

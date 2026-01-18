@@ -1,6 +1,5 @@
 import {Box, IconButton} from "@chakra-ui/react";
 import {useEffect, useRef, useState} from "react";
-import parseProvJSON from "../../graph/parseProvenance";
 import {d3Adapter} from "../../graph/d3Adapter";
 import controller from "../../graph/GraphController";
 import Graph from "../../graph/Graph";
@@ -22,17 +21,15 @@ export default function GraphContainer({ graphData }) {
 
     useEffect(() => {
         if (!graphData) return;
-
         try {
-            const parsed = parseProvJSON(graphData);
-            const d3data = d3Adapter(parsed);
+            const d3data = d3Adapter(graphData);
             setGraph(d3data);
-            controller.setGraphData(parsed);
         } catch (err) {
-            console.error("Error parsing JSON for graph:", err);
+            console.error("Error adapting graph data:", err);
             setGraph(null);
         }
     }, [graphData]);
+
 
     // Function to toggle the fullscreen mode
     const toggleFullscreen = () => {

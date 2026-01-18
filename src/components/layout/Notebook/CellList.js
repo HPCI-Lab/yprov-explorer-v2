@@ -1,27 +1,21 @@
 import { Box } from "@chakra-ui/react";
 
-const test = [
-    { index: 0, preview: "import xarray as xr" },
-    { index: 1, preview: "ds = xr.open_dataset(...)" },
-    { index: 2, preview: "ds = ds.persist()" },
-    { index: 3, preview: "result = ds.mean()" },
-]
 
-export default function CellList({ onSelectCell }) {
+export default function CellList({ cells, onSelectCell }) {
     return (
         <Box h="100%" overflow="auto">
-            {test.map((cell) => (
+            {cells.map((cell) => (
                 <Box
-                    key={cell.index}
+                    key={cell.cellIndex}
                     py="1"
                     borderBottom="1px solid"
                     borderColor="whiteAlpha.200"
                     cursor="pointer"
                     _hover={{ bg: "whiteAlpha.100" }}
-                    onClick={() => onSelectCell(cell.index)}
+                    onClick={() => onSelectCell(cell.cellIndex)}
                 >
                     <Box fontSize="sm" fontWeight="semibold">
-                        Cell {cell.index}
+                        Cell {cell.cellIndex}
                     </Box>
                     <Box
                         fontSize="xs"

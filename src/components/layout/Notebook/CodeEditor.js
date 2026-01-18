@@ -4,10 +4,31 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { python } from "@codemirror/lang-python";
 import { EditorView, lineNumbers } from "@codemirror/view";
 import {AddIcon, MinusIcon, SearchIcon} from "@chakra-ui/icons";
-import {useState} from "react";
+import {useRef, useState} from "react";
+import { gutter, GutterMarker } from "@codemirror/view";
 
-export default function CodeEditor({ cellIndex }){
+class ProvenanceMarker extends GutterMarker {
+    toDOM() {
+        const el = document.createElement("div");
+        el.textContent = "●";
+        el.style.color = "#facc15";
+        el.style.fontSize = "10px";
+        el.style.lineHeight = "1";
+        el.style.marginLeft = "4px";
+        return el;
+    }
+}
+
+const provenanceMarker = new ProvenanceMarker();
+
+
+export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
     const [fontSize, setFontSize] = useState(14);
+    const editorRef = useRef(null);
+    const code = lines
+        .filter(l => !l.isCellSeparator)
+        .map(l => l.content)
+        .join("\n");
 
     const editorTheme = EditorView.theme({
         ".cm-gutters": {
@@ -26,6 +47,50 @@ export default function CodeEditor({ cellIndex }){
             backgroundColor: "#333333"
         },
     });
+
+    const lineClickExtension = EditorView.domEventHandlers({
+        mousedown: (event, view) => {
+            if (!onLineClick) return;
+
+            const pos = view.posAtCoords({
+                x: event.clientX,
+                y: event.clientY
+            });
+            if (pos == null) return;
+
+            const line = view.state.doc.lineAt(pos);
+            const editorLineNumber = line.number;
+
+            const visibleLines = lines.filter(l => !l.isCellSeparator);
+            const clicked = visibleLines[editorLineNumber - 1];
+            if (!clicked) return;
+
+            view.dispatch({
+                selection: { anchor: line.from },
+                scrollIntoView: true,
+            });
+
+            const hasProv = provenanceLines?.has(clicked.lineNumber);
+            if (!hasProv) {
+                console.log("Line without provenance:", clicked.lineNumber);
+            }
+            onLineClick(clicked.lineNumber);
+        }
+    });
+
+    const provenanceGutter = gutter({
+        class: "cm-provenance-gutter",
+        lineMarker: (view, line) => {
+            const visibleLines = lines.filter(l => !l.isCellSeparator);
+            const entry = visibleLines[line.number - 1];
+            if (!entry) return null;
+
+            return provenanceLines?.has(entry.lineNumber)
+                ? provenanceMarker
+                : null;
+        },
+    });
+
 
 
     return (
@@ -130,13 +195,16 @@ export default function CodeEditor({ cellIndex }){
                     }}
                 >
                     <CodeMirror
-                        value={`# Cell ${cellIndex}\n\nprint("Hello from cell ${cellIndex}")`}
+                        value={code}
+                        ref={editorRef}
                         theme={oneDark}
                         extensions={[
                             lineNumbers(),
+                            provenanceGutter,
                             python(),
                             editorTheme,
                             EditorView.editable.of(false),
+                            lineClickExtension,
                         ]}
                         basicSetup={{
                             highlightActiveLine: true,
@@ -155,6 +223,7 @@ export default function CodeEditor({ cellIndex }){
             borderTop="1px solid"
             borderColor="whiteAlpha.200"
         >
+            {/*
             <HStack justify="space-between">
                 <Box fontSize="xs" opacity={0.6}>
                     Ready to associate with graph
@@ -167,6 +236,7 @@ export default function CodeEditor({ cellIndex }){
                     aria-label="associate"
                 />
             </HStack>
+            */}
         </Box>
     </Box>
     );

@@ -31,7 +31,7 @@ export default function SidePanelManager({
         switch (activePanel) {
             //case "home": return;
             case "input": return <SideInput setGraphData={setGraphData} jsonContent={jsonContent} setJsonContent={setJsonContent}/>;
-            case "code": return <SideCode/>;
+            case "code": return <SideCode graphData={graphData}/>;
             case "timeline": return <SideTimeline/>;
             case "layers": return <SideLayers/>;
             case "pattern": return <SidePattern/>;
@@ -62,7 +62,7 @@ export default function SidePanelManager({
             overflow="hidden"
             bg="gray.800"
             transition="width 0s linear"
-            zIndex={10}
+            zIndex={11}
             p={isOpen ? "4" : "0"}
             display="flex"
             flexDirection="column"

@@ -7,11 +7,12 @@ class GraphController {
     graphData = null;
 
     //Graoh api
-    API = {
+    graphAPI = {
         selectNode: () => {},
         focusNode: () => {},
         resetView: () => {},
-        applyFilter: () => {}
+        applyFilter: () => {},
+        highlightNodes: () => {}
     };
 
     setGraphData = (graphData) => {
@@ -23,7 +24,7 @@ class GraphController {
     }
 
     applyFilter(filter) {
-        this.graphAPI.applyFilter?.(filter);
+        this.graphAPI.applyFilter(filter);
     }
 
     //Graph to UI
@@ -43,6 +44,9 @@ class GraphController {
     }
     resetView() {
         this.graphAPI.resetView();
+    }
+    highlightNodes(id) {
+        this.graphAPI.highlightNodes(id);
     }
 
     //seach api
@@ -85,6 +89,9 @@ class GraphController {
             chunks: []
         };
     }
+
+
+
 
 }
 

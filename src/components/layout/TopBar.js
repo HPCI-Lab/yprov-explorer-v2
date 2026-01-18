@@ -1,15 +1,17 @@
-import { Flex, Input, IconButton, Box } from "@chakra-ui/react";
+import {Flex, Input, IconButton, Box, Menu, Text, MenuButton, MenuList, MenuItem, Divider} from "@chakra-ui/react";
 import { SunIcon } from "@chakra-ui/icons";
 import { Image } from "@chakra-ui/react"
 import {useState} from "react";
 import controller from "../../graph/GraphController";
+import DatasetUpload from "../../inputs/DatasetUpload";
+import {ChevronDownIcon} from "lucide-react";
 
 /*
 TopBar.js: Top bar component that contains main elements for navigation:
 - searchbar for searching the nodes on the graph
 - theme toggler button for changing the theme on preferences
 */
-export default function TopBar() {
+export default function TopBar({ dataset, onDatasetLoaded }) {
     const [query, setQuery] = useState("");
 
     const handleSearch = () => {
@@ -28,13 +30,48 @@ export default function TopBar() {
             px="3"
         >
             {/*Logo container*/}
-            <Flex align="center" justify="center" w="24px">
-                <Image
-                    src="logo.png"
-                    boxSize="26px"
-                    objectFit="contain"
-                />
+            <Flex align="center" gap="4">
+                {/* Logo */}
+                <Box w="26px" h="26px">
+                    <Image
+                        src="logo.png"
+                        boxSize="26px"
+                        objectFit="contain"
+                        pointerEvents="none"
+                    />
+                </Box>
+
+                {/* File menu */}
+                <Menu>
+                    <MenuButton
+                        as={Text}
+                        fontSize="sm"
+                        cursor="pointer"
+                        px="2"
+                        py="1"
+                        borderRadius="sm"
+                        _hover={{ bg: "whiteAlpha.100" }}
+                        _expanded={{ bg: "whiteAlpha.200" }}
+                    >
+                        File
+                    </MenuButton>
+
+                    <MenuList
+                        bg="gray.900"
+                        borderColor="whiteAlpha.200"
+                        minW="180px"
+                        fontSize="sm"
+                    >
+                        <DatasetUpload
+                            currentDataset={dataset}
+                            onDatasetLoaded={onDatasetLoaded}
+                        />
+                        <Divider />
+                        <MenuItem bg="gray.900">Close</MenuItem>
+                    </MenuList>
+                </Menu>
             </Flex>
+
             <Box flex="1" maxW="420px">
             {/*Search bar*/}
                 <Input

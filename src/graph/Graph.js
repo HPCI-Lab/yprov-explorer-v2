@@ -299,7 +299,45 @@ export default function Graph({ graph, controller }) {
                 }
                 node.style("opacity", applyOpacity);
                 nodeLabel.style("opacity", applyOpacity);
-            }
+                link.style("opacity", d =>
+                    applyOpacity(d.source) * applyOpacity(d.target)
+                );
+            },
+            //highlighing the nodes based on the ids
+            highlightNodes: (ids = []) => {
+                const idSet = new Set(ids);
+                node
+                    .attr("opacity", d => {
+                        if (idSet.size === 0) return 1;
+                        return idSet.has(d.id) ? 1 : 0.15;
+                    })
+                    .attr("stroke", d => {
+                        if (idSet.has(d.id)) return "#ffffff";
+                        return "#000";
+                    })
+                    .attr("stroke-width", d => {
+                        if (idSet.has(d.id)) return 3;
+                        return 1.5;
+                    });
+
+                nodeLabel
+                    .attr("opacity", d => {
+                        if (idSet.size === 0) return 1;
+                        return idSet.has(d.id) ? 1 : 0.1;
+                    });
+                link
+                    .attr("opacity", d => {
+                        if (idSet.size === 0) return 1;
+                        return idSet.has(d.source.id) || idSet.has(d.target.id)
+                            ? 1
+                            : 0.05;
+                    })
+                    .attr("stroke-width", d => {
+                        if (idSet.has(d.source.id) || idSet.has(d.target.id)) return 3;
+                        return 2;
+                    });
+            },
+
         });
 
         const linksData = graph.links;
