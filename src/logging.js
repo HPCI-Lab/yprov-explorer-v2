@@ -3,7 +3,7 @@ import { UAParser } from 'ua-parser-js';
 
 export async function visit_log() {
   // get device info
-  const { browser, os, device }=UAParser();
+  const { ua, browser, os, device }=UAParser();
 
   // get location info
   const location=await get_location_info();
@@ -14,6 +14,7 @@ export async function visit_log() {
     "country": location["country"],
     "region": location["region"],
     "city": location["city"],
+    "user_agent": ua,
     "browser": browser["name"],
     "os": os["name"],
     "device": device["type"]===undefined?"desktop":device["type"]   // undefined device type is desktop

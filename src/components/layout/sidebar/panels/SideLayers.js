@@ -271,7 +271,7 @@ const SideLayers = ({ mainGraphData, mainFileName, setGraphData, updateJsonLabel
       {alertMsg && <Box className={`ml-alert ml-alert-${alertType}`}>{alertMsg}</Box>}
 
       {levelCount > 0 && (
-        <Box className="ml-section">
+        <Box className="ml-section" style={{ overflow: "auto"}}>
           <h4 className="ml-subtitle">Level Selector</h4>
 
           <List className="ml-select">

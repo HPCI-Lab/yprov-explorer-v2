@@ -244,6 +244,22 @@ export default function SideTimeline({
   return (
     <Box id="animationOverviewPanel" className="animation-overview-panel">
       <h3>Activity Log</h3>
+      {activityTimeline.length > 0 && (
+        <Box className="status-legend">
+          <Box className="legend-item">
+            <span className="legend-dot active"></span>
+            <Text>Active</Text>
+          </Box>
+          <Box className="legend-item">
+            <span className="legend-dot finished"></span>
+            <Text>Finished</Text>
+          </Box>
+          <Box className="legend-item">
+            <span className="legend-dot future"></span>
+            <Text>Future</Text>
+          </Box>
+        </Box>
+      )}
 
       <Box className="activity-log" ref={listRef}>
         {events.length === 0 && <Box className="log-empty">No activities</Box>}

@@ -1,5 +1,5 @@
 from flask import request
-import uuid, mysql.connector, os
+import uuid, mysql.connector, os, hashlib
 
 
 def create_visit_log():
@@ -10,12 +10,17 @@ def create_visit_log():
   country=data.get("country") if data.get("country") else None
   region=data.get("region") if data.get("region") else None
   city=data.get("city") if data.get("city") else None
+  user_agent=data.get("user_agent") if data.get("user_agent") else None
   browser=data.get("browser") if data.get("browser") else None
   os=data.get("os") if data.get("os") else None
   device=data.get("device") if data.get("device") else None
 
   # generate uuid
   id=str(uuid.uuid4())
+
+  # generate unique visitor hash
+  value=str(ip)+str(user_agent)
+  unique_visitor_hash=hashlib.sha256(value.encode("utf-8")).hexdigest()
 
   # connect to database
   database=get_database()
@@ -24,11 +29,11 @@ def create_visit_log():
   # add log
   cursor.execute("""
     INSERT INTO visit_logs
-    (uuid, ip, country, region, city, browser, os, device)
+    (uuid, unique_visitor_hash, country, region, city, browser, os, device)
     VALUES
     (%s, %s, %s, %s, %s, %s, %s, %s)
   """
-    , (id, ip, country, region, city, browser, os, device)
+    , (id, unique_visitor_hash, country, region, city, browser, os, device)
   )
   database.commit()
 

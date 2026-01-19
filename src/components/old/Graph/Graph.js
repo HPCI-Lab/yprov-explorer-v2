@@ -430,13 +430,14 @@ const Graph = ({
         .data(nodes)
         .join("text")
         .attr("class", "node-label")
+        .attr("id", d => `node-label-${d.id}`)
         .attr("font-size", 15)
         .attr("dy", -5)
         .attr("fill", "#000")
         .attr("text-shadow", "1px 1px 2px white")
         .attr("text-anchor", "middle")
         .text( d => d.id.length <= 18 ? d.id : `${d.id.slice(0, 10)}...${d.id.slice(-5)}` ) // Truncate long IDs
-        .style("display", "none");
+        //.style("display", "none");
 
       // Add labels to the links (initially hidden)
       const linkLabels = g
@@ -446,12 +447,13 @@ const Graph = ({
         .data(links)
         .join("text")
         .attr("class", "link-label")
+        .attr("id", d => `link-label-${d.id}`)
         .attr("font-size", 15)
         .attr("fill", "#000")
         .attr("text-shadow", "1px 1px 2px white")
         .attr("text-anchor", "middle")
         .text((d) => d.type)
-        .style("display", "none");
+        //.style("display", "none");
 
       // Add the nodes to the graph with different shapes based on the group (entity, activity, agent)
       const node = g
@@ -695,17 +697,9 @@ const Graph = ({
 
   // 2° useEffect to manage interactions with the graph (show/hide labels and links)
   useEffect(() => {
-    // Toggle node labels
-    d3.selectAll(".node-label").style(
-      "display",
-      showNodeLabels ? "block" : "none"
-    );
-
-    // Toggle link labels
-    d3.selectAll(".link-label").style(
-      "display",
-      showLinkLabels ? "block" : "none"
-    );
+    // Toggle node and link labels
+    d3.selectAll(".node-label").classed('label-visible', showNodeLabels);
+    d3.selectAll(".link-label").classed('label-visible', showLinkLabels);
 
     // Scope selection to the graph container to be safe
     const graphContainer = d3.select("#graphFrame");
@@ -758,9 +752,10 @@ const Graph = ({
         }
 
         // Reset the style of all nodes (remove the border)
-        d3.selectAll(".node").style("stroke", null).style("stroke-width", null);
+        d3.selectAll(".node").classed("node-selected", false);
         // Highlight the selected node (add a white border)
-        selectedNode.style("stroke", "grey").style("stroke-width", 5, "important");
+        selectedNode.classed("node-selected", true);
+
 
         const nodeData = selectedNode.datum(); // Get the data for the selected node
         // Function to focus on the selected node in the graph

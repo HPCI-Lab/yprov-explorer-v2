@@ -27,8 +27,13 @@
   pointer-events: none !important;
 }
 
-.node-hidden {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+.label-visible {
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: visible !important;
+}
+
+.node-selected {
+  stroke: grey !important;
+  stroke-width: 5 !important;
 }

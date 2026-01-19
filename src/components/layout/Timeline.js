@@ -19,6 +19,7 @@ const Timeline = ({ activities = [], linksByActivityRef, onIndexChange }) => {
   const [showSettings, setShowSettings] = useState(false);
   const playStartedRef = useRef(false);
   const [hoverSlider, setHoverSlider] = useState(false);
+  const [subsetOnlyMode, setSubsetOnlyMode] = useState(true);
 
   // --- GIF state ---
   const [isGeneratingGif, setIsGeneratingGif] = useState(false);
@@ -114,6 +115,7 @@ const Timeline = ({ activities = [], linksByActivityRef, onIndexChange }) => {
     playStartedRef.current = false;
     setCurrentIndex(0);
     setCurrentTime(defaultStart);
+    setSubsetOnlyMode(true);
   }, [activities, minTime]);
 
   // --- Utility functions ---
@@ -171,6 +173,10 @@ const Timeline = ({ activities = [], linksByActivityRef, onIndexChange }) => {
       return 0.05;
     }
 
+    if (subsetOnlyMode) {
+      return 0.95;
+    }
+
     if (typeof effectiveTime !== "number" || Number.isNaN(effectiveTime)) {
       if (actStart > subsetStart) {
         return 0.3;
@@ -188,50 +194,70 @@ const Timeline = ({ activities = [], linksByActivityRef, onIndexChange }) => {
       return 0.3;
     }
     return 0.95;
-  }, []);
+  }, [subsetOnlyMode]);
 
   // --- Opacities: stable callback ---
   const applyOpacities = useCallback((effectiveTime, subsetTime) => {
-  const acts = activities || [];
-  if (acts.length === 0) return;
+    const acts = activities || [];
+    if (acts.length === 0) return;
 
-  const [subsetStart, subsetEnd] = subsetTime;
+    const [subsetStart, subsetEnd] = subsetTime;
 
-  // fallback selectors might be undefined if D3 hasn't run yet
-  if (allNodesRef.current) allNodesRef.current.style?.("opacity", 0.05);
-  if (allLinksRef.current) allLinksRef.current.style?.("opacity", 0.05);
+    if (allNodesRef.current) allNodesRef.current.style?.("opacity", 0);
+    if (allLinksRef.current) allLinksRef.current.style?.("opacity", 0);
+    d3.selectAll("[id^='node-label-']").style("opacity", 0);
+    d3.selectAll("[id^='link-label-']").style("opacity", 0);
 
-  acts.forEach((act) => {
+    acts.forEach((act) => {
       const actOpacity = getActivityOpacity(act, effectiveTime, subsetStart, subsetEnd);
 
+      // Activity
       const nodeSel = d3.select(`#${CSS.escape(`node-${act.id}`)}`);
       if (!nodeSel.empty()) {
         nodeSel
           .style("opacity", actOpacity)
-          .style("stroke", actOpacity === 1 ? "#1a73e8" : null)
-          .style("stroke-width", actOpacity === 1 ? 6 : null);
+          // .style("stroke", actOpacity === 1 ? "#000" : null)
+          // .style("stroke-width", actOpacity === 1 ? 6 : null)
+          .style("fill", actOpacity === 1 ? "#FFAA1D" : null);
       }
 
+      const nodeLabelSel = d3.select(`#${CSS.escape(`node-label-${act.id}`)}`);
+      if (!nodeLabelSel.empty()) {
+        nodeLabelSel.style("opacity", actOpacity);
+      }
+
+      // Link & Entity
       const linked = linksByActivityRef?.current?.[act.id] || [];
       linked.forEach((l) => {
-      const linkSel = d3.select(`#${CSS.escape(l.id)}`);
-      const entSel = d3.select(`#${CSS.escape(`node-${l.entId}`)}`);
-      const isActivity = acts.some(a => a.id === l.entId);
-      if (isActivity) return;
+        const linkSel = d3.select(`#${CSS.escape(l.id)}`);
+        const linkLabelSel = d3.select(`#${CSS.escape(`link-label-${l.id}`)}`);
 
-      if (!linkSel.empty()) linkSel.style("opacity", actOpacity);
+        const entSel = d3.select(`#${CSS.escape(`node-${l.entId}`)}`);
+        const entLabelSel = d3.select(`#${CSS.escape(`node-label-${l.entId}`)}`);
 
-      //if (!entSel.empty()) entSel.style("opacity", actOpacity);
-      if (!entSel.empty()) {
-        entSel
-          .style("opacity", actOpacity)
-          .style("stroke", actOpacity === 1 ? "#1a73e8" : null)
-          .style("stroke-width", actOpacity === 1 ? 6 : null);
-      }
+        const isActivity = acts.some(a => a.id === l.entId);
+
+        if (!linkSel.empty()) linkSel.style("opacity", actOpacity);
+        if (!linkLabelSel.empty()) {
+          linkLabelSel.style("opacity", actOpacity);
+        }
+
+        if (isActivity) return;
+
+        if (!entSel.empty()) {
+          entSel
+            .style("opacity", actOpacity)
+            // .style("stroke", actOpacity === 1 ? "#000" : null)
+            // .style("stroke-width", actOpacity === 1 ? 6 : null)
+            .style("fill", actOpacity === 1 ? "#FFAA1D" : null);
+        }
+
+        if (!entLabelSel.empty()) {
+          entLabelSel.style("opacity", actOpacity);
+        }
       });
-  });
+    });
   }, [getActivityOpacity, activities?.length /* only recreate when length changes */]);
-
 
   // --- Apply opacities and notify parent  ---
   const lastNotifyRef = useRef({ currentIndex: null, currentTime: null, subsetStart: null, subsetEnd: null });
@@ -371,6 +397,8 @@ useEffect(() => {
       setIsPlaying(false);
       return;
     }
+    
+    setSubsetOnlyMode(false);
 
     const [subsetStart, subsetEnd] = subsetTime;
     const isFinished = currentTime >= subsetEnd;
@@ -675,7 +703,7 @@ useEffect(() => {
         setGifProgress({
           current: i + 2,
           total: totalFrames,
-          pct: Math.round(((i + 2) / totalFrames) * 100)
+          pct: Math.min(100, Math.round(((i + 2) / totalFrames) * 100))
         });
 
         await new Promise(r => requestAnimationFrame(r));
@@ -785,21 +813,27 @@ useEffect(() => {
               style={{ left: pctToPercent(startPct) }}
             >
               <Box className="thumb-label">
-                {new Date(startTime ?? minTime).toLocaleTimeString()}.
-                {String(new Date(startTime ?? minTime).getMilliseconds()).padStart(3, "0")}
+                {(() => {
+                  const d = new Date(startTime ?? minTime);
+                  return `${d.toLocaleDateString()}, ${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, "0")}`;
+                })()}
               </Box>
             </Box>
-
-            <Box
-              className="slider-thumb thumb-current"
-              onPointerDown={(e) => onThumbPointerDown("current", e)}
-              style={{ left: pctToPercent(currentPct) }}
-            >
-              <Box className="thumb-label">
-                {new Date(currentTime ?? minTime).toLocaleTimeString()}.
-                {String(new Date(currentTime ?? minTime).getMilliseconds()).padStart(3, "0")}
+            
+            {!subsetOnlyMode && (
+              <Box
+                className="slider-thumb thumb-current"
+                onPointerDown={(e) => onThumbPointerDown("current", e)}
+                style={{ left: pctToPercent(currentPct) }}
+              >
+                <Box className="thumb-label">
+                  {(() => {
+                    const d = new Date(currentTime ?? minTime);
+                    return `${d.toLocaleDateString()}, ${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, "0")}`;
+                  })()}
+                </Box>
               </Box>
-            </Box>
+            )}
 
             <Box
               className="slider-thumb thumb-end"
@@ -807,8 +841,10 @@ useEffect(() => {
               style={{ left: pctToPercent(endPct) }}
             >
               <Box className="thumb-label">
-                {new Date(endTime ?? maxTime).toLocaleTimeString()}.
-                {String(new Date(endTime ?? maxTime).getMilliseconds()).padStart(3, "0")}
+                {(() => {
+                  const d = new Date(endTime ?? maxTime);
+                  return `${d.toLocaleDateString()}, ${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, "0")}`;
+                })()}
               </Box>
             </Box>
           </Box>
@@ -824,8 +860,19 @@ useEffect(() => {
                 <Box className="anim-settings-panel" onClick={(e) => e.stopPropagation()}>
                   <h4>Settings</h4>
 
+                  <Button
+                    onClick={() => !isPlaying && setSubsetOnlyMode(prev => !prev)}
+                    disabled={isPlaying}
+                  >
+                    Animation
+                    <i
+                      className={`bi ${ subsetOnlyMode ? "bi-toggle-off" : "bi-toggle-on" }`}
+                      style={{ fontSize: 20, color: "#1a73e8" }}
+                    />
+                  </Button>
+
                   <Button onClick={() => handleReset(false)}>
-                    <i className="bi bi-arrow-clockwise" style={{ marginRight: 6, rotate: "45deg", display: "inline-block" }}></i>
+                    <i className="bi bi-arrow-clockwise" style={{ rotate: "45deg", display: "inline-block" }}></i>
                     Reset
                   </Button>
 
@@ -849,12 +896,12 @@ useEffect(() => {
                       gifCancelRef.current = false;
                     }
                   }}>
-                    <i className="bi bi-download" style={{ marginRight: 6 }}></i>
+                    <i className="bi bi-download"></i>
                     {isGeneratingGif ? "Cancel Export" : "Export GIF"}
                   </Button>
 
                   <Button onClick={() => setUseTimestamps(prev => !prev)}>
-                    <i className="bi bi-speedometer2" style={{ marginRight: 6 }}></i>
+                    <i className="bi bi-speedometer2"></i>
                     {useTimestamps ? "Mode: Real-time" : "Mode: Fixed"}
                   </Button>
 

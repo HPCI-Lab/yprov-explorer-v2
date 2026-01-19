@@ -8,7 +8,7 @@ use yprov;
 create table if not exists visit_logs (
 	id int auto_increment not null,
 	uuid varchar(255) not null,
-	ip varchar(255),
+	unique_visitor_hash varchar(255) not null,
 	country varchar(2),
 	region varchar(255),
 	city varchar(255),
