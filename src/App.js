@@ -62,7 +62,7 @@ function App() {
                 <Flex flex="1" position="relative" overflow="hidden" minWidth={0} minH="0">
                     {/* Graph canvas */}
                     <GraphContainer graphData={graphData}/>
-                    {isCodePanelVisible && (
+                    {/* {isCodePanelVisible && (
                             <Resizable
                                 defaultSize={{
                                     width: 400,
@@ -86,11 +86,11 @@ function App() {
                                     display: "flex",
                                 }}
                             >
-                                {/*Code panel for viewing the code*/}
-                                <CodePanel />
-                            </Resizable>
+                            
+                                /<CodePanel />
+                            </Resizable> 
                         )
-                    }
+                    }*/}
                 </Flex>
             </Flex>
             {/*Timeline bar*/}

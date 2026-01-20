@@ -31,8 +31,8 @@ class GraphController {
         this.graphAPI.setNodeTypeOpacity?.(types);
     }
 
-    highlightNodesAndLinks(id) {
-        this.graphAPI.highlightNodesAndLinks?.(id);
+    highlightNodesAndLinks() {
+        this.graphAPI.highlightNodesAndLinks?.();
     }
 
     resetFilters() {
@@ -55,6 +55,13 @@ class GraphController {
         this.graphAPI.colorNodesByDuration?.();
     }
 
+    pickNodeForSubgraph(nodeId, mode) {
+        this.graphAPI.pickNodeForSubgraph?.(nodeId, mode);
+    }
+
+    applySubgraph() {
+        this.graphAPI.applySubgraph?.();
+    }
 
     //Graph to UI
     onNodeClick(callback) {

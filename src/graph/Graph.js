@@ -7,8 +7,10 @@ import { useEffect, useRef } from "react";
 import {scale} from "framer-motion";
 
 export default function Graph({ graph, controller }) {
-    const ref = useRef(null);
-    let selectedNodeId = null;
+    const ref = useRef(null); 
+
+    let tempSubgraphStart = null;
+    let tempSubgraphEnd = null;
 
     //Web worker for off thread simulation
     const worker = new Worker(new URL("./d3Worker.js", import.meta.url), {
@@ -20,8 +22,10 @@ export default function Graph({ graph, controller }) {
 
         if (!graph) return;
         const width = window.innerWidth;
-        const height = window.innerHeight;   
-
+        const height = window.innerHeight;
+        let selectedNodeId = null;
+ 
+        //Clear previous svg
         d3.select(ref.current).selectAll("*").remove();
         const svg = d3.select(ref.current)
             .attr("width", width)
@@ -39,9 +43,13 @@ export default function Graph({ graph, controller }) {
             wasGeneratedBy: "red",
             wasDerivedFrom: "#00E572",
         };
+        const callback = (node) => {
+            controller.graphAPI?.pickNodeForSubgraph(node.id, node.pickMode);
+        };
 
         const defs = svg.append("defs");
 
+        //Define arrow markers for graph links
         markerTypes.forEach(type => {
             defs.append("marker")
                 .attr("id", `arrow-${type}`)
@@ -87,15 +95,7 @@ export default function Graph({ graph, controller }) {
         let tickCount = 0;
         const MAX_COLLIDE_TICKS = 100; // dopo ~1-2s smettiamo
 
-        //Begins the simulation
-        simulation.on("tick", () => {
-            tickCount++;
-
-            // Reducing collision during the time
-            if (tickCount === MAX_COLLIDE_TICKS) {
-                simulation.force("collide", null);
-            }
-        });
+        
 
         //Draw links
         const link = g.append("g")
@@ -145,7 +145,6 @@ export default function Graph({ graph, controller }) {
                     event.subject.fx = null;
                     event.subject.fy = null;
                 })
-
             );
 
         //Node labels
@@ -156,7 +155,7 @@ export default function Graph({ graph, controller }) {
             .join("text")
             .attr("font-size", 12)
             .attr("text-anchor", "middle")
-            .attr("dy", 4) // centrato verticalmente
+            .attr("dy", 4) 
             .text(d =>
                 d.label.length > MAX_NODE_LABEL
                     ? d.label.slice(0, 10) + "..." + d.label.slice(-3)
@@ -196,44 +195,89 @@ export default function Graph({ graph, controller }) {
                 .attr("x", d => (d.source.x + d.target.x) / 2)
                 .attr("y", d => (d.source.y + d.target.y) / 2);
             updateVisibility();
+
+            tickCount++;
+
+            // Reducing collision during the time
+            if (tickCount === MAX_COLLIDE_TICKS) {
+                simulation.force("collide", null);
+            }
         });
 
         //Building adjacency list for highlight function
-        const adjacency = new Map();
 
+        const adjacency = new Map();
         graph.nodes.forEach(n => adjacency.set(n.id, []));
 
-        // populate the adjacency list
         graph.links.forEach(l => {
-            adjacency.get(l.source.id)?.push(l.target.id);
-            adjacency.get(l.target.id)?.push(l.source.id);
+            const s = typeof l.source === "string" ? l.source : l.source.id;
+            const t = typeof l.target === "string" ? l.target : l.target.id;
+
+            if (!adjacency.has(s) || !adjacency.has(t)) return;
+
+            // undirected for structural traversal
+            adjacency.get(s).push({ id: t, type: l.type, dir: "out" });
+            adjacency.get(t).push({ id: s, type: l.type, dir: "in" });
         });
 
-        function getNodesWithinDepth(startId, maxDepth) {
-        const visited = new Set([startId]);
-        let frontier = [startId];
+        function updateSubgraphPickVisuals() {
+            node
+                .attr("stroke", "#000")
+                .attr("stroke-width", 1.5);
 
-        for (let depth = 0; depth < maxDepth; depth++) {
-            const next = [];
-            frontier.forEach(id => {
-                (adjacency.get(id) || []).forEach(n => {
-                    if (!visited.has(n)) {
-                        visited.add(n);
-                        next.push(n);
-                    }
-                });
-            });
-            frontier = next;
-            if (frontier.length === 0) break;
+            if (tempSubgraphStart) {
+                node.filter(d => d.id === tempSubgraphStart)
+                    .attr("stroke", "green")
+                    .attr("stroke-width", 3);
+            }
+
+            if (tempSubgraphEnd) {
+                node.filter(d => d.id === tempSubgraphEnd)
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 3);
+            }
         }
 
-        return visited;
-    }
+
+
+        //Function to get nodes within a certain depth
+        function getNodesWithinDepth(startId, maxDepth, direction = "both", maxNodes = 300) {
+            const visited = new Set([startId]);
+            let frontier = [startId];
+            let count = 1;
+
+            for (let depth = 0; depth < maxDepth; depth++) {
+                const next = [];
+
+                for (const id of frontier) {
+                    for (const edge of adjacency.get(id) || []) {
+
+                        if (
+                            direction === "out" && edge.dir !== "out" ||
+                            direction === "in" && edge.dir !== "in"
+                        ) continue;
+
+                        if (!visited.has(edge.id)) {
+                            visited.add(edge.id);
+                            next.push(edge.id);
+                            count++;
+
+                            if (count >= maxNodes) return visited;
+                        }
+                    }
+                }
+
+                frontier = next;
+                if (!frontier.length) break;
+            }
+            return visited;
+        }
+
         //Function visibility culling
         function updateVisibility() {
+            // get current zoom transform
             const transform = d3.zoomTransform(svg.node());
             const scale = transform.k;
-
             const bbox = svg.node().getBoundingClientRect();
             const newWidth = bbox.width;
             const newHeight = bbox.height;
@@ -244,6 +288,7 @@ export default function Graph({ graph, controller }) {
             const maxX = (newWidth - transform.x) / scale + 100;
             const maxY = (newHeight - transform.y) / scale + 100;
 
+            //Update visibility based on current zoom and pan
             node.style("display", d =>
                 d.x >= minX && d.x <= maxX && d.y >= minY && d.y <= maxY
                     ? "block" : "none");
@@ -268,37 +313,65 @@ export default function Graph({ graph, controller }) {
                     ? "block" : "none");
         }
 
-        function colorByDuration(nodes) {
-            // calcolate min and max durations
+        function highlightPath(path) {
+            const set = new Set(path);
+
+            node.style("opacity", d => set.has(d.id) ? 1 : 0.15);
+            nodeLabel.style("opacity", d => set.has(d.id) ? 1 : 0.3);
+
+            link.style("opacity", l => {
+                const s = typeof l.source === "string" ? l.source : l.source.id;
+                const t = typeof l.target === "string" ? l.target : l.target.id;
+                return set.has(s) && set.has(t) ? 1 : 0.1;
+            });
+        }
+
+
+        // Function to color nodes by duration
+       function colorByDuration(nodes) {
+            function parseProvTime(str) {
+                return new Date(str.replace(" ", "T"));
+            }
+
+            const HUES = [130, 210, 270];
+
             const durations = nodes
-            .map(n => {
-                const start = n.attributes?.["prov:startTime"];
-                const end = n.attributes?.["prov:endTime"];
-                if (start && end) {
-                    return new Date(end) - new Date(start);
+                .map(n => {
+                    const s = n.attributes?.["prov:startTime"];
+                    const e = n.attributes?.["prov:endTime"];
+                    if (!s || !e) return null;
+                    return parseProvTime(e) - parseProvTime(s);
+                })
+                .filter(d => Number.isFinite(d));
+
+            if (!durations.length) {
+                nodes.forEach(n => n.color = "#999");
+                return;
+            }
+
+            const min = Math.min(...durations);
+            const max = Math.max(...durations);
+            const span = max === min ? 1 : max - min;         
+
+            nodes.forEach(n => {
+                const s = n.attributes?.["prov:startTime"];
+                const e = n.attributes?.["prov:endTime"];
+
+                if (!s || !e) {
+                    n.color = "#999";
+                    return;
                 }
-                return null;
-            })
-            .filter(d => d !== null);
 
-            const minDur = Math.min(...durations);
-            const maxDur = Math.max(...durations);
+                const d = parseProvTime(e) - parseProvTime(s);
+                const t = (d - min) / span;
+                
+                const bucket = Math.floor(t * HUES.length);
+                const hue = HUES[Math.min(bucket, HUES.length - 1)];
 
-            // color scale
-            const colorScale = d3.scaleLinear()
-                .domain([minDur, maxDur])
-                .range(["#3de43dff", "#e72d2dff"]); 
+                const localT = (t * HUES.length) % 1;
+                const lightness = 90 - localT * 60;
 
-            // apply colors
-            nodes.forEach((n, i) => {
-                const start = n.attributes?.["prov:startTime"];
-                const end = n.attributes?.["prov:endTime"];
-                if (start && end) {
-                    const duration = new Date(end) - new Date(start);
-                    n.color = colorScale(duration);
-                } else {
-                    n.color = "#0000ff"; 
-                }
+                n.color = `hsl(${hue}, 70%, ${lightness}%)`;
             });
         }
 
@@ -391,7 +464,7 @@ export default function Graph({ graph, controller }) {
                     relSet.has(d.type) ? 1 : opacityHidden
                 );
 
-                // node - check if connected to any visible link
+                //check if connected to any visible link
                 node.style("opacity", d => {
                     const connected = graph.links.some(l =>
                         relSet.has(l.type) &&
@@ -432,132 +505,191 @@ export default function Graph({ graph, controller }) {
                     const targetType = (d.target.type || d.target.attributes?.type || "").toLowerCase();
                     return visTypes.includes(sourceType) && visTypes.includes(targetType) ? 1 : opacityHidden;
                 });
+            },
+
+            highlightNodesAndLinks: () => {
+                
+                if (!graph || !graph.nodes || !graph.links) return;
+
+                // color definitions
+                const colors = {
+                    input: "#00ff00ff",      
+                    output: "#FF0000",      
+                    connected: "#AAAAAA",    
+                };
+
+                // input node : target di link "used"
+                const inputNodes = new Set(
+                    graph.links
+                        .filter(l => l.type === "used")
+                        .map(l => l.target.id)
+                );
+
+                // output node : source di link "wasGeneratedBy"
+                const outputNodes = new Set(
+                    graph.links
+                        .filter(l => l.type === "wasGeneratedBy")
+                        .map(l => l.source.id)
+                );
+
+                node
+                    .attr("fill", d => {
+                        if (inputNodes.has(d.id)) return colors.input;
+                        if (outputNodes.has(d.id)) return colors.output;
+                        return colors.connected;
+                    })
+                    .style("opacity", d =>
+                        inputNodes.has(d.id) || outputNodes.has(d.id) ? 1 : 0.3
+                    );
+
+                link
+                    .attr("stroke", l => {
+                        if (l.type === "used") return colors.input;
+                        if (l.type === "wasGeneratedBy") return colors.output;
+                        return colors.connected;
+                    })
+                    .attr("stroke-width", d =>
+                        d.type === "used" || d.type === "wasGeneratedBy" ? 3 : 1.5
+                    )
+                    .style("opacity", d =>
+                        d.type === "used" || d.type === "wasGeneratedBy" ? 1 : 0.3
+                    );
+
+                    }, 
+
+            //Reset all filters
+            resetFilters: () => {
+                const nodeBaseColor = d =>
+                    d.type === "entity" ? "#fdfd66"
+                    : d.type === "activity" ? "#9898fd"
+                    : "#FF5733";
+
+                const linkBaseColor = d =>
+                    d.type === "used" ? "#FDED00"
+                    : d.type === "wasGeneratedBy" ? "red"
+                    : d.type === "wasDerivedFrom" ? "#00E572"
+                    : "#999";
+
+                // reset nodi
+                node
+                    .style("opacity", 1)
+                    .attr("fill", d => nodeBaseColor(d))
+                    .attr("stroke", "#000")
+                    .attr("stroke-width", 1.5);
+
+                nodeLabel
+                    .style("opacity", 1)
+                    .style("display", "block");
+
+                // reset link
+                link
+                    .style("opacity", 1)
+                    .attr("stroke", d => linkBaseColor(d))
+                    .attr("stroke-width", 2);
+
+                linkLabel
+                    .style("opacity", 1)
+                    .style("display", "block");
+
+                tempSubgraphStart = null;
+                tempSubgraphEnd = null;
+                updateSubgraphPickVisuals();
+            },
+        //Depth based filtering
+        applyDepthFilter: (nodeId, depth, hiddenOpacity = 0.07) => {
+            if (!nodeId || depth == null) return;
+
+            const visible = getNodesWithinDepth(nodeId, depth);
+
+            node.style("opacity", d =>
+                visible.has(d.id) ? 1 : hiddenOpacity
+            );
+
+            nodeLabel.style("opacity", d =>
+                visible.has(d.id) ? 1 : hiddenOpacity
+            );
+
+            link.style("opacity", l =>
+                visible.has(l.source.id) && visible.has(l.target.id)
+                    ? 1
+                    : hiddenOpacity
+            );
+
+            linkLabel.style("opacity", l =>
+                visible.has(l.source.id) && visible.has(l.target.id)
+                    ? 1
+                    : hiddenOpacity
+            );
         },
 
-        highlightNodesAndLinks: (selectedId = null) => {
-            // color used for different states
-            const colors = {
-                input: "#00ff00ff",      
-                output: "#FF0000",        
-                selected: "#0000FF",     
-                connected: "#AAAAAA",    
-            };
+        pickNodeForSubgraph(nodeId, mode) {
+            if (mode === "start") tempSubgraphStart = nodeId;
+            if (mode === "end") tempSubgraphEnd = nodeId;
 
-            if (!graph || !graph.nodes || !graph.links) return;
+            updateSubgraphPickVisuals();
 
-            // resetting all to low opacity gray
-            node.style("opacity", 0.09).attr("fill", colors.connected);
-            link.style("opacity", 0.09).attr("stroke", colors.connected).attr("stroke-width", 2);
+            if (tempSubgraphStart && tempSubgraphEnd) {
+                this.applySubgraph(); 
+            }
+        },
 
-            if (!selectedId) return;
 
-            // selected node
-            node.filter(d => d.id === selectedId)
-                .style("opacity", 1)
-                .attr("fill", colors.selected);
+    applySubgraph: () => {
+    if (!tempSubgraphStart || !tempSubgraphEnd) return;
 
-            // connected nodes mapping
-            const connectedNodesMap = {};
-            graph.links.forEach(l => {
-                if (l.source.id === selectedId) connectedNodesMap[l.target.id] = l;
-                if (l.target.id === selectedId) connectedNodesMap[l.source.id] = l;
-            });
+    const queue = [[tempSubgraphStart]];
+    const visited = new Set([tempSubgraphStart]);
+    const parentMap = new Map();
 
-            // highlight connected nodes
-            node.filter(d => d.id in connectedNodesMap)
-                .style("opacity", 1)
-                .attr("fill", d => {
-                    const link = connectedNodesMap[d.id];
-                    // input link
-                    if (link.target.id === selectedId && link.type === "used") return colors.input;
-                    //output link
-                    if (link.source.id === selectedId && link.type === "wasGeneratedBy") return colors.output;
-                    return colors.connected;
-                });
+    // BFS per trovare il percorso più corto
+    let found = false;
+    while (queue.length && !found) {
+        const path = queue.shift();
+        const last = path[path.length - 1];
 
-            // highlight connected links
-            link.filter(l => l.source.id === selectedId || l.target.id === selectedId)
-                .style("opacity", 1)
-                .attr("stroke", l => {
-                    if (l.type === "used" && l.target.id === selectedId) return colors.input;
-                    if (l.type === "wasGeneratedBy" && l.source.id === selectedId) return colors.output;
-                    return colors.connected;
-                })
-                .attr("stroke-width", 3);
+        if (last === tempSubgraphEnd) {
+            found = true;
+            break;
+        }
 
-            // all the other nodes fade
-            node.filter(d => !(d.id === selectedId || d.id in connectedNodesMap))
-                .style("opacity", 0.3)
-                .attr("fill", colors.connected);
+        for (const edge of adjacency.get(last) || []) {
+            if (!visited.has(edge.id)) {
+                visited.add(edge.id);
+                parentMap.set(edge.id, last);
+                queue.push([...path, edge.id]);
+            }
+        }
+    }
 
-            // all the other links fade
-            link.filter(l => !(l.source.id === selectedId || l.target.id === selectedId))
-                .style("opacity", 0.3)
-                .attr("stroke", colors.connected)
-                .attr("stroke-width", 2);
-        }, 
+    if (!found) {
+        console.warn("No path found between selected nodes");
+        return;
+    }
 
-        resetFilters: () => {
-            const nodeBaseColor = d =>
-                d.type === "entity" ? "#fdfd66"
-                : d.type === "activity" ? "#9898fd"
-                : "#FF5733";
+    // Ricostruisci percorso dal parentMap
+    const pathNodes = [];
+    let current = tempSubgraphEnd;
+    while (current) {
+        pathNodes.unshift(current);
+        current = parentMap.get(current);
+    }
 
-            const linkBaseColor = d =>
-                d.type === "used" ? "#FDED00"
-                : d.type === "wasGeneratedBy" ? "red"
-                : d.type === "wasDerivedFrom" ? "#00E572"
-                : "#999";
-      
-        // nodi
-        node
-            .style("opacity", 1)
-            .attr("fill", d => nodeBaseColor(d))
-            .attr("stroke", "#000")
-            .attr("stroke-width", 1.5);
+    const pathSet = new Set(pathNodes);
 
-        // label nodi
-        nodeLabel
-            .style("opacity", 1)
-            .style("display", "block");
+    // Aggiorna nodi
+    node.style("opacity", d => pathSet.has(d.id) ? 1 : 0.2);
+    nodeLabel.style("opacity", d => pathSet.has(d.id) ? 1 : 0.3);
 
-        // link
-        link
-            .style("opacity", 1)
-            .attr("stroke", d => linkBaseColor(d))
-            .attr("stroke-width", 2);
+    // Aggiorna link
+    link.style("opacity", l =>
+        pathSet.has(l.source.id) && pathSet.has(l.target.id) ? 1 : 0.1
+    );
+    linkLabel.style("opacity", l =>
+        pathSet.has(l.source.id) && pathSet.has(l.target.id) ? 1 : 0.2
+    );
+}
 
-        // label link
-        linkLabel
-            .style("opacity", 1)
-            .style("display", "block");
-    },
 
-    applyDepthFilter: (nodeId, depth, hiddenOpacity = 0.07) => {
-        if (!nodeId || depth == null) return;
-
-        const visible = getNodesWithinDepth(nodeId, depth);
-
-        node.style("opacity", d =>
-            visible.has(d.id) ? 1 : hiddenOpacity
-        );
-
-        nodeLabel.style("opacity", d =>
-            visible.has(d.id) ? 1 : hiddenOpacity
-        );
-
-        link.style("opacity", l =>
-            visible.has(l.source.id) && visible.has(l.target.id)
-                ? 1
-                : hiddenOpacity
-        );
-
-        linkLabel.style("opacity", l =>
-            visible.has(l.source.id) && visible.has(l.target.id)
-                ? 1
-                : hiddenOpacity
-        );
-    },
 
  });
         const linksData = graph.links;
@@ -644,6 +776,9 @@ export default function Graph({ graph, controller }) {
                 attributes: d.attributes
             });
         });
+
+        controller.onNodeClick(callback);
+        return () => controller.onNodeClick(() => {});
 
         //Function for direction based filtering
         function applyDirectionFilter(nodeId, mode, hiddenOpacity = 0.07) {
