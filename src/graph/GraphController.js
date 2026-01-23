@@ -91,6 +91,10 @@ class GraphController {
         this.graphAPI.highlightNodes?.(nodeIds);
     }
 
+    zoomOnNodes(nodeIds) {
+        this.graphAPI.zoomOnNodes?.(nodeIds);
+    }
+
 }
 
 // eslint-disable-next-line import/no-anonymous-default-export

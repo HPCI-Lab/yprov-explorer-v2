@@ -1,11 +1,25 @@
-import {Box, Heading, Text, VStack, HStack, Image, Spinner, IconButton, Input} from "@chakra-ui/react";
-import { ChevronUpIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import {
+  Box,
+  Heading,
+  Text,
+  VStack,
+  HStack,
+  Image,
+  Spinner,
+  IconButton,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb
+} from "@chakra-ui/react";
+
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon
+} from "@chakra-ui/icons";
+
 import { useEffect, useState } from "react";
 import controller from "../../../../graph/GraphController";
-
-/*
- SidePattern.js: Patterns Panel
-*/
 
 function parseMotifs(data) {
   return Object.entries(data).map(([motifId, motifData]) => ({
@@ -23,27 +37,26 @@ export default function SidePattern() {
   const [motifs, setMotifs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [fileNumber, setFileNumber] = useState(3);
-  
-  // useState of instances motif
+  const [minOccurrences, setMinOccurrences] = useState(1);
+
   const [selectedMotif, setSelectedMotif] = useState(null);
   const [selectedInstanceByMotif, setSelectedInstanceByMotif] = useState({});
-  const [allInstancesByMotif, setAllInstancesByMotif] = useState({});
+  const [zoomed, setZoomed] = useState(null);
 
 
-  // Load motifs when fileNumber changes
   useEffect(() => {
     setLoading(true);
     setError(null);
 
-    fetch(`/patterns/FIRES_${fileNumber}.log`)
+    fetch(`/patterns/yprov4_${fileNumber}.json`)
       .then(res => {
-        if (!res.ok) throw new Error("Error on loading pattern file .log");
+        if (!res.ok) throw new Error("Error loading pattern file");
         return res.text();
       })
       .then(text => {
-        const json = JSON.parse(text);
-        setMotifs(parseMotifs(json));
+        setMotifs(parseMotifs(JSON.parse(text)));
         setLoading(false);
       })
       .catch(err => {
@@ -54,157 +67,212 @@ export default function SidePattern() {
       });
   }, [fileNumber]);
 
-  const increaseFile = () => setFileNumber(n => n + 1);
-  const decreaseFile = () => setFileNumber(n => Math.max(1, n - 1));
-
   return (
     <Box
+      height="100vh"
+      display="flex"
+      flexDirection="column"
       color="white"
-      p="4"
-      height="100%"
-      maxH="100vh"
-      overflowY="auto"
-      sx={{
-        "&::-webkit-scrollbar": { width: "6px" },
-        "&::-webkit-scrollbar-thumb": {
-          background: "gray.500",
-          borderRadius: "3px"
-        }
-      }}
+      backdropFilter="blur(18px)"
     >
-      <Heading size="md" mb="4">
-        Pattern Panel
-      </Heading>
+      <Box
+        p="4"
+        pb="1"
+        pt="1"
+        borderBottom="1px solid rgba(255,255,255,0.08)"
+      >
+        <Heading size="md" mb="3" fontWeight="600" letterSpacing="-0.02em">
+          Pattern Explorer
+        </Heading>
 
-      {/* File selector */}
-      <HStack mb="4" spacing="2" align="center">
-        <Text fontSize="sm">PATTERN</Text>
-
-        <VStack spacing="0">
-          <IconButton
-            icon={<ChevronUpIcon />}
-            size="xs"
-            aria-label="Increase"
-            onClick={increaseFile}
-          />
-          <IconButton
-            icon={<ChevronDownIcon />}
-            size="xs"
-            aria-label="Decrease"
-            onClick={decreaseFile}
-          />
-        </VStack>
-
-        <Input
-          type="number"
-          value={fileNumber}
-          min={1}
-          width="70px"
-          textAlign="center"
-          onChange={(e) => {
-            const v = Number(e.target.value);
-            if (!Number.isNaN(v) && v >= 1) setFileNumber(v);
-          }}
-        />
-      </HStack>
-
-      {/* Loading */}
-      {loading && (
-        <HStack>
-          <Spinner size="sm" />
-          <Text fontSize="sm">Loading patterns...</Text>
-        </HStack>
-      )}
-
-      {/* Error */}
-      {error && (
-        <Text color="red.300" fontSize="sm">
-          {error}
+        <Text
+          fontSize="xs"
+          textTransform="uppercase"
+          letterSpacing="wider"
+          color="gray.400"
+        >
+          Pattern size
         </Text>
-      )}
 
-      {!loading && !error && (
-        <VStack align="stretch" spacing="6">
-          {motifs.map(motif => (
-            <Box
-              key={motif.id}
-              border="1px solid"
-              borderColor="gray.600"
-              borderRadius="md"
-              p="3"
-              cursor="pointer"
-              _hover={{ borderColor: "gray.200" }}
-              onClick={() => {
-                setSelectedMotif(motif);
+        <HStack justify="center" spacing="4" m="3">
+          <IconButton
+            icon={<ChevronLeftIcon />}
+            size="sm"
+            variant="ghost"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.06)"
+            _hover={{ bg: "rgba(255,255,255,0.12)" }}
+            onClick={() => setFileNumber(n => Math.max(3, n - 1))}
+          />
 
-                setAllInstancesByMotif(prev => ({
-                  ...prev,
-                  [motif.id]: true
-                }));
+          <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
+            {fileNumber}
+          </Text>
 
-                const allNodeIds = motif.instances.flatMap(inst => inst.nodes);
-                controller.highlightNodes(allNodeIds);
-              }}
-            >
-              <HStack spacing="4" mb="2">
-                <Image
-                  src={motif.image}
-                  alt={motif.id}
-                  boxSize="50px"
-                  objectFit="contain"
-                  borderRadius="md"
-                  bgColor={"whiteAlpha.800"}
-                />
-                <Box>
-                  <Text fontWeight="bold">{motif.id}</Text>
-                  <Text fontSize="sm" color="gray.300">
-                    Occurrences: {motif.occurrences}
-                  </Text>
-                  <Text fontSize="sm" color="gray.400">
-                    Instances: {motif.instances.length}
-                  </Text>
-                </Box>
-              </HStack>
-              
-              {/* scroll instances motif */}
-              {selectedMotif?.id === motif.id && (
-                <Box mt="3">
-                  <Text fontSize="xs" mb="1" color="gray.400">
-                    Instance {(selectedInstanceByMotif[motif.id] ?? 0) + 1}
-                    {" / "}
-                    {motif.instances.length}
-                  </Text>
+          <IconButton
+            icon={<ChevronRightIcon />}
+            size="sm"
+            variant="ghost"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.06)"
+            _hover={{ bg: "rgba(255,255,255,0.12)" }}
+            onClick={() => setFileNumber(n => Math.min(10, n + 1))}
+          />
+        </HStack>
 
-                  <Input
-                    type="range"
-                    min={0}
-                    max={motif.instances.length - 1}
-                    step={1}
-                    value={selectedInstanceByMotif[motif.id] ?? 0}
-                    onChange={(e) => {
-                      const idx = Number(e.target.value);
-                      
-                      setSelectedInstanceByMotif(prev => ({
-                        ...prev,
-                        [motif.id]: idx
-                      }));
+        <Text
+          fontSize="xs"
+          textTransform="uppercase"
+          letterSpacing="wider"
+          color="gray.400"
+        >
+          Min occurrences
+        </Text>
 
-                      setAllInstancesByMotif(prev => ({
-                        ...prev,
-                        [motif.id]: false
-                      }));
+        <HStack justify="center" spacing="4" m="3">
+          <IconButton
+            icon={<ChevronLeftIcon />}
+            size="sm"
+            variant="ghost"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.06)"
+            isDisabled={minOccurrences <= 1}
+            onClick={() => setMinOccurrences(n => Math.max(1, n - 1))}
+          />
 
-                      const nodeIds = motif.instances[idx]?.nodes || [];
-                      controller.highlightNodes(nodeIds);
-                    }}
+          <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
+            {minOccurrences}
+          </Text>
 
+          <IconButton
+            icon={<ChevronRightIcon />}
+            size="sm"
+            variant="ghost"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.06)"
+            onClick={() => setMinOccurrences(n => n + 1)}
+          />
+        </HStack>
+      </Box>
+
+      <Box
+        flex="1"
+        minH="0"
+        overflowY="auto"
+        p="4"
+        pb="calc(4 * 1rem + 70px)"
+        boxSizing="border-box"
+        sx={{
+          "&::-webkit-scrollbar": { width: "6px" },
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgba(255,255,255,0.25)",
+            borderRadius: "full"
+          }
+        }}
+      >
+        {loading && (
+          <HStack spacing="3">
+            <Spinner size="sm" />
+            <Text fontSize="sm">Loading patterns…</Text>
+          </HStack>
+        )}
+
+        {error && (
+          <Text color="red.300" fontSize="sm">
+            {error}
+          </Text>
+        )}
+
+        {!loading && !error && (
+          <VStack spacing="6" align="stretch">
+            {motifs.map(motif => {
+              const isSelected = selectedMotif?.id === motif.id;
+              const selectedIdx = selectedInstanceByMotif[motif.id] ?? 0;
+
+              return (
+                <Box
+                  key={motif.id}
+                  p="4"
+                  borderRadius="2xl"
+                  bg="rgba(255,255,255,0.04)"
+                  border="1px solid rgba(255,255,255,0.08)"
+                  cursor="pointer"
+                  transition="all 0.25s ease"
+                  _hover={{
+                    transform: "translateY(-2px)",
+                    bg: "rgba(255,255,255,0.07)"
+                  }}
+                  boxShadow={isSelected ? "0 10px 30px rgba(0,0,0,0.4)" : "none"}
+                  onClick={() => {
+                    // Se clicco un altro motif, seleziono il nuovo e attivo zoom
+                    if (!isSelected) {
+                      setSelectedMotif(motif);
+                      setZoomed(true); // nuovo motif parte zoomato
+                    }
+
+                    if (!(motif.id in selectedInstanceByMotif)) {
+                      controller.highlightNodes(motif.instances.flatMap(i => i.nodes));
+                      setSelectedInstanceByMotif(prev => ({ ...prev, [motif.id]: 0 }));
+                    } else {
+                      controller.highlightNodes(motif.instances[selectedIdx].nodes);
+                    }
+                  }}
+                >
+                  <Image
+                    src={motif.image}
+                    boxSize={isSelected && zoomed ? "220px" : "110px"} // solo il motif selezionato è ingrandito
+                    transition="all 0.3s ease"
+                    objectFit="contain"
+                    mx="auto"
+                    bg="white"
+                    p="2"
+                    borderRadius="xl"
+                    boxShadow="0 8px 20px rgba(0,0,0,0.35)"
+                    mb="3"
                   />
+
+                  {isSelected && (
+                    <VStack spacing="2">
+
+                      <Text fontSize="xs" color="gray.400">
+                        Instance {selectedIdx + 1} / {motif.instances.length}
+                      </Text>
+
+                      <Slider
+                        min={0}
+                        max={motif.instances.length - 1}
+                        step={1}
+                        value={selectedIdx}
+                        onChange={idx => {
+                          setSelectedInstanceByMotif(prev => ({
+                            ...prev,
+                            [motif.id]: idx
+                          }));
+
+                          const instanceNodes = motif.instances[idx].nodes;
+                          controller.highlightNodes(instanceNodes);
+                          controller.zoomOnNodes(instanceNodes);
+                        }}
+                      >
+                        <SliderTrack bg="rgba(255,255,255,0.15)">
+                          <SliderFilledTrack bg="white" />
+                        </SliderTrack>
+                        <SliderThumb
+                          boxSize="4"
+                          bg="white"
+                          boxShadow="0 0 0 6px rgba(255,255,255,0.15)"
+                        />
+                      </Slider>
+
+                    </VStack>
+                  )}
                 </Box>
-              )}
-            </Box>
-          ))}
-        </VStack>
-      )}
+              );
+            })}
+
+          </VStack>
+        )}
+      </Box>
     </Box>
   );
 }

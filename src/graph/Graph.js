@@ -317,17 +317,71 @@ export default function Graph({ graph, controller }) {
                     .attr("opacity", d =>
                         highlighted.size === 0 ? 1
                             : highlighted.has(d.id) ? 1
-                                : 0.30
+                                : 0.3
                     );
 
                 nodeLabel
-                    .style("fill", d => highlighted.has(d.id) ? "red" : "#000")
+                    .transition()
+                    .duration(300)
                     .style("opacity", d =>
                         highlighted.size === 0 ? 1
                             : highlighted.has(d.id) ? 1
                                 : 0.15
                     );
-            }
+
+                // Highlight dei link/frecce
+                link
+                    .transition()
+                    .duration(300)
+                    .attr("stroke", l =>
+                        highlighted.has(l.source.id) && highlighted.has(l.target.id)
+                            ? "red"
+                            : l.type === "used" ? "#FDED00"
+                                : l.type === "wasGeneratedBy" ? "red"
+                                    : l.type === "wasDerivedFrom" ? "#00E572"
+                                        : "#999"
+                    )
+                    .attr("opacity", l =>
+                        highlighted.size === 0 ? 1
+                            : highlighted.has(l.source.id) && highlighted.has(l.target.id)
+                                ? 1
+                                : 0.15
+                    );
+            },
+
+            // Zoom su un insieme di nodi
+            zoomOnNodes: (nodeIds) => {
+                if (!nodeIds || nodeIds.length === 0) return;
+
+                const selectedN = graph.nodes.filter(n => nodeIds.includes(n.id));
+                const minX = Math.min(...selectedN.map(n => n.x));
+                const maxX = Math.max(...selectedN.map(n => n.x));
+                const minY = Math.min(...selectedN.map(n => n.y));
+                const maxY = Math.max(...selectedN.map(n => n.y));
+
+                const svgWidth = window.innerWidth;
+                const svgHeight = window.innerHeight;
+
+                const scaleX = svgWidth / (maxX - minX + 100);
+                const scaleY = svgHeight / (maxY - minY + 100);
+                let targetScale = Math.min(scaleX, scaleY, 6);
+
+                const zoomFactor = 0.55;
+                targetScale *= zoomFactor;
+
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+
+                svg.transition().duration(600)
+                    .call(
+                        zoom.transform,
+                        d3.zoomIdentity
+                            .translate(svgWidth / 2 - centerX * targetScale, svgHeight / 2 - centerY * targetScale)
+                            .scale(targetScale)
+                    );
+            },
+
+
         });
 
         const linksData = graph.links;
