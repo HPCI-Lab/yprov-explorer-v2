@@ -91,9 +91,16 @@ class GraphController {
         this.graphAPI.highlightNodes?.(nodeIds);
     }
 
+    // Zoom on set of nodes
     zoomOnNodes(nodeIds) {
         this.graphAPI.zoomOnNodes?.(nodeIds);
     }
+
+    // Reset view
+    resetHighlight() {
+        this.graphAPI.highlightNodes?.([]);
+    }
+
 
 }
 

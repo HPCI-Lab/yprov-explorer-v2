@@ -13,10 +13,7 @@ import {
   SliderThumb
 } from "@chakra-ui/react";
 
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from "@chakra-ui/icons";
+import {ChevronLeftIcon, ChevronRightIcon} from "@chakra-ui/icons";
 
 import { useEffect, useState } from "react";
 import controller from "../../../../graph/GraphController";
@@ -49,6 +46,10 @@ export default function SidePattern() {
   useEffect(() => {
     setLoading(true);
     setError(null);
+
+    setSelectedMotif(null);
+    setSelectedInstanceByMotif({});
+    setZoomed(false);
 
     fetch(`/patterns/yprov4_${fileNumber}.json`)
       .then(res => {
@@ -102,7 +103,10 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             _hover={{ bg: "rgba(255,255,255,0.12)" }}
-            onClick={() => setFileNumber(n => Math.max(3, n - 1))}
+            onClick={() => {
+              setFileNumber(n => Math.max(3, n - 1))
+              controller.resetHighlight();
+            }}
           />
 
           <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
@@ -116,7 +120,11 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             _hover={{ bg: "rgba(255,255,255,0.12)" }}
-            onClick={() => setFileNumber(n => Math.min(10, n + 1))}
+            onClick={() => {
+              setFileNumber(n => Math.min(10, n + 1));
+              controller.resetHighlight();
+            }}
+
           />
         </HStack>
 
@@ -137,7 +145,10 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             isDisabled={minOccurrences <= 1}
-            onClick={() => setMinOccurrences(n => Math.max(1, n - 1))}
+            onClick={() => {
+              setMinOccurrences(n => Math.max(1, n - 1));
+              controller.resetHighlight();
+            }}
           />
 
           <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
@@ -204,23 +215,27 @@ export default function SidePattern() {
                   }}
                   boxShadow={isSelected ? "0 10px 30px rgba(0,0,0,0.4)" : "none"}
                   onClick={() => {
-                    // Se clicco un altro motif, seleziono il nuovo e attivo zoom
                     if (!isSelected) {
                       setSelectedMotif(motif);
-                      setZoomed(true); // nuovo motif parte zoomato
+                      setZoomed(true); 
                     }
 
                     if (!(motif.id in selectedInstanceByMotif)) {
-                      controller.highlightNodes(motif.instances.flatMap(i => i.nodes));
-                      setSelectedInstanceByMotif(prev => ({ ...prev, [motif.id]: 0 }));
-                    } else {
-                      controller.highlightNodes(motif.instances[selectedIdx].nodes);
+                      const allNodes = motif.instances.flatMap(i => i.nodes);
+
+                      controller.highlightNodes(allNodes);
+                      controller.zoomOnNodes(allNodes);
+
+                      setSelectedInstanceByMotif(prev => ({
+                        ...prev,
+                        [motif.id]: 0
+                      }));
                     }
                   }}
                 >
                   <Image
                     src={motif.image}
-                    boxSize={isSelected && zoomed ? "220px" : "110px"} // solo il motif selezionato è ingrandito
+                    boxSize={isSelected && zoomed ? "220px" : "110px"} 
                     transition="all 0.3s ease"
                     objectFit="contain"
                     mx="auto"

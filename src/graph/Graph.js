@@ -309,7 +309,7 @@ export default function Graph({ graph, controller }) {
                     .transition()
                     .duration(300)
                     .attr("fill", d =>
-                        highlighted.has(d.id) ? "red"
+                        highlighted.has(d.id) ? "#1AA7A7"
                             : d.type === "entity" ? "#fdfd66"
                                 : d.type === "activity" ? "#9898fd"
                                     : "#FF5733"
@@ -329,13 +329,11 @@ export default function Graph({ graph, controller }) {
                                 : 0.15
                     );
 
-                // Highlight dei link/frecce
                 link
                     .transition()
                     .duration(300)
                     .attr("stroke", l =>
-                        highlighted.has(l.source.id) && highlighted.has(l.target.id)
-                            ? "red"
+                        highlighted.has(l.source.id) && highlighted.has(l.target.id) ? "#168484"
                             : l.type === "used" ? "#FDED00"
                                 : l.type === "wasGeneratedBy" ? "red"
                                     : l.type === "wasDerivedFrom" ? "#00E572"
@@ -380,8 +378,41 @@ export default function Graph({ graph, controller }) {
                             .scale(targetScale)
                     );
             },
+            
+            // Reset view
+             resetHighlight: () => {
+                node
+                    .transition()
+                    .duration(300)
+                    .attr("opacity", 1)
+                    .attr("fill", d =>
+                        d.type === "entity" ? "#fdfd66"
+                            : d.type === "activity" ? "#9898fd"
+                                : "#FF5733"
+                    );
 
+                nodeLabel
+                    .transition()
+                    .duration(300)
+                    .style("opacity", 1)
+                    .style("fill", "#000");
 
+                link
+                    .transition()
+                    .duration(300)
+                    .attr("opacity", 1)
+                    .attr("stroke", l =>
+                        l.type === "used" ? "#FDED00"
+                            : l.type === "wasGeneratedBy" ? "red"
+                                : l.type === "wasDerivedFrom" ? "#00E572"
+                                    : "#999"
+                    );
+
+                // reset zoom
+                svg.transition()
+                    .duration(400)
+                    .call(zoom.transform, d3.zoomIdentity);
+            }
         });
 
         const linksData = graph.links;
