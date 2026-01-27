@@ -1,3 +1,10 @@
+/* 
+  FileUploadButton.js
+  This component provides multiple methods for users to upload a JSON file:
+  1. Upload from their computer.
+  2. Upload via a direct URL link.
+  3. Upload from an API endpoint. */
+
 import React, { useState, useRef } from "react";
 import {
   Box,
