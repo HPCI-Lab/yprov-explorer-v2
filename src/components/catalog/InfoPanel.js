@@ -16,11 +16,9 @@ import OpenButton from "./OpenButton";
 import GraphPreview from "./GraphPreview/GraphPreview";
 
 export default function InfoPanel({ file, onClose }) {
-  const [setGraphData] = useState(null);
+  const [graphData, setGraphData] = useState(null);
 
   if (!file || !file.source) return null;
-
-  // 🔹 Extract data exactly like DocumentFile
   const {
     title,
     author,

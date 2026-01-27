@@ -1,12 +1,17 @@
-/* 
-    service for fetching catalog data with filters
-*/
-
+// FilterConnection.js
 import { apiFetch } from "./ConnectionF";
 
-export function getCatalog(filters = {}) {
+// Function to search the catalog based on a query
+export function searchCatalog(query) {
+  const q = query != null ? String(query) : "";
 
-  return apiFetch("/search/all", {
-    params: filters
-  });
+  if (q !== "") {
+    return apiFetch("/search/fulltext", { params: { query: q } });
+  } else {
+    return apiFetch("/search/all");
+  }
+}
+
+export function getCatalog(query) {
+  return searchCatalog(query);
 }

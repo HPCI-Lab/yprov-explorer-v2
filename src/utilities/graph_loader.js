@@ -4,7 +4,7 @@ Function to load graph data from a given URL */
 export const loadGraphFromURL = async (url) => {
   // Fetch the graph JSON from the URL
     try {
-    // fetch graph data
+    // fetch graph data 
     const response = await fetch(url);
     if (!response.ok) throw new Error("Network response was not ok");
     const data = await response.json();

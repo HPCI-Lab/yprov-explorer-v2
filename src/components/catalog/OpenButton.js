@@ -1,4 +1,4 @@
-// OpenButton
+/* open-button component to fetch a JSON file and set graph data */
 
 import React from "react";
 import { Flex, Button, } from "@chakra-ui/react";

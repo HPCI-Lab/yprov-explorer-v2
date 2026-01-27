@@ -1,10 +1,9 @@
 /* GraphPreview.js
    Component to generate and display a preview image of a provenance graph
    from its JSON representation or URL.
-*/
 import React, { useEffect, useState } from "react";
 import { Image } from "@chakra-ui/react";
-import { loadGraphFromURL } from "../../../utilities/graph_loader";
+//import { loadGraphFromURL } from "../../../utilities/graph_loader";
 
 const GraphPreview = ({ graphJSON, url, width = 300, height = 200 }) => {
     // State to hold the generated preview URL
@@ -15,7 +14,7 @@ const GraphPreview = ({ graphJSON, url, width = 300, height = 200 }) => {
     const generatePreview = async () => {
     setLoading(true);
 
-    let data;
+    /*let data;
     let nodes = [];
     let links = [];
 
@@ -44,10 +43,10 @@ const GraphPreview = ({ graphJSON, url, width = 300, height = 200 }) => {
       data = result.json;
       nodes = result.nodes;
       links = result.links;
-    } else {
+    } else { 
       setLoading(false);
-      return;
-    }
+     // return;
+    //}
 
     // Simple force-directed layout for small graphs
     if (nodes.length < 500) {
@@ -106,4 +105,82 @@ const GraphPreview = ({ graphJSON, url, width = 300, height = 200 }) => {
     return <Image src={previewUrl} alt="Graph preview" width={width} height={height} objectFit="contain" />;
     };
 
+export default GraphPreview; */
+
+/* GraphPreview.js
+   Component to generate and display a preview image of a provenance graph
+   from its JSON representation or URL.
+*/
+
+import React, { useEffect, useState } from "react";
+import { Box, Text } from "@chakra-ui/react";
+// import { loadGraphFromURL } from "../../../utilities/graph_loader"; // Commentato per disabilitare fetch
+
+const GraphPreview = ({ graphJSON, url, width = 300, height = 200 }) => {
+    // const [previewUrl, setPreviewUrl] = useState(null); // Commentato
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const generatePreview = async () => {
+            setLoading(true);
+
+            // Disabilitiamo tutta la logica di generazione SVG / fetch
+            /*
+            let data;
+            let nodes = [];
+            let links = [];
+
+            if (graphJSON) {
+                data = graphJSON;
+                nodes = [
+                    ...Object.keys(data.activity || {}).map(id => ({ id, type: "activity" })),
+                    ...Object.keys(data.entity || {}).map(id => ({ id, type: "entity" })),
+                ];
+                links = [
+                    ...Object.values(data.used || {}).map(d => ({
+                        source: d["prov:activity"],
+                        target: d["prov:entity"],
+                    })),
+                    ...Object.values(data.wasGeneratedBy || {}).map(d => ({
+                        source: d["prov:activity"],
+                        target: d["prov:entity"],
+                    })),
+                ];
+            } else if (url) {
+                const result = await loadGraphFromURL(url);
+                if (!result) {
+                    setLoading(false);
+                    return;
+                }
+                data = result.json;
+                nodes = result.nodes;
+                links = result.links;
+            }
+            // logica SVG omessa
+            */
+
+            setLoading(false);
+        };
+
+        generatePreview();
+    }, [graphJSON, url, width, height]);
+
+    // Placeholder semplice invece della preview
+    return (
+        <Box
+            width={width}
+            height={height}
+            bg="gray.700"
+            color="white"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            borderRadius="md"
+        >
+            <Text>Graph preview </Text>
+        </Box>
+    );
+};
+
 export default GraphPreview;
+

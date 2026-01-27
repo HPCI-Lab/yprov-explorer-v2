@@ -21,9 +21,9 @@ function buildQuery(params) {
 
 export async function apiFetch(endpoint, { params } = {}) {
   let url = `${BASE_URL}${endpoint}`;
-  if (params) {
-    const query = buildQuery(params);
-    if (query) url += `?${query}`;
+  if (params && Object.keys(params).length > 0) {
+    const queryString = new URLSearchParams(params).toString();
+    url += `?${queryString}`;
   }
 
   const response = await fetch(url);
@@ -34,3 +34,4 @@ export async function apiFetch(endpoint, { params } = {}) {
 
   return response.json();
 }
+
