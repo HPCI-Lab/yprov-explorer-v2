@@ -1,3 +1,4 @@
+// src/components/layout/sidebar/panels/SidePattern.js
 import {
   Box,
   Heading,
@@ -10,63 +11,154 @@ import {
   Slider,
   SliderTrack,
   SliderFilledTrack,
-  SliderThumb
+  SliderThumb,
+  Input,
+  Button
 } from "@chakra-ui/react";
 
-import {ChevronLeftIcon, ChevronRightIcon} from "@chakra-ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import controller from "../../../../graph/GraphController";
 
-function parseMotifs(data) {
-  return Object.entries(data).map(([motifId, motifData]) => ({
-    id: motifId,
-    image: `/patterns/${motifData.image}`,
-    occurrences: motifData.occurrences,
-    instances: motifData.instances.map((inst, idx) => ({
-      id: idx,
-      nodes: inst
-    }))
-  }));
+function parseMotifs(data, apiBase) {
+  return Object.entries(data).map(([motifId, motifData]) => {
+    let image = motifData.image || "";
+    if (typeof image === "string" && image.startsWith("/")) {
+      const base = apiBase ? apiBase.replace(/\/$/, "") : "";
+      image = `${base}${image}`;
+    }
+    return {
+      id: motifId,
+      image,
+      occurrences: motifData.occurrences,
+      instances: motifData.instances.map((inst, idx) => ({
+        id: idx,
+        nodes: inst
+      }))
+    };
+  });
 }
 
 export default function SidePattern() {
   const [motifs, setMotifs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [fileNumber, setFileNumber] = useState(3);
+  const [knumber, setKnumber] = useState(3);
   const [minOccurrences, setMinOccurrences] = useState(1);
 
   const [selectedMotif, setSelectedMotif] = useState(null);
   const [selectedInstanceByMotif, setSelectedInstanceByMotif] = useState({});
-  const [zoomed, setZoomed] = useState(null);
+  const [zoomed, setZoomed] = useState(false);
 
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [debounceTimer, setDebounceTimer] = useState(null);
+  const [lastCalcKey, setLastCalcKey] = useState(null);
+  const [cleaning, setCleaning] = useState(false); // stato pulizia
 
-  useEffect(() => {
-    setLoading(true);
+  const API_BASE = process.env.REACT_APP_API_SERVER_HOST || "http://localhost:8000";
+
+  // quando si sceglie un file: non calcoliamo subito, solo memorizziamo
+  const handleFileChange = (file) => {
     setError(null);
-
+    setMotifs([]);
     setSelectedMotif(null);
     setSelectedInstanceByMotif({});
     setZoomed(false);
+    setUploadedFile(file || null);
+    // resettiamo lastCalcKey così Calculate sarà disponibile anche se lo stesso nome file
+    setLastCalcKey(null);
+  };
 
-    fetch(`/patterns/yprov4_${fileNumber}.json`)
-      .then(res => {
-        if (!res.ok) throw new Error("Error loading pattern file");
-        return res.text();
-      })
-      .then(text => {
-        setMotifs(parseMotifs(JSON.parse(text)));
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setError(err.message);
-        setMotifs([]);
-        setLoading(false);
+  // Remove / reset + chiamata al backend per pulire file
+  const handleRemove = async () => {
+    // disabilita bottoni
+    setCleaning(true);
+    setError(null);
+
+    try {
+      // chiamiamo endpoint di cleanup sul backend
+      const res = await fetch(`${API_BASE}/motif/cleanup`, {
+        method: "DELETE"
       });
-  }, [fileNumber]);
+
+      if (!res.ok) {
+        let errText = `HTTP ${res.status} ${res.statusText}`;
+        try {
+          const errJson = await res.json();
+          errText = errJson.error || JSON.stringify(errJson);
+        } catch (_) {}
+        throw new Error(errText);
+      }
+
+      // risposta ok -> reset frontend state
+      setUploadedFile(null);
+      setMotifs([]);
+      setSelectedMotif(null);
+      setSelectedInstanceByMotif({});
+      setZoomed(false);
+      setLastCalcKey(null);
+    } catch (err) {
+      console.error("Cleanup failed:", err);
+      setError(err.message || "Cleanup failed");
+    } finally {
+      setCleaning(false);
+    }
+  };
+
+  // Calcola / debounce / previeni doppio click identico
+  const handleCalculate = () => {
+    if (!uploadedFile || loading || cleaning) return;
+
+    const calcKey = `${uploadedFile.name}_${knumber}_${minOccurrences}`;
+    if (calcKey === lastCalcKey) return;
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+      setMotifs([]);
+      setSelectedMotif(null);
+      setSelectedInstanceByMotif({});
+      setZoomed(false);
+
+      const formData = new FormData();
+      formData.append("file", uploadedFile);
+      formData.append("k", knumber);
+      formData.append("min_occurrences", minOccurrences);
+
+      try {
+        const res = await fetch(`${API_BASE}/motif/extract`, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!res.ok) {
+          let errText = `HTTP ${res.status} ${res.statusText}`;
+          try {
+            const errJson = await res.json();
+            errText = errJson.error || JSON.stringify(errJson);
+          } catch (_) {}
+          throw new Error(errText);
+        }
+
+        const data = await res.json();
+        setMotifs(parseMotifs(data, API_BASE));
+        setLastCalcKey(calcKey);
+      } catch (err) {
+        console.error("Error fetching motif data:", err);
+        setError(err.message || "Error fetching motif data");
+      } finally {
+        setLoading(false);
+      }
+    }, 350);
+
+    setDebounceTimer(timer);
+  };
 
   return (
     <Box
@@ -76,23 +168,54 @@ export default function SidePattern() {
       color="white"
       backdropFilter="blur(18px)"
     >
-      <Box
-        p="4"
-        pb="1"
-        pt="1"
-        borderBottom="1px solid rgba(255,255,255,0.08)"
-      >
+      <Box p="4" pb="1" pt="1" borderBottom="1px solid rgba(255,255,255,0.08)">
         <Heading size="md" mb="3" fontWeight="600" letterSpacing="-0.02em">
           Pattern Explorer
         </Heading>
 
-        <Text
-          fontSize="xs"
-          textTransform="uppercase"
-          letterSpacing="wider"
-          color="gray.400"
-        >
-          Pattern size
+        <Input
+          type="file"
+          accept=".json"
+          mb="3"
+          onChange={(e) => handleFileChange(e.target.files && e.target.files[0])}
+          bg="rgba(255,255,255,0.06)"
+        />
+
+        <HStack spacing="3" mb="3">
+          <Button
+            size="sm"
+            fontSize="sm"
+            px="3"
+            onClick={handleCalculate}
+            isLoading={loading}
+            isDisabled={loading || !uploadedFile || cleaning}
+            colorScheme="teal"
+            fontWeight="600"
+          >
+            Calculate
+          </Button>
+
+          <Button
+            size="sm"
+            fontSize="sm"
+            px="3"
+            onClick={handleRemove}
+            variant="ghost"
+            colorScheme="red"
+            isDisabled={loading || cleaning}
+          >
+            Remove
+          </Button>
+
+          {uploadedFile && (
+            <Text fontSize="sm" color="gray.300" ml="2">
+              {uploadedFile.name}
+            </Text>
+          )}
+        </HStack>
+
+        <Text fontSize="xs" textTransform="uppercase" letterSpacing="wider" color="gray.400">
+          Pattern size (k)
         </Text>
 
         <HStack justify="center" spacing="4" m="3">
@@ -103,16 +226,11 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             _hover={{ bg: "rgba(255,255,255,0.12)" }}
-            onClick={() => {
-              setFileNumber(n => Math.max(3, n - 1))
-              controller.resetHighlight();
-            }}
+            onClick={() => setKnumber((n) => Math.max(2, n - 1))}
           />
-
           <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
-            {fileNumber}
+            {knumber}
           </Text>
-
           <IconButton
             icon={<ChevronRightIcon />}
             size="sm"
@@ -120,20 +238,11 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             _hover={{ bg: "rgba(255,255,255,0.12)" }}
-            onClick={() => {
-              setFileNumber(n => Math.min(10, n + 1));
-              controller.resetHighlight();
-            }}
-
+            onClick={() => setKnumber((n) => n + 1)}
           />
         </HStack>
 
-        <Text
-          fontSize="xs"
-          textTransform="uppercase"
-          letterSpacing="wider"
-          color="gray.400"
-        >
+        <Text fontSize="xs" textTransform="uppercase" letterSpacing="wider" color="gray.400">
           Min occurrences
         </Text>
 
@@ -145,23 +254,18 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             isDisabled={minOccurrences <= 1}
-            onClick={() => {
-              setMinOccurrences(n => Math.max(1, n - 1));
-              controller.resetHighlight();
-            }}
+            onClick={() => setMinOccurrences((n) => Math.max(1, n - 1))}
           />
-
           <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
             {minOccurrences}
           </Text>
-
           <IconButton
             icon={<ChevronRightIcon />}
             size="sm"
             variant="ghost"
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
-            onClick={() => setMinOccurrences(n => n + 1)}
+            onClick={() => setMinOccurrences((n) => n + 1)}
           />
         </HStack>
       </Box>
@@ -184,7 +288,7 @@ export default function SidePattern() {
         {loading && (
           <HStack spacing="3">
             <Spinner size="sm" />
-            <Text fontSize="sm">Loading patterns…</Text>
+            <Text fontSize="sm">Calculating patterns…</Text>
           </HStack>
         )}
 
@@ -196,7 +300,7 @@ export default function SidePattern() {
 
         {!loading && !error && (
           <VStack spacing="6" align="stretch">
-            {motifs.map(motif => {
+            {motifs.map((motif) => {
               const isSelected = selectedMotif?.id === motif.id;
               const selectedIdx = selectedInstanceByMotif[motif.id] ?? 0;
 
@@ -217,16 +321,15 @@ export default function SidePattern() {
                   onClick={() => {
                     if (!isSelected) {
                       setSelectedMotif(motif);
-                      setZoomed(true); 
+                      setZoomed(true);
                     }
 
                     if (!(motif.id in selectedInstanceByMotif)) {
-                      const allNodes = motif.instances.flatMap(i => i.nodes);
-
+                      const allNodes = motif.instances.flatMap((i) => i.nodes);
                       controller.highlightNodes(allNodes);
                       controller.zoomOnNodes(allNodes);
 
-                      setSelectedInstanceByMotif(prev => ({
+                      setSelectedInstanceByMotif((prev) => ({
                         ...prev,
                         [motif.id]: 0
                       }));
@@ -235,7 +338,7 @@ export default function SidePattern() {
                 >
                   <Image
                     src={motif.image}
-                    boxSize={isSelected && zoomed ? "220px" : "110px"} 
+                    boxSize={isSelected && zoomed ? "220px" : "110px"}
                     transition="all 0.3s ease"
                     objectFit="contain"
                     mx="auto"
@@ -248,7 +351,6 @@ export default function SidePattern() {
 
                   {isSelected && (
                     <VStack spacing="2">
-
                       <Text fontSize="xs" color="gray.400">
                         Instance {selectedIdx + 1} / {motif.instances.length}
                       </Text>
@@ -258,8 +360,8 @@ export default function SidePattern() {
                         max={motif.instances.length - 1}
                         step={1}
                         value={selectedIdx}
-                        onChange={idx => {
-                          setSelectedInstanceByMotif(prev => ({
+                        onChange={(idx) => {
+                          setSelectedInstanceByMotif((prev) => ({
                             ...prev,
                             [motif.id]: idx
                           }));
@@ -278,13 +380,11 @@ export default function SidePattern() {
                           boxShadow="0 0 0 6px rgba(255,255,255,0.15)"
                         />
                       </Slider>
-
                     </VStack>
                   )}
                 </Box>
               );
             })}
-
           </VStack>
         )}
       </Box>

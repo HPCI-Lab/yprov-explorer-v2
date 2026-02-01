@@ -51,7 +51,6 @@ export default function SidePanelManager({
             default: return null;
         }
     };
-
     return (
         <Box
             position="absolute"

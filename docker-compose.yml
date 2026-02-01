@@ -1,8 +1,45 @@
-version: '3'
+version: '3.8'
+
 services:
-  server:
+
+  # FRONTEND REACT
+  frontend:
+    container_name: yprov_frontend
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_SERVER_HOST: http://localhost:8000
+    ports:
+      - "8080:3000"
+    environment:
+      REACT_APP_PATTERN: "/patterns"
+    restart: always
+    depends_on:
+      - backend
+      - motif_api
+
+  # BACKEND NODE
+  backend:
+    container_name: yprov_backend
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3001:3001"
+    restart: always
+
+  # SERVIZIO PYTHON (GRAPH-TOOLS MOTIF API)
+  motif_api:
+    container_name: yprov_motif
+    build:
+      context: ./service/pattern 
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      REACT_APP_PATTERN: "/patterns"
+    volumes:
+      - ./service/pattern/data:/app/data
+    restart: always
+
