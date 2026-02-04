@@ -1,6 +1,7 @@
 # service/pattern/motif/service.py
 from typing import List, Dict
 
+#build structure
 def build_response(instances_list: List[List[List[str]]], counts: List[int], basenames: List[str], k: int, min_occurs: int) -> Dict:
     response = {}
     for i, insts in enumerate(instances_list):

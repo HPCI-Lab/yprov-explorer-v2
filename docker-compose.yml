@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
 
-  # FRONTEND REACT
+  # Frontend React
   frontend:
     container_name: yprov_frontend
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_SERVER_HOST: http://localhost:8000
+        REACT_APP_API_SERVER_HOST: http://motif_api:8000
     ports:
       - "8080:3000"
     environment:
@@ -19,7 +19,7 @@ services:
       - backend
       - motif_api
 
-  # BACKEND NODE
+  # Backend
   backend:
     container_name: yprov_backend
     build:
@@ -29,7 +29,7 @@ services:
       - "3001:3001"
     restart: always
 
-  # SERVIZIO PYTHON (GRAPH-TOOLS MOTIF API)
+  # API graph-tools for motif
   motif_api:
     container_name: yprov_motif
     build:

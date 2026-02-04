@@ -2,52 +2,69 @@ import { Box } from "@chakra-ui/react";
 import SideInput from "./panels/SideInput";
 import SideCode from "./panels/SideCode";
 import SideTimeline from "./panels/SideTimeline";
-import SideLayers from "./panels/SideLayers"
+import SideLayers from "./panels/SideLayers";
 import SideInfo from "./panels/SideInfo";
 import SidePattern from "./panels/SidePattern";
 import SideSettings from "./panels/SideSettings";
 import NodeInfo from "./panels/SideInfo";
-import React from "react";
+import React, { useState } from "react";
 
 /*
 SidePanelManager.js: panel manager for managing all the feature panels
  */
 
 export default function SidePanelManager({
-                                             activePanel,
-                                             isOpen,
-                                             setGraphData,
-                                             jsonContent,
-                                             setJsonContent,
-                                             selectedNode,
-                                             setSelectedNode,
-                                             setHighlightedNode,
-                                             graphData,
-                                             searchQuery,
-                                             handleSearch,
-                                             findNodeDetails,
-                                         }) {
+                                            activePanel,
+                                            isOpen,
+                                            setGraphData,
+                                            jsonContent,
+                                            setJsonContent,
+                                            selectedNode,
+                                            setSelectedNode,
+                                            setHighlightedNode,
+                                            graphData,
+                                            searchQuery,
+                                            handleSearch,
+                                            findNodeDetails
+}) {
+
+    const [savedGraphFilename, setSavedGraphFilename] = useState(null);
+
     const renderPanel = () => {
         switch (activePanel) {
-            //case "home": return;
-            case "input": return <SideInput setGraphData={setGraphData} jsonContent={jsonContent} setJsonContent={setJsonContent}/>;
-            case "code": return <SideCode/>;
-            case "timeline": return <SideTimeline/>;
-            case "layers": return <SideLayers/>;
-            case "pattern": return <SidePattern/>;
-            case "info": return <NodeInfo
-                nodeInfo={selectedNode}
-                searchQuery={searchQuery}
-                onHighlightNode={(nodeId) => {
-                    setHighlightedNode(nodeId);
-
-                    // Fetch updated node details for the label
-                    const nodeDetails = findNodeDetails(nodeId, graphData);
-                    if (nodeDetails) setSelectedNode(nodeDetails);
-                }}
-                onSearch={handleSearch}
-            />;
-            case "settings": return <SideSettings/>;
+            case "input":
+                return (
+                    <SideInput
+                        setGraphData={setGraphData}
+                        jsonContent={jsonContent}
+                        setJsonContent={setJsonContent}
+                        setSavedGraphFilename={setSavedGraphFilename}
+                    />
+                );
+            case "code": return <SideCode />;
+            case "timeline": return <SideTimeline />;
+            case "layers": return <SideLayers />;
+            case "pattern":
+                return (
+                    <SidePattern
+                        graphData={graphData}
+                        savedGraphFilename={savedGraphFilename}
+                    />
+                );
+            case "info":
+                return (
+                    <NodeInfo
+                        nodeInfo={selectedNode}
+                        searchQuery={searchQuery}
+                        onHighlightNode={(nodeId) => {
+                            setHighlightedNode(nodeId);
+                            const nodeDetails = findNodeDetails(nodeId, graphData);
+                            if (nodeDetails) setSelectedNode(nodeDetails);
+                        }}
+                        onSearch={handleSearch}
+                    />
+                );
+            case "settings": return <SideSettings />;
             default: return null;
         }
     };
@@ -68,6 +85,5 @@ export default function SidePanelManager({
         >
             {renderPanel()}
         </Box>
-
     );
 }

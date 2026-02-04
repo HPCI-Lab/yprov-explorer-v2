@@ -11,6 +11,7 @@ from motif import extract, draw, service as motif_service
 
 app = FastAPI(title="yProv Motif API")
 
+# Middleware with general approach
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,6 +19,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# Work Directory
 BASE_DIR = "data"
 GRAPHS_DIR = os.path.join(BASE_DIR, "graphs")
 IMAGES_DIR = os.path.join(BASE_DIR, "images")
@@ -34,7 +36,7 @@ async def health_check():
 def clear_data_dirs():
     deleted = {"graphs": 0, "images": 0}
     try:
-        # elimina files in graphs
+        # delete graphs file
         for fname in os.listdir(GRAPHS_DIR):
             fpath = os.path.join(GRAPHS_DIR, fname)
             try:
@@ -69,6 +71,50 @@ async def cleanup_endpoint():
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": "Cleanup failed", "details": str(e)})
 
+@app.post("/motif/upload")
+async def upload_graph(file: UploadFile = File(...)):
+    try:
+        clear_data_dirs()
+        uid = str(uuid.uuid4())
+        filename = f"{uid}_{file.filename}"
+        graph_path = os.path.join(GRAPHS_DIR, filename)
+
+        with open(graph_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        return JSONResponse({"status": "ok", "self": filename})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": "Upload failed", "details": str(e)})
+
+# api/graphs (docs)/<id>/motifs/pattern<k>_<min_occur>/occurrences
+@app.post("/motif/extract_saved")
+async def extract_saved(
+    stored_filename: str = Form(...),
+    k: int = Form(3),
+    min_occurrences: int = Form(1)
+):
+    try:
+        graph_path = os.path.join(GRAPHS_DIR, stored_filename)
+        if not os.path.exists(graph_path):
+            return JSONResponse(status_code=400, content={"error": "File not found", "details": f"{stored_filename} not in graphs directory"})
+
+        motif_list, counts, instances_list = extract.apply_motif(
+            graph_path, k=k, min_occurrences=min_occurrences
+        )
+
+        motif_image_basenames = draw.draw_motifs(motif_list, counts, IMAGES_DIR, k=k, min_occurs=min_occurrences)
+
+        response = motif_service.build_response(instances_list, counts, motif_image_basenames, k, min_occurrences)
+
+        return JSONResponse(content=response)
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": "Motif extraction failed", "details": str(e)})
+
+# per visualizzare tutte le istanze di un singolo motif
+#@app.get("api/graphs (docs)/<id>/motifs?k=<k>
+#@app.get("api/graphs (docs)/<id>/motifs/<id>/istanceses
+#  istanceses?k=<n>&min_occurs=<x>")
 @app.post("/motif/extract")
 async def extract_motif(
     file: UploadFile = File(...),
@@ -95,6 +141,7 @@ async def extract_motif(
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": "Motif extraction failed", "details": str(e)})
+
 
 @app.on_event("shutdown")
 def on_shutdown_cleanup():

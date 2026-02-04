@@ -3,8 +3,6 @@ import json
 import os
 from typing import Any, List, Tuple
 
-
-# ---------------------- COSTANTI ----------------------
 ENTITY = 'entity'
 ACTIVITY = 'activity'
 AGENT = 'agent'
@@ -42,10 +40,8 @@ source_dest = {
 
 RELATION = 'relation'
 
-# ---------------------- FUNZIONI PRINCIPALI ----------------------
-
+#Parse JSON of provenance and build graph
 def from_prov_json(file_path: str) -> gt.Graph:
-    """Parse JSON di provenance e costruisce un grafo graph-tool"""
     with open(file_path, 'r') as f:
         json_dict: dict[str, Any] = json.load(f)
 
@@ -69,7 +65,7 @@ def from_prov_json(file_path: str) -> gt.Graph:
     vertex_ids = graph.add_edge_list(edges, eprops=[relation], hashed=True)
     id_to_vertex = {v_id: v_index for v_index, v_id in enumerate(vertex_ids)}
 
-    # proprietà dei vertici
+    # vertex
     vertices = {}
     vertex_types = graph.new_vertex_property('string')
     for vertex_type in node_types:
@@ -80,7 +76,6 @@ def from_prov_json(file_path: str) -> gt.Graph:
             if key in id_to_vertex:
                 vertex_types[id_to_vertex[key]] = vertex_type
 
-    # proprietà aggiuntive
     vertex_additional_types = graph.new_vertex_property('string')
     vertex_level = graph.new_vertex_property('int')
     vertex_source = graph.new_vertex_property('string')
@@ -108,7 +103,7 @@ def from_prov_json(file_path: str) -> gt.Graph:
         if 'analytics4yprov:aggregates' in json_vertex:
             vertex_aggregates[v] = json_vertex['analytics4yprov:aggregates']
 
-    # assegnazione proprietà al grafo
+    # graph property
     graph.vertex_properties['id'] = vertex_ids
     graph.vertex_properties['type'] = vertex_types
     graph.vertex_properties['other_type'] = vertex_additional_types
@@ -121,9 +116,8 @@ def from_prov_json(file_path: str) -> gt.Graph:
 
     return graph
 
-
+# activity subgraph recovery
 def get_activity_subgraph(g: gt.Graph) -> gt.GraphView:
-    """Restituisce il sottografo delle activity"""
     return gt.GraphView(
         g,
         vfilt=lambda v: g.vertex_properties['type'][v] == ACTIVITY,
@@ -132,41 +126,38 @@ def get_activity_subgraph(g: gt.Graph) -> gt.GraphView:
 
 
 
-# ---------- modifica apply_motif ----------
+# apply motif
 def apply_motif(file_path: str, k: int = 3, min_occurrences: int = 1) -> Tuple[List[gt.Graph], List[int], List[List[List[str]]]]:
-
     g = from_prov_json(file_path)
     activity_subgraph = get_activity_subgraph(g)
 
     motif_list_all, counts_all, vertex_maps_list_all = gt.motifs(activity_subgraph, k, return_maps=True)
 
-    # filtra per occorrenze minime
+    # filter min occurs
     valid_indices = [i for i, count in enumerate(counts_all) if count >= min_occurrences]
     motif_list = [motif_list_all[i] for i in valid_indices]
     counts = [counts_all[i] for i in valid_indices]
     vertex_maps_list = [vertex_maps_list_all[i] for i in valid_indices]
 
-    # Converti le mappature (vertex_maps_list) in ID leggibili (stringhe)
+    #build list map of motif instance
     instances_list = []
-    # activity_subgraph condivide vertex_properties['id'] con il grafo originale:
     id_prop = activity_subgraph.vertex_properties.get('id', None)
     for maps_for_motif in vertex_maps_list:
         instances_for_motif = []
         for vertex_map in maps_for_motif:
-            # vertex_map è una lista/array di indici (relativi alla view)
+            # vertex_map is a list of indeces 
             instance_ids = []
             for v_main in vertex_map:
-                # v_main può essere int o un oggetto; assicurati di convertire in int
                 idx = int(v_main)
                 try:
                     v = activity_subgraph.vertex(idx)
                     if id_prop is not None:
                         instance_ids.append(id_prop[v])
                     else:
-                        # fallback: usa l'indice come stringa
+                        # index as a string
                         instance_ids.append(str(int(v)))
                 except Exception:
-                    # fallback se la mappatura non è trovata
+                    # fallback
                     instance_ids.append(str(idx))
             instances_for_motif.append(instance_ids)
         instances_list.append(instances_for_motif)

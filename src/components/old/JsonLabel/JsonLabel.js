@@ -15,21 +15,56 @@ import { unifiedFileLoader } from '../../../server/unified-loader';
 /*
  - setGraphData: Function to set the graph data in the parent component
 */
-const JsonLabel = ({ setGraphData, jsonContent, setJsonContent }) => {
-  const [fileName, setFileName] = useState(null); // State to store the name of the uploaded file
-  //const [jsonContent, setJsonContent] = useState(null); // State to store the JSON content
-  const [showUploadBox, setShowUploadBox] = useState(false); // State to manage the visibility of the upload window
+// JsonLabel.js
+
+
+const API_BASE = process.env.REACT_APP_API_SERVER_HOST || "http://localhost:8000";
+
+/*
+ - setGraphData: Function to set the graph data in the parent component
+ - setSavedGraphFilename: function(filename) -> saved server-side filename
+*/
+const JsonLabel = ({ setGraphData, jsonContent, setJsonContent, setSavedGraphFilename }) => {
+  const [fileName, setFileName] = useState(null);
+  const [showUploadBox, setShowUploadBox] = useState(false);
 
   const getQueryParam = (param) => {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
   };
 
+  // Upload a File instance to server /motif/upload
+  const uploadFileToServer = async (fileObj) => {
+    try {
+      const form = new FormData();
+      form.append("file", fileObj);
+
+      const res = await fetch(`${API_BASE}/motif/upload`, {
+        method: "POST",
+        body: form
+      });
+
+      if (!res.ok) {
+        console.error("Upload failed:", res.statusText);
+        return null;
+      }
+
+      const json = await res.json();
+      if (json && json.filename) {
+        if (setSavedGraphFilename) setSavedGraphFilename(json.filename);
+        return json.filename;
+      }
+      return null;
+    } catch (err) {
+      console.error("Upload error:", err);
+      return null;
+    }
+  };
+
   // Function to handle the file upload and update the states accordingly
-  const handleFileUpload = (name, content) => {
+  const handleFileUpload = async (name, content, originalFile=null) => {
     let parsedContent = content;
 
-    // Check if the content has a 'result' field and parse it if it's a string
     if (content.result && typeof content.result === "string") {
       try {
         parsedContent = JSON.parse(content.result);
@@ -39,69 +74,78 @@ const JsonLabel = ({ setGraphData, jsonContent, setJsonContent }) => {
         return;
       }
     }
-    setFileName(name); // Save the file name in the state
-    setShowUploadBox(false); // Hide the upload window
-    setJsonContent(JSON.stringify(content, null, 2).split("\n")); // Format the JSON content and split it by line 
-    setGraphData(content); // Update the graph data in the parent component 
-    const encodedUrl = encodeURIComponent(name); // Encode the file name to handle special characters
-    window.history.replaceState(null, "", `?file=${encodedUrl}`); // Update the URL with the file name
+
+    setFileName(name);
+    setShowUploadBox(false);
+    setJsonContent(JSON.stringify(content, null, 2).split("\n"));
+    setGraphData(content);
+    const encodedUrl = encodeURIComponent(name);
+    window.history.replaceState(null, "", `?file=${encodedUrl}`);
+    if (originalFile) {
+      await uploadFileToServer(originalFile);
+    } else {
+      try {
+        const blob = new Blob([JSON.stringify(content)], { type: "application/json" });
+        const fakeName = name || "graph.json";
+        const fileObj = new File([blob], fakeName, { type: "application/json" });
+        await uploadFileToServer(fileObj);
+      } catch (err) {
+        console.error("Could not create/upload blob file:", err);
+      }
+    }
   };
 
   const truncateText = (text, maxLength) => {
     if (text.length > maxLength) {
-      return `${text.substring(0, maxLength)}...`; // Truncate the text if it's longer than the max length
+      return `${text.substring(0, maxLength)}...`;
     }
     return text;
   };
 
-  // Load the JSON content from the URL parameter when the component is mounted 
   useEffect(() => {
     const loadContent = async () => {
       const fileUrl = getQueryParam("file");
       if (!fileUrl) return;
-  
+
       try {
-        // Decode the URL to handle special characters
         const decodedUrl = decodeURIComponent(fileUrl);
-        
-        // Check if the URL is a full URL
         const isFullUrl = decodedUrl.startsWith('http://') || decodedUrl.startsWith('https://');
-        
+
         let result;
         if (isFullUrl) {
-          // For full URLs/API, pass the decoded
           result = await unifiedFileLoader(decodedUrl);
         } else {
-          // For relative URLs, pass the original URL
           result = await unifiedFileLoader(fileUrl);
         }
-  
-        // Check if the result is valid
+
         if (!result || !result.data) {
           throw new Error('Invalid data format received');
         }
-  
-        // Set the file name
+
         setFileName(decodedUrl);
-        
-        // Format the JSON content and split it by line
         const formattedContent = JSON.stringify(result.data, null, 2).split("\n");
         setJsonContent(formattedContent);
-        
-        // Update the graph data in the parent component
         setGraphData(result.data);
-        
+
+        try {
+          const blob = new Blob([JSON.stringify(result.data)], { type: "application/json" });
+          const fakeName = decodedUrl.split("/").pop() || "graph.json";
+          const fileObj = new File([blob], fakeName, { type: "application/json" });
+          await uploadFileToServer(fileObj);
+        } catch (err) {
+          console.error("Error uploading loaded URL content to server:", err);
+        }
+
       } catch (error) {
         console.error("Error loading JSON content:", error);
         setJsonContent(["Error loading JSON content. Please try again."]);
         setFileName("Error loading file");
       }
     };
-  
+
     loadContent();
   }, [setGraphData]);
-  
-  
+
   return (
     <div className="json-label-container">
       <div className="json-label-header">
@@ -110,7 +154,7 @@ const JsonLabel = ({ setGraphData, jsonContent, setJsonContent }) => {
       </span>
 
         <div className="upload-button-container">
-        <FileUploadButton onFileUpload={(fileNameOrUrl, content) => handleFileUpload(fileNameOrUrl, content)} />
+        <FileUploadButton onFileUpload={(fileNameOrUrl, content, originalFile) => handleFileUpload(fileNameOrUrl, content, originalFile)} />
         </div>
       </div>
 
@@ -120,16 +164,17 @@ const JsonLabel = ({ setGraphData, jsonContent, setJsonContent }) => {
             <input
               type="file"
               accept=".json"
-              onChange={(e) => {
-                const file = e.target.files[0]; 
-                if (file && file.type === "application/json") { 
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (file && file.type === "application/json") {
                   const reader = new FileReader();
-                  reader.onload = (event) => {
+                  reader.onload = async (event) => {
                     try {
-                      const content = JSON.parse(event.target.result); 
-                      handleFileUpload(file.name, content); 
+                      const content = JSON.parse(event.target.result);
+                      // Pass original file to upload function
+                      await handleFileUpload(file.name, content, file);
                     } catch (error) {
-                      console.error("Errore nel parsing del file JSON", error); 
+                      console.error("Errore nel parsing del file JSON", error);
                     }
                   };
                   reader.readAsText(file);

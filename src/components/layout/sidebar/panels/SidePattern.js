@@ -12,8 +12,8 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  Input,
-  Button
+  Button,
+  Input
 } from "@chakra-ui/react";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
@@ -40,47 +40,51 @@ function parseMotifs(data, apiBase) {
   });
 }
 
-export default function SidePattern() {
+export default function SidePattern({ graphData, savedGraphFilename }) {
   const [motifs, setMotifs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [knumber, setKnumber] = useState(3);
-  const [minOccurrences, setMinOccurrences] = useState(1);
+  const [minOccurrences, setMinOccurrences] = useState(10);
 
   const [selectedMotif, setSelectedMotif] = useState(null);
   const [selectedInstanceByMotif, setSelectedInstanceByMotif] = useState({});
   const [zoomed, setZoomed] = useState(false);
 
-  const [uploadedFile, setUploadedFile] = useState(null);
-  const [debounceTimer, setDebounceTimer] = useState(null);
-  const [lastCalcKey, setLastCalcKey] = useState(null);
-  const [cleaning, setCleaning] = useState(false); // stato pulizia
+  const [calculationDone, setCalculationDone] = useState(false);
 
   const API_BASE = process.env.REACT_APP_API_SERVER_HOST || "http://localhost:8000";
 
-  // quando si sceglie un file: non calcoliamo subito, solo memorizziamo
-  const handleFileChange = (file) => {
+  const clampK = (v) => Math.min(10, Math.max(3, v));
+  const clampMin = (v) => Math.max(1, v);
+
+  const handleCalculate = async () => {
     setError(null);
+
+    if (loading) return;
+
+    if (!savedGraphFilename) {
+      setError("No graphics file has been uploaded to the server. Please upload a file from the Input panel");
+      return;
+    }
+
+    setLoading(true);
     setMotifs([]);
     setSelectedMotif(null);
     setSelectedInstanceByMotif({});
     setZoomed(false);
-    setUploadedFile(file || null);
-    // resettiamo lastCalcKey così Calculate sarà disponibile anche se lo stesso nome file
-    setLastCalcKey(null);
-  };
-
-  // Remove / reset + chiamata al backend per pulire file
-  const handleRemove = async () => {
-    // disabilita bottoni
-    setCleaning(true);
-    setError(null);
+    setCalculationDone(false);
 
     try {
-      // chiamiamo endpoint di cleanup sul backend
-      const res = await fetch(`${API_BASE}/motif/cleanup`, {
-        method: "DELETE"
+      const formData = new FormData();
+      formData.append("stored_filename", savedGraphFilename);
+      formData.append("k", Number(knumber));
+      formData.append("min_occurrences", Number(minOccurrences));
+
+      const res = await fetch(`${API_BASE}/motif/extract_saved`, {
+        method: "POST",
+        body: formData
       });
 
       if (!res.ok) {
@@ -92,72 +96,15 @@ export default function SidePattern() {
         throw new Error(errText);
       }
 
-      // risposta ok -> reset frontend state
-      setUploadedFile(null);
-      setMotifs([]);
-      setSelectedMotif(null);
-      setSelectedInstanceByMotif({});
-      setZoomed(false);
-      setLastCalcKey(null);
+      const data = await res.json();
+      setMotifs(parseMotifs(data, API_BASE));
     } catch (err) {
-      console.error("Cleanup failed:", err);
-      setError(err.message || "Cleanup failed");
+      console.error("Error fetching motif data:", err);
+      setError(err.message || "Error fetching motif data");
     } finally {
-      setCleaning(false);
+      setLoading(false);
+      setCalculationDone(true);
     }
-  };
-
-  // Calcola / debounce / previeni doppio click identico
-  const handleCalculate = () => {
-    if (!uploadedFile || loading || cleaning) return;
-
-    const calcKey = `${uploadedFile.name}_${knumber}_${minOccurrences}`;
-    if (calcKey === lastCalcKey) return;
-
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      setError(null);
-      setMotifs([]);
-      setSelectedMotif(null);
-      setSelectedInstanceByMotif({});
-      setZoomed(false);
-
-      const formData = new FormData();
-      formData.append("file", uploadedFile);
-      formData.append("k", knumber);
-      formData.append("min_occurrences", minOccurrences);
-
-      try {
-        const res = await fetch(`${API_BASE}/motif/extract`, {
-          method: "POST",
-          body: formData
-        });
-
-        if (!res.ok) {
-          let errText = `HTTP ${res.status} ${res.statusText}`;
-          try {
-            const errJson = await res.json();
-            errText = errJson.error || JSON.stringify(errJson);
-          } catch (_) {}
-          throw new Error(errText);
-        }
-
-        const data = await res.json();
-        setMotifs(parseMotifs(data, API_BASE));
-        setLastCalcKey(calcKey);
-      } catch (err) {
-        console.error("Error fetching motif data:", err);
-        setError(err.message || "Error fetching motif data");
-      } finally {
-        setLoading(false);
-      }
-    }, 350);
-
-    setDebounceTimer(timer);
   };
 
   return (
@@ -173,49 +120,8 @@ export default function SidePattern() {
           Pattern Explorer
         </Heading>
 
-        <Input
-          type="file"
-          accept=".json"
-          mb="3"
-          onChange={(e) => handleFileChange(e.target.files && e.target.files[0])}
-          bg="rgba(255,255,255,0.06)"
-        />
-
-        <HStack spacing="3" mb="3">
-          <Button
-            size="sm"
-            fontSize="sm"
-            px="3"
-            onClick={handleCalculate}
-            isLoading={loading}
-            isDisabled={loading || !uploadedFile || cleaning}
-            colorScheme="teal"
-            fontWeight="600"
-          >
-            Calculate
-          </Button>
-
-          <Button
-            size="sm"
-            fontSize="sm"
-            px="3"
-            onClick={handleRemove}
-            variant="ghost"
-            colorScheme="red"
-            isDisabled={loading || cleaning}
-          >
-            Remove
-          </Button>
-
-          {uploadedFile && (
-            <Text fontSize="sm" color="gray.300" ml="2">
-              {uploadedFile.name}
-            </Text>
-          )}
-        </HStack>
-
         <Text fontSize="xs" textTransform="uppercase" letterSpacing="wider" color="gray.400">
-          Pattern size (k)
+          Pattern size 
         </Text>
 
         <HStack justify="center" spacing="4" m="3">
@@ -226,11 +132,28 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             _hover={{ bg: "rgba(255,255,255,0.12)" }}
-            onClick={() => setKnumber((n) => Math.max(2, n - 1))}
+            onClick={() => setKnumber((n) => clampK(n - 1))}
           />
-          <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
-            {knumber}
-          </Text>
+
+          <Input
+            type="number"
+            value={knumber}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (!isNaN(v)) setKnumber(v);
+            }}
+            onBlur={() => setKnumber((n) => clampK(Number(n)))}
+            fontSize="xl"
+            fontWeight="600"
+            minW="40px"
+            textAlign="center"
+            bg="transparent"
+            variant="unstyled"
+            p={0}
+            _focus={{ boxShadow: "none" }}
+            aria-label="k value"
+          />
+
           <IconButton
             icon={<ChevronRightIcon />}
             size="sm"
@@ -238,15 +161,25 @@ export default function SidePattern() {
             borderRadius="full"
             bg="rgba(255,255,255,0.06)"
             _hover={{ bg: "rgba(255,255,255,0.12)" }}
-            onClick={() => setKnumber((n) => n + 1)}
+            onClick={() => setKnumber((n) => clampK(n + 1))}
           />
         </HStack>
 
         <Text fontSize="xs" textTransform="uppercase" letterSpacing="wider" color="gray.400">
-          Min occurrences
+          Minimum Occurrences
         </Text>
 
-        <HStack justify="center" spacing="4" m="3">
+        <HStack justify="center" spacing="3" m="3">
+          <IconButton
+            icon={<Text fontSize="md">&laquo;</Text>}
+            size="sm"
+            variant="ghost"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.06)"
+            isDisabled={minOccurrences <= 1}
+            onClick={() => setMinOccurrences((n) => Math.max(1, n - 100))}
+            _hover={{ bg: "rgba(255,255,255,0.12)" }}
+          />
           <IconButton
             icon={<ChevronLeftIcon />}
             size="sm"
@@ -256,9 +189,26 @@ export default function SidePattern() {
             isDisabled={minOccurrences <= 1}
             onClick={() => setMinOccurrences((n) => Math.max(1, n - 1))}
           />
-          <Text fontSize="xl" fontWeight="600" minW="40px" textAlign="center">
-            {minOccurrences}
-          </Text>
+
+          <Input
+            type="number"
+            value={minOccurrences}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              if (!isNaN(v)) setMinOccurrences(v);
+            }}
+            onBlur={() => setMinOccurrences((n) => clampMin(Number(n)))}
+            fontSize="xl"
+            fontWeight="600"
+            minW="40px"
+            textAlign="center"
+            bg="transparent"
+            variant="unstyled"
+            p={0}
+            _focus={{ boxShadow: "none" }}
+            aria-label="min occurrences"
+          />
+
           <IconButton
             icon={<ChevronRightIcon />}
             size="sm"
@@ -267,7 +217,49 @@ export default function SidePattern() {
             bg="rgba(255,255,255,0.06)"
             onClick={() => setMinOccurrences((n) => n + 1)}
           />
+          <IconButton
+            icon={<Text fontSize="md">&raquo;</Text>}
+            size="sm"
+            variant="ghost"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.06)"
+            onClick={() => setMinOccurrences((n) => n + 100)}
+            _hover={{ bg: "rgba(255,255,255,0.12)" }}
+          />
         </HStack>
+
+        <VStack spacing="3" mb="3">
+          <Button
+            size="sm"
+            fontSize="sm"
+            px="3"
+            w="100%"
+            onClick={handleCalculate}
+            isLoading={loading}
+            isDisabled={loading || !savedGraphFilename}
+            fontWeight="600"
+            color="white"
+            borderRadius="xl"
+            bg="rgba(26, 144, 248, 0.73)"         
+            backdropFilter="blur(10px)"
+            border="1px solid rgba(255,255,255,0.22)"
+            boxShadow="0 4px 14px rgba(0,0,0,0.18)"
+            transition="all 0.2s ease"
+            _hover={{
+              bg: "rgba(51,153,242,0.7)",
+            }}
+            _active={{
+              bg: "rgba(51,153,242,0.55)",
+            }}
+            _disabled={{
+              opacity: 0.45,
+              cursor: "not-allowed",
+            }}
+          >
+            Calculate
+          </Button>
+
+        </VStack>
       </Box>
 
       <Box
@@ -298,7 +290,49 @@ export default function SidePattern() {
           </Text>
         )}
 
-        {!loading && !error && (
+        {!loading && !error && !savedGraphFilename && (
+          <Box
+            h="100%"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            color="whiteAlpha.700"
+            py="10"
+          >
+            <VStack spacing="3">
+              <Text fontSize="sm" fontWeight="500">
+                Before load file
+              </Text>
+              <Text fontSize="xs">
+                Upload a graph file from the Input panel to start.
+              </Text>
+            </VStack>
+          </Box>
+        )}
+
+        {!loading && !error && savedGraphFilename && calculationDone && motifs.length === 0 && (
+          <Box
+            h="100%"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            color="whiteAlpha.700"
+            py="10"
+          >
+            <VStack spacing="3">
+              <Text fontSize="sm" fontWeight="500">
+                No patterns found
+              </Text>
+              <Text fontSize="xs">
+                Try changing the parameters (e.g. <b>k</b> or graph type)
+              </Text>
+            </VStack>
+          </Box>
+        )}
+
+        {!loading && !error && motifs.length > 0 && (
           <VStack spacing="6" align="stretch">
             {motifs.map((motif) => {
               const isSelected = selectedMotif?.id === motif.id;
