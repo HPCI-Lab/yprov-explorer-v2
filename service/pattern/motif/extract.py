@@ -1,3 +1,4 @@
+# service/pattern/motif/extract.py
 import graph_tool.all as gt
 import json
 import os
@@ -124,28 +125,31 @@ def get_activity_subgraph(g: gt.Graph) -> gt.GraphView:
         efilt=lambda e: g.edge_properties[RELATION][e] == 'wasInformedBy'
     )
 
-
-
 # apply motif
-def apply_motif(file_path: str, k: int = 3, min_occurrences: int = 1) -> Tuple[List[gt.Graph], List[int], List[List[List[str]]]]:
+def apply_motif(file_path: str, k: int = 3, min_occurrences: Optional[int] = None) -> Tuple[List[gt.Graph], List[int], List[List[List[str]]]]:
     g = from_prov_json(file_path)
     activity_subgraph = get_activity_subgraph(g)
 
+    # return_maps True for instance mapping
     motif_list_all, counts_all, vertex_maps_list_all = gt.motifs(activity_subgraph, k, return_maps=True)
 
-    # filter min occurs
-    valid_indices = [i for i, count in enumerate(counts_all) if count >= min_occurrences]
-    motif_list = [motif_list_all[i] for i in valid_indices]
-    counts = [counts_all[i] for i in valid_indices]
-    vertex_maps_list = [vertex_maps_list_all[i] for i in valid_indices]
+    # if min_occurrences is provided, filter; otherwise return all
+    if min_occurrences is None:
+        motif_list = motif_list_all
+        counts = counts_all
+        vertex_maps_list = vertex_maps_list_all
+    else:
+        valid_indices = [i for i, count in enumerate(counts_all) if count >= min_occurrences]
+        motif_list = [motif_list_all[i] for i in valid_indices]
+        counts = [counts_all[i] for i in valid_indices]
+        vertex_maps_list = [vertex_maps_list_all[i] for i in valid_indices]
 
-    #build list map of motif instance
+    # build list map of motif instance
     instances_list = []
     id_prop = activity_subgraph.vertex_properties.get('id', None)
     for maps_for_motif in vertex_maps_list:
         instances_for_motif = []
         for vertex_map in maps_for_motif:
-            # vertex_map is a list of indeces 
             instance_ids = []
             for v_main in vertex_map:
                 idx = int(v_main)
@@ -154,13 +158,10 @@ def apply_motif(file_path: str, k: int = 3, min_occurrences: int = 1) -> Tuple[L
                     if id_prop is not None:
                         instance_ids.append(id_prop[v])
                     else:
-                        # index as a string
                         instance_ids.append(str(int(v)))
                 except Exception:
-                    # fallback
                     instance_ids.append(str(idx))
             instances_for_motif.append(instance_ids)
         instances_list.append(instances_for_motif)
 
     return motif_list, counts, instances_list
-

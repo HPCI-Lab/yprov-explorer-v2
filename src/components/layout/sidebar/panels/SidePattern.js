@@ -13,7 +13,8 @@ import {
   SliderFilledTrack,
   SliderThumb,
   Button,
-  Input
+  Input,
+  Collapse
 } from "@chakra-ui/react";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
@@ -41,18 +42,23 @@ function parseMotifs(data, apiBase) {
 }
 
 export default function SidePattern({ graphData, savedGraphFilename }) {
+  const [allMotifs, setAllMotifs] = useState([]);
   const [motifs, setMotifs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [knumber, setKnumber] = useState(3);
-  const [minOccurrences, setMinOccurrences] = useState(10);
+  const [minOccurrences, setMinOccurrences] = useState(1);
 
   const [selectedMotif, setSelectedMotif] = useState(null);
   const [selectedInstanceByMotif, setSelectedInstanceByMotif] = useState({});
   const [zoomed, setZoomed] = useState(false);
 
   const [calculationDone, setCalculationDone] = useState(false);
+
+  const [showFilterControls, setShowFilterControls] = useState(false);
+  const [filterApplied, setFilterApplied] = useState(false);
 
   const API_BASE = process.env.REACT_APP_API_SERVER_HOST || "http://localhost:8000";
 
@@ -71,16 +77,18 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
 
     setLoading(true);
     setMotifs([]);
+    setAllMotifs([]);
     setSelectedMotif(null);
     setSelectedInstanceByMotif({});
     setZoomed(false);
     setCalculationDone(false);
+    setShowFilterControls(false);
+    setFilterApplied(false);
 
     try {
       const formData = new FormData();
       formData.append("stored_filename", savedGraphFilename);
       formData.append("k", Number(knumber));
-      formData.append("min_occurrences", Number(minOccurrences));
 
       const res = await fetch(`${API_BASE}/motif/extract_saved`, {
         method: "POST",
@@ -97,7 +105,9 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
       }
 
       const data = await res.json();
-      setMotifs(parseMotifs(data, API_BASE));
+      const parsed = parseMotifs(data, API_BASE);
+      setAllMotifs(parsed);
+      setMotifs(parsed);
     } catch (err) {
       console.error("Error fetching motif data:", err);
       setError(err.message || "Error fetching motif data");
@@ -105,6 +115,29 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
       setLoading(false);
       setCalculationDone(true);
     }
+  };
+
+  const handleFilter = async () => {
+    setError(null);
+    if (!calculationDone) return;
+
+    setFilterLoading(true);
+    try {
+      const minN = clampMin(Number(minOccurrences));
+      const filtered = allMotifs.filter((m) => m.occurrences >= minN);
+      setMotifs(filtered);
+      setFilterApplied(true);
+    } catch (err) {
+      console.error("Error applying filter:", err);
+      setError(err.message || "Error applying filter");
+    } finally {
+      setFilterLoading(false);
+    }
+  };
+
+  const handleRemoveFilter = () => {
+    setMotifs(allMotifs);
+    setFilterApplied(false);
   };
 
   return (
@@ -165,69 +198,6 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
           />
         </HStack>
 
-        <Text fontSize="xs" textTransform="uppercase" letterSpacing="wider" color="gray.400">
-          Minimum Occurrences
-        </Text>
-
-        <HStack justify="center" spacing="3" m="3">
-          <IconButton
-            icon={<Text fontSize="md">&laquo;</Text>}
-            size="sm"
-            variant="ghost"
-            borderRadius="full"
-            bg="rgba(255,255,255,0.06)"
-            isDisabled={minOccurrences <= 1}
-            onClick={() => setMinOccurrences((n) => Math.max(1, n - 100))}
-            _hover={{ bg: "rgba(255,255,255,0.12)" }}
-          />
-          <IconButton
-            icon={<ChevronLeftIcon />}
-            size="sm"
-            variant="ghost"
-            borderRadius="full"
-            bg="rgba(255,255,255,0.06)"
-            isDisabled={minOccurrences <= 1}
-            onClick={() => setMinOccurrences((n) => Math.max(1, n - 1))}
-          />
-
-          <Input
-            type="number"
-            value={minOccurrences}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              if (!isNaN(v)) setMinOccurrences(v);
-            }}
-            onBlur={() => setMinOccurrences((n) => clampMin(Number(n)))}
-            fontSize="xl"
-            fontWeight="600"
-            minW="40px"
-            textAlign="center"
-            bg="transparent"
-            variant="unstyled"
-            p={0}
-            _focus={{ boxShadow: "none" }}
-            aria-label="min occurrences"
-          />
-
-          <IconButton
-            icon={<ChevronRightIcon />}
-            size="sm"
-            variant="ghost"
-            borderRadius="full"
-            bg="rgba(255,255,255,0.06)"
-            onClick={() => setMinOccurrences((n) => n + 1)}
-          />
-          <IconButton
-            icon={<Text fontSize="md">&raquo;</Text>}
-            size="sm"
-            variant="ghost"
-            borderRadius="full"
-            bg="rgba(255,255,255,0.06)"
-            onClick={() => setMinOccurrences((n) => n + 100)}
-            _hover={{ bg: "rgba(255,255,255,0.12)" }}
-          />
-        </HStack>
-
         <VStack spacing="3" mb="3">
           <Button
             size="sm"
@@ -259,6 +229,99 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
             Calculate
           </Button>
 
+          <Box
+            mt="2"
+            display="flex"
+            justifyContent="center"
+            onClick={() => setShowFilterControls((prev) => !prev)}
+            cursor="pointer"
+          >
+            <Box
+              w="44px"
+              h="5px"
+              borderRadius="full"
+              bg="whiteAlpha.400"
+            />
+          </Box>
+
+          <Collapse in={showFilterControls} animateOpacity>
+            <VStack mt="3" spacing="2">
+              <HStack w="100%" spacing="3">
+                <Text fontSize="xs" color="gray.300">Min occurrences</Text>
+                <Input
+                  type="number"
+                  value={minOccurrences}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) setMinOccurrences(v);
+                  }}
+                  onBlur={() => setMinOccurrences((n) => clampMin(Number(n)))}
+                  fontSize="md"
+                  fontWeight="600"
+                  minW="80px"
+                  textAlign="center"
+                  bg="transparent"
+                  variant="unstyled"
+                  p={0}
+                  _focus={{ boxShadow: "none" }}
+                  aria-label="min occurrences"
+                />
+              </HStack>
+              
+              <HStack w="100%" spacing="3">
+                <Button
+                  size="sm"
+                  fontSize="sm"
+                  px="3"
+                  flex="1"
+                  onClick={handleFilter}
+                  isLoading={filterLoading}
+                  isDisabled={filterLoading || loading || !calculationDone || allMotifs.length === 0}
+                  fontWeight="600"
+                  color="white"
+                  borderRadius="xl"
+                  bg="rgba(26, 144, 248, 0.73)"         
+                  backdropFilter="blur(10px)"
+                  border="1px solid rgba(255,255,255,0.22)"
+                  boxShadow="0 4px 14px rgba(0,0,0,0.18)"
+                  transition="all 0.2s ease"
+                  _hover={{
+                    bg: "rgba(51,153,242,0.7)",
+                  }}
+                  _active={{
+                    bg: "rgba(51,153,242,0.55)",
+                  }}
+                >
+                  Filter
+                </Button>
+
+                <Button
+                  size="sm"
+                  fontSize="sm"
+                  px="3"
+                  flex="1"
+                  onClick={handleRemoveFilter}
+                  isDisabled={!filterApplied}
+                  fontWeight="600"
+                  color="white"
+                  borderRadius="xl"
+                  bg="rgba(220, 53, 69, 0.75)"
+                  backdropFilter="blur(10px)"
+                  border="1px solid rgba(255,255,255,0.22)"
+                  boxShadow="0 4px 14px rgba(0,0,0,0.18)"
+                  transition="all 0.2s ease"
+                  _hover={{
+                    bg: "rgba(220, 53, 69, 0.9)",
+                  }}
+                  _active={{
+                    bg: "rgba(220, 53, 69, 0.6)",
+                  }}
+                >
+                  Remove
+                </Button>
+              </HStack>
+            </VStack>
+          </Collapse>
         </VStack>
       </Box>
 
@@ -275,6 +338,23 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
             background: "rgba(255,255,255,0.25)",
             borderRadius: "full"
           }
+        }}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (!selectedMotif) return;
+          let idx = selectedInstanceByMotif[selectedMotif.id] ?? 0;
+          if (e.key === "ArrowLeft") {
+            idx = Math.max(0, idx - 1);
+          } else if (e.key === "ArrowRight") {
+            idx = Math.min(selectedMotif.instances.length - 1, idx + 1);
+          } else return;
+          setSelectedInstanceByMotif((prev) => ({
+            ...prev,
+            [selectedMotif.id]: idx
+          }));
+          const instanceNodes = selectedMotif.instances[idx].nodes;
+          controller.highlightNodes(instanceNodes);
+          controller.zoomOnNodes(instanceNodes);
         }}
       >
         {loading && (
@@ -353,16 +433,13 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
                   }}
                   boxShadow={isSelected ? "0 10px 30px rgba(0,0,0,0.4)" : "none"}
                   onClick={() => {
-                    if (!isSelected) {
-                      setSelectedMotif(motif);
-                      setZoomed(true);
-                    }
-
+                    setSelectedMotif(motif);
+                    setZoomed(true);
+                    setShowFilterControls(true);
                     if (!(motif.id in selectedInstanceByMotif)) {
                       const allNodes = motif.instances.flatMap((i) => i.nodes);
                       controller.highlightNodes(allNodes);
                       controller.zoomOnNodes(allNodes);
-
                       setSelectedInstanceByMotif((prev) => ({
                         ...prev,
                         [motif.id]: 0
@@ -399,7 +476,6 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
                             ...prev,
                             [motif.id]: idx
                           }));
-
                           const instanceNodes = motif.instances[idx].nodes;
                           controller.highlightNodes(instanceNodes);
                           controller.zoomOnNodes(instanceNodes);

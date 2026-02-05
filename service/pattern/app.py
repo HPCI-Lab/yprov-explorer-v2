@@ -1,3 +1,4 @@
+# service/pattern/app.py
 from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -6,6 +7,8 @@ import shutil
 import os
 import uuid
 import traceback
+from collections import OrderedDict
+from typing import Tuple, Dict, Any
 
 from motif import extract, draw, service as motif_service
 
@@ -74,7 +77,6 @@ async def cleanup_endpoint():
 @app.post("/motif/upload")
 async def upload_graph(file: UploadFile = File(...)):
     try:
-        clear_data_dirs()
         uid = str(uuid.uuid4())
         filename = f"{uid}_{file.filename}"
         graph_path = os.path.join(GRAPHS_DIR, filename)
@@ -82,11 +84,30 @@ async def upload_graph(file: UploadFile = File(...)):
         with open(graph_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
-        return JSONResponse({"status": "ok", "self": filename})
+        return JSONResponse({"status": "ok", "filename": filename})
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": "Upload failed", "details": str(e)})
 
-# api/graphs (docs)/<id>/motifs/pattern<k>_<min_occur>/occurrences
+
+CACHE_MAX = 10
+pattern_cache = OrderedDict()  # type: OrderedDict[str, Dict[str, Any]]
+
+def cache_key_from_filename_and_k(stored_filename: str, k: int) -> Tuple[str, str]:
+    file_id = stored_filename.split("_", 1)[0]
+    return f"{file_id}:{k}", file_id
+
+def evict_one_cache_entry():
+    key, entry = pattern_cache.popitem(last=False)
+    basenames = entry.get("basenames", [])
+    for b in basenames:
+        try:
+            p = os.path.join(IMAGES_DIR, b)
+            if os.path.exists(p):
+                os.remove(p)
+        except Exception:
+            pass
+
+
 @app.post("/motif/extract_saved")
 async def extract_saved(
     stored_filename: str = Form(...),
@@ -98,49 +119,73 @@ async def extract_saved(
         if not os.path.exists(graph_path):
             return JSONResponse(status_code=400, content={"error": "File not found", "details": f"{stored_filename} not in graphs directory"})
 
-        motif_list, counts, instances_list = extract.apply_motif(
-            graph_path, k=k, min_occurrences=min_occurrences
-        )
+        key, file_id = cache_key_from_filename_and_k(stored_filename, k)
 
-        motif_image_basenames = draw.draw_motifs(motif_list, counts, IMAGES_DIR, k=k, min_occurs=min_occurrences)
+        if key in pattern_cache:
+            entry = pattern_cache.pop(key)
+            pattern_cache[key] = entry
+            response = motif_service.build_response(entry["instances_list"], entry["counts"], entry["basenames"], k, 0)
+            return JSONResponse(content=response)
 
-        response = motif_service.build_response(instances_list, counts, motif_image_basenames, k, min_occurrences)
+        motif_list_all, counts_all, instances_list_all = extract.apply_motif(graph_path, k=k, min_occurrences=None)
 
+        basenames = draw.draw_motifs(motif_list_all, counts_all, IMAGES_DIR, k=k, min_occurs=0, file_id=file_id)
+
+        entry = {
+            "motif_list": motif_list_all,
+            "counts": counts_all,
+            "instances_list": instances_list_all,
+            "basenames": basenames
+        }
+        pattern_cache[key] = entry
+        if len(pattern_cache) > CACHE_MAX:
+            evict_one_cache_entry()
+
+        response = motif_service.build_response(instances_list_all, counts_all, basenames, k, 0)
         return JSONResponse(content=response)
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": "Motif extraction failed", "details": str(e)})
 
-# per visualizzare tutte le istanze di un singolo motif
-#@app.get("api/graphs (docs)/<id>/motifs?k=<k>
-#@app.get("api/graphs (docs)/<id>/motifs/<id>/istanceses
-#  istanceses?k=<n>&min_occurs=<x>")
-@app.post("/motif/extract")
-async def extract_motif(
-    file: UploadFile = File(...),
+
+@app.post("/motif/filter_saved")
+async def filter_saved(
+    stored_filename: str = Form(...),
     k: int = Form(3),
     min_occurrences: int = Form(1)
 ):
     try:
-        uid = str(uuid.uuid4())
-        filename = f"{uid}_{file.filename}"
-        graph_path = os.path.join(GRAPHS_DIR, filename)
+        graph_path = os.path.join(GRAPHS_DIR, stored_filename)
+        if not os.path.exists(graph_path):
+            return JSONResponse(status_code=400, content={"error": "File not found", "details": f"{stored_filename} not in graphs directory"})
 
-        with open(graph_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
+        key, file_id = cache_key_from_filename_and_k(stored_filename, k)
 
-        motif_list, counts, instances_list = extract.apply_motif(
-            graph_path, k=k, min_occurrences=min_occurrences
-        )
+        if key not in pattern_cache:
+            motif_list_all, counts_all, instances_list_all = extract.apply_motif(graph_path, k=k, min_occurrences=None)
+            basenames = draw.draw_motifs(motif_list_all, counts_all, IMAGES_DIR, k=k, min_occurs=0, file_id=file_id)
+            entry = {
+                "motif_list": motif_list_all,
+                "counts": counts_all,
+                "instances_list": instances_list_all,
+                "basenames": basenames
+            }
+            pattern_cache[key] = entry
+            if len(pattern_cache) > CACHE_MAX:
+                evict_one_cache_entry()
 
-        motif_image_basenames = draw.draw_motifs(motif_list, counts, IMAGES_DIR, k=k, min_occurs=min_occurrences)
+        entry = pattern_cache.pop(key)
+        pattern_cache[key] = entry
 
-        response = motif_service.build_response(instances_list, counts, motif_image_basenames, k, min_occurrences)
+        counts_all = entry["counts"]
+        instances_all = entry["instances_list"]
+        basenames = entry["basenames"]
 
+        response = motif_service.build_response(instances_all, counts_all, basenames, k, 0)
         return JSONResponse(content=response)
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": "Motif extraction failed", "details": str(e)})
+        return JSONResponse(status_code=500, content={"error": "Filter failed", "details": str(e)})
 
 
 @app.on_event("shutdown")
