@@ -39,7 +39,7 @@ const JsonLabel = ({ setGraphData, jsonContent, setJsonContent, setSavedGraphFil
       const form = new FormData();
       form.append("file", fileObj);
 
-      const res = await fetch(`${API_BASE}/motif/upload`, {
+      const res = await fetch(`${API_BASE}/api/graphs/upload`, {
         method: "POST",
         body: form
       });

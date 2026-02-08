@@ -23,23 +23,21 @@ import { useState } from "react";
 import controller from "../../../../graph/GraphController";
 
 function parseMotifs(data, apiBase) {
-  return Object.entries(data).map(([motifId, motifData]) => {
-    let image = motifData.image || "";
+  return (Array.isArray(data) ? data : []).map((m) => {
+    let image = m.image || "";
     if (typeof image === "string" && image.startsWith("/")) {
       const base = apiBase ? apiBase.replace(/\/$/, "") : "";
       image = `${base}${image}`;
     }
     return {
-      id: motifId,
+      id: m.motif_id || (m.motifId || ""),
       image,
-      occurrences: motifData.occurrences,
-      instances: motifData.instances.map((inst, idx) => ({
-        id: idx,
-        nodes: inst
-      }))
+      occurrences: m.occurrences || m.count || 0,
+      instances: (m.instances || []).map((inst, idx) => ({ id: idx, nodes: inst }))
     };
   });
 }
+
 
 export default function SidePattern({ graphData, savedGraphFilename }) {
   const [allMotifs, setAllMotifs] = useState([]);
@@ -87,12 +85,12 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
 
     try {
       const formData = new FormData();
-      formData.append("stored_filename", savedGraphFilename);
-      formData.append("k", Number(knumber));
+      formData.append("min_occurrences", Number(minOccurrences));
 
-      const res = await fetch(`${API_BASE}/motif/extract_saved`, {
+      const encodedFilename = encodeURIComponent(savedGraphFilename);
+      const res = await fetch(`${API_BASE}/api/graphs/${encodedFilename}/pattern?k=${Number(knumber)}&min_occurrences=${Number(minOccurrences)}`, {
         method: "POST",
-        body: formData
+        //body: formData
       });
 
       if (!res.ok) {
@@ -124,8 +122,19 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
     setFilterLoading(true);
     try {
       const minN = clampMin(Number(minOccurrences));
-      const filtered = allMotifs.filter((m) => m.occurrences >= minN);
-      setMotifs(filtered);
+      const encodedFilename = encodeURIComponent(savedGraphFilename);
+      const res = await fetch(`${API_BASE}/api/graphs/${encodedFilename}/pattern?k=${Number(knumber)}&min_count=${minN}`);
+      if (!res.ok) {
+        let errText = `HTTP ${res.status} ${res.statusText}`;
+        try {
+          const errJson = await res.json();
+          errText = errJson.error || JSON.stringify(errJson);
+        } catch (_) {}
+        throw new Error(errText);
+      }
+      const data = await res.json();
+      const parsed = parseMotifs(data, API_BASE);
+      setMotifs(parsed);
       setFilterApplied(true);
     } catch (err) {
       console.error("Error applying filter:", err);
@@ -133,6 +142,7 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
     } finally {
       setFilterLoading(false);
     }
+
   };
 
   const handleRemoveFilter = () => {
@@ -435,7 +445,6 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
                   onClick={() => {
                     setSelectedMotif(motif);
                     setZoomed(true);
-                    setShowFilterControls(true);
                     if (!(motif.id in selectedInstanceByMotif)) {
                       const allNodes = motif.instances.flatMap((i) => i.nodes);
                       controller.highlightNodes(allNodes);

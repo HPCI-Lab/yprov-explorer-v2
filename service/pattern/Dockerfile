@@ -19,7 +19,8 @@ RUN /venv/bin/pip install --upgrade pip
 RUN /venv/bin/pip install --no-cache-dir \
     fastapi \
     uvicorn \
-    python-multipart
+    python-multipart \
+    markdown pygments
 
 # Copy backend code
 COPY . /app
