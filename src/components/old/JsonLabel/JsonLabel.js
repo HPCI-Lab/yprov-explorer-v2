@@ -20,10 +20,6 @@ import { unifiedFileLoader } from '../../../server/unified-loader';
 
 const API_BASE = process.env.REACT_APP_API_SERVER_HOST || "http://localhost:8000";
 
-/*
- - setGraphData: Function to set the graph data in the parent component
- - setSavedGraphFilename: function(filename) -> saved server-side filename
-*/
 const JsonLabel = ({ setGraphData, jsonContent, setJsonContent, setSavedGraphFilename }) => {
   const [fileName, setFileName] = useState(null);
   const [showUploadBox, setShowUploadBox] = useState(false);
@@ -33,7 +29,7 @@ const JsonLabel = ({ setGraphData, jsonContent, setJsonContent, setSavedGraphFil
     return urlParams.get(param);
   };
 
-  // Upload a File instance to server /motif/upload
+  // Upload a File instance to server /api/graphs/upload
   const uploadFileToServer = async (fileObj) => {
     try {
       const form = new FormData();

@@ -1,3 +1,5 @@
+🇮🇹 Italiano | [🇬🇧 English](/api/graphs?lang=en)
+
 # Provenance Graph Motif API
 
 Motif API fornisce un’interfaccia per l’estrazione di pattern di sottografi a partire da un grafo di origine fornito in input. Il servizio è basato su un’architettura *Python* e si appoggia principalmente alla libreria **Graph-Tool**. A partire dal source graph, la libreria consente di individuare ed estrarre i pattern strutturali ricorrenti del grafo, definiti come *Motif*.

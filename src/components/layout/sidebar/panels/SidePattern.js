@@ -22,6 +22,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { useState } from "react";
 import controller from "../../../../graph/GraphController";
 
+//PARSE STRCTURE OF PATTERN
 function parseMotifs(data, apiBase) {
   return (Array.isArray(data) ? data : []).map((m) => {
     let image = m.image || "";
@@ -47,7 +48,7 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
   const [error, setError] = useState(null);
 
   const [knumber, setKnumber] = useState(3);
-  const [minOccurrences, setMinOccurrences] = useState(1);
+  const [minOccurrences, setMinOccurrences] = useState(10);
 
   const [selectedMotif, setSelectedMotif] = useState(null);
   const [selectedInstanceByMotif, setSelectedInstanceByMotif] = useState({});
@@ -58,11 +59,14 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
   const [showFilterControls, setShowFilterControls] = useState(false);
   const [filterApplied, setFilterApplied] = useState(false);
 
+  // PATH API
   const API_BASE = process.env.REACT_APP_API_SERVER_HOST || "http://localhost:8000";
 
+  // FUNCTION TO HANDLE PARAMETERS
   const clampK = (v) => Math.min(10, Math.max(3, v));
-  const clampMin = (v) => Math.max(1, v);
+  const clampMin = (v) => Math.max(2, v);
 
+  // FUNCTION TO HANDLE UPLOAD FILE AND THE PATTERN EXTRACTION
   const handleCalculate = async () => {
     setError(null);
 
@@ -115,6 +119,7 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
     }
   };
 
+  // FILTER FUNCTION (MANAGE MIN_OCCURECES)
   const handleFilter = async () => {
     setError(null);
     if (!calculationDone) return;
@@ -145,12 +150,16 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
 
   };
 
+  //CLEAN UP FUNCTION
   const handleRemoveFilter = () => {
     setMotifs(allMotifs);
     setFilterApplied(false);
   };
 
   return (
+    //#######################
+    // SMART CONTROLLER
+    //#######################
     <Box
       height="100vh"
       display="flex"
@@ -334,7 +343,10 @@ export default function SidePattern({ graphData, savedGraphFilename }) {
           </Collapse>
         </VStack>
       </Box>
-
+      
+      {/* ####################
+          INSTANCE PATTERN BOX
+          #####################*/}
       <Box
         flex="1"
         minH="0"

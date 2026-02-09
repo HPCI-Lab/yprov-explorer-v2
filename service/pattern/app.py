@@ -133,28 +133,48 @@ import markdown
 import os
 
 @app.get("/api/graphs")
-async def api_home():
-    readme_path = os.path.join(os.path.dirname(__file__), "README.md")
+async def api_home(lang: str = Query("it")):
+
+    filename = "README.it.md" if lang == "it" else "README.en.md"
+    readme_path = os.path.join(os.path.dirname(__file__), filename)
+
     if not os.path.exists(readme_path):
-        return HTMLResponse("<h1>Motif API</h1><p>README.md non trovato</p>", status_code=500)
+        return HTMLResponse(
+            "<h1>Motif API</h1><p>README not found</p>",
+            status_code=500
+        )
+
     with open(readme_path, "r", encoding="utf-8") as f:
         md = f.read()
+
     try:
         files = os.listdir(GRAPHS_DIR)
     except Exception:
         files = []
+
     if files:
-        graphs_md = "\n".join(f"- **{f}**  \n  ID: `{f.split('_', 1)[0]}`" for f in files)
+        graphs_md = "\n".join(
+            f"- **{f}**  \n  ID: `{f.split('_', 1)[0]}`"
+            for f in files
+        )
     else:
-        graphs_md = "_Nessun file caricato_"
-    header = "## File Caricati"
+        graphs_md = "_No uploaded files_" if lang == "en" else "_Nessun file caricato_"
+
+    header = "## Uploaded Files" if lang == "en" else "## File Caricati"
+
     if header in md:
         parts = md.split(header, 1)
         md = parts[0] + header + "\n\n" + graphs_md + "\n\n" + parts[1]
     else:
-        md = md + "\n\n## File Caricati\n\n" + graphs_md
-    html_body = markdown.markdown(md, extensions=["fenced_code", "tables", "toc", "codehilite"])
-    full = f"""<!doctype html>
+        md += f"\n\n{header}\n\n{graphs_md}"
+
+    html_body = markdown.markdown(
+        md,
+        extensions=["fenced_code", "tables", "toc", "codehilite"]
+    )
+
+    return HTMLResponse(f"""
+<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -183,8 +203,8 @@ async def api_home():
 {html_body}
 </body>
 </html>
-"""
-    return HTMLResponse(content=full)
+""")
+
 
 
 
