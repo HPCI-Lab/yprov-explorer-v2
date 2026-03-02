@@ -28,6 +28,8 @@ services:
     ports:
       - "3001:3001"
     restart: always
+    depends_on:
+      - motif_api
 
   # API graph-tools for motif
   motif_api:
