@@ -1,7 +1,7 @@
 // notebookLoader.js
-
+//linearize the notebook: split the code into lines
 export function linearizeNotebook(notebook) {
-    const lines = [];
+    const lines = [];   //lines
     let lineNumber = 1;
 
     if (!notebook?.cells) return lines;
@@ -9,6 +9,7 @@ export function linearizeNotebook(notebook) {
     notebook.cells.forEach((cell, cellIndex) => {
         if (cell.cell_type !== "code") return;
 
+        //builds the lines
         cell.source.forEach((line) => {
             lines.push({
                 lineNumber,
@@ -18,6 +19,7 @@ export function linearizeNotebook(notebook) {
             lineNumber++;
         });
 
+        //joins the lines
         lines.push({
             lineNumber,
             cellIndex,

@@ -6,8 +6,6 @@ import {useNotebookModel} from "./Notebook/notebookModel";
 import controller from "../../graph/GraphController";
 import Filters from "./Notebook/Filters";
 import {FilterIcon} from "lucide-react";
-
-
 /*
 CodePanel.js: contains the code editor for viewing cells code of the graph
  */
@@ -71,55 +69,6 @@ export default function CodePanel({ graphData, notebook }) {
     if (loading) return <div>Loading notebook…</div>;
     if (error) return <div>Error loading notebook</div>;
 
-    //-----Parsing Notebook------------
-    /*
-    const {
-        code,
-        loading,
-        error,
-    } = useNotebookProvenance(
-        "/dataset_mean.ipynb",
-        "/dataset_mean_jt.json"
-    );
-
-
-    if (loading) return <div>Loading notebook…</div>;
-    if (error) return <div>Error loading notebook</div>;
-    */
-/*
-    function handleLineClick(cellIndex, lineNumber) {
-        if (!graphData) return;
-
-        const matched = graphData.nodes.filter(n => {
-            const a = n.attributes || {};
-
-            const nodeCell = a["yprov4wfs:jupyter_cell_index"];
-            const start = Number(a["yprov4wfs:jupyter_cell_line_start"]);
-            const end   = Number(a["yprov4wfs:jupyter_cell_line_end"]);
-
-            if (nodeCell == null || Number(nodeCell) !== Number(cellIndex)) {
-                return false;
-            }
-
-            if (Number.isNaN(start) || Number.isNaN(end)) {
-                return false;
-            }
-
-            return lineNumber >= start && lineNumber <= end;
-        });
-
-        const ids = matched.map(n => n.id);
-
-        controller.highlightNodes(ids);
-
-        if (ids.length === 0) {
-            setNoProvenanceLine(lineNumber);
-        } else {
-            setNoProvenanceLine(null);
-        }
-        console.log("Highlight nodes:", ids);
-    }
-*/
     //DEMO
     function handleLineClick(_, lineNumber) {
         console.log("CLICKED LINE:", lineNumber);
@@ -167,7 +116,6 @@ export default function CodePanel({ graphData, notebook }) {
             w="100%"
             h="100%"
             minH="0"
-            bg="gray.700"
             p="4"
             color="white"
             display="flex"
@@ -188,15 +136,6 @@ export default function CodePanel({ graphData, notebook }) {
                             </Box>
                         </Box>
                     </HStack>
-                    <Box
-                        fontSize="xs"
-                        px="2"
-                        py="1"
-                        bg="yellow.500"
-                        color="black"
-                    >
-                        Unlinked
-                    </Box>
                     <IconButton
                         aria-label="Toggle filters"
                         size="sm"
@@ -215,7 +154,6 @@ export default function CodePanel({ graphData, notebook }) {
                         left="0"
                         right="0"
                         zIndex="20"
-                        bg="gray.700"
                         borderBottom="1px solid"
                         borderColor="whiteAlpha.300"
                         p="3"

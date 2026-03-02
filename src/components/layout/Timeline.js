@@ -8,8 +8,6 @@ export default function Timeline() {
     return (
         <Box
             h="70px"
-            bg="gray.800"
-            color="white"
             display="flex"
             alignItems="center"
             p="4"

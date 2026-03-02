@@ -30,7 +30,6 @@ export default function SidePanelManager({
     const renderPanel = () => {
         switch (activePanel) {
             //case "home": return;
-            case "input": return <SideInput setGraphData={setGraphData} jsonContent={jsonContent} setJsonContent={setJsonContent}/>;
             case "code": return <SideCode graphData={graphData}/>;
             case "timeline": return <SideTimeline/>;
             case "layers": return <SideLayers/>;

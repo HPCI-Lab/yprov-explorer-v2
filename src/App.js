@@ -52,6 +52,7 @@ function App() {
         controller.setGraphData(parsed);
     };
 
+    const hasNotebook = !!dataset?.notebook;
 
     return (
         <Flex direction="column" h="100vh" w="100vw" bg="black" color="white">
@@ -77,7 +78,7 @@ function App() {
                 <Flex flex="1" position="relative" overflow="hidden" minWidth={0} minH="0">
                     {/* Graph canvas */}
                     <GraphContainer graphData={graphData}/>
-                    {isCodePanelVisible && (
+                    {isCodePanelVisible && hasNotebook &&(
                             <Resizable
                                 defaultSize={{
                                     width: 400,
@@ -102,10 +103,12 @@ function App() {
                                 }}
                             >
                                 {/*Code panel for viewing the code*/}
-                                <CodePanel
-                                    graphData={graphData}
-                                    notebook={dataset?.notebook}
-                                />
+                                {hasNotebook && (
+                                    <CodePanel
+                                        graphData={graphData}
+                                        notebook={dataset?.notebook}
+                                    />
+                                )}
                             </Resizable>
                         )
                     }

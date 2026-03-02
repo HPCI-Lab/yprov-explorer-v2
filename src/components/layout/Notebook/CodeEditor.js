@@ -10,7 +10,6 @@ import { gutter, GutterMarker } from "@codemirror/view";
 class ProvenanceMarker extends GutterMarker {
     toDOM() {
         const el = document.createElement("div");
-        el.textContent = "●";
         el.style.color = "#facc15";
         el.style.fontSize = "10px";
         el.style.lineHeight = "1";
@@ -20,7 +19,6 @@ class ProvenanceMarker extends GutterMarker {
 }
 
 const provenanceMarker = new ProvenanceMarker();
-
 
 export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
     const [fontSize, setFontSize] = useState(14);
@@ -91,8 +89,6 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
         },
     });
 
-
-
     return (
         <Box
             w="100%"
@@ -119,7 +115,7 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
             <Box
                 flex="1"
                 position="relative"
-                bg="gray.900"
+                bg="gray.750"
                 border="1px solid"
                 minH="0"
                 borderColor="whiteAlpha.200"
@@ -136,7 +132,7 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
                     height="28px"
                     px="2"
                     spacing={1}
-                    bg="gray.900"
+                    bg="gray.800"
                     borderBottom="1px solid"
                     borderColor="whiteAlpha.200"
                     zIndex="10"
@@ -165,7 +161,6 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
                 <Box
                     overflow="hidden"
                     flex="1"
-                    bg="gray.900"
                     width="100%"
                     minHeight="0"
                     border="1px gray.600"

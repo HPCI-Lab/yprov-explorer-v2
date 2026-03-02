@@ -15,6 +15,59 @@ export default function Graph({ graph, controller }) {
         type: "module"
     });
 
+    function roundedRectPath(width, height, radius) {
+        // Define the corner points of the rectangle with rounded corners
+        const x0 = -width / 2;
+        const x1 = width / 2;
+        const y0 = -height / 2;
+        const y1 = height / 2;
+
+        // Return the path for the rounded rectangle
+        return `
+      M ${x0 + radius},${y0}
+      H ${x1 - radius}
+      A ${radius},${radius} 0 0 1 ${x1},${y0 + radius}
+      V ${y1 - radius}
+      A ${radius},${radius} 0 0 1 ${x1 - radius},${y1}
+      H ${x0 + radius}
+      A ${radius},${radius} 0 0 1 ${x0},${y1 - radius}
+      V ${y0 + radius}
+      A ${radius},${radius} 0 0 1 ${x0 + radius},${y0}
+      Z
+    `;
+    }
+
+    // Function to create a rectangle path for the nodes (activities)
+    function rectPath(width, height) {
+        const x0 = -width / 2;
+        const x1 = width / 2;
+        const y0 = -height / 2;
+        const y1 = height / 2;
+
+        // Return the path for the rectangle
+        return `
+      M ${x0},${y0}
+      L ${x1},${y0}
+      L ${x1},${y1}
+      L ${x0},${y1}
+      Z
+    `;
+    }
+
+    // Function to create a house path for the nodes (agents)
+    function housePath(size) {
+        const half = size / 2;
+
+        return `
+      M ${-half},0
+      L ${-half},${half}
+      L ${half},${half}
+      L ${half},0
+      L 0,${-half}
+      Z
+    `;
+    }
+
     //Graph initialization
     useEffect(() => {
         if (!graph) return;
@@ -116,10 +169,9 @@ export default function Graph({ graph, controller }) {
 
         //Nodes drawing and properties
         const node = g.append("g")
-            .selectAll("circle")
+            .selectAll("path")
             .data(graph.nodes)
-            .join("circle")
-            .attr("r", 15)
+            .join("path")
             .attr("stroke", "#000")
             .attr("stroke-width", 1.5)
             .attr("fill", d =>
@@ -127,6 +179,11 @@ export default function Graph({ graph, controller }) {
                     : d.type === "activity" ? "#9898fd"
                         : "#FF5733"
             )
+            .attr("d", d => {
+                if (d.type === "entity") return roundedRectPath(40, 30, 8);
+                if (d.type === "activity") return rectPath(40, 30);
+                return housePath(30);
+            })
             .call(d3.drag()
                 .on("start", event => {
                     if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -142,7 +199,6 @@ export default function Graph({ graph, controller }) {
                     event.subject.fx = null;
                     event.subject.fy = null;
                 })
-
             );
 
         //Node labels
@@ -183,9 +239,7 @@ export default function Graph({ graph, controller }) {
                 .attr("y1", d => d.source.y)
                 .attr("x2", d => d.target.x)
                 .attr("y2", d => d.target.y);
-            node
-                .attr("cx", d => d.x)
-                .attr("cy", d => d.y);
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
             nodeLabel
                 .attr("x", d => d.x)
                 .attr("y", d => d.y);
@@ -481,9 +535,6 @@ export default function Graph({ graph, controller }) {
         return () => {
             window.removeEventListener("resize", handleResize);
         };
-
-
-
 
     }, [graph]);
 

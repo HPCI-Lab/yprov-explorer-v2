@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {linearizeNotebook} from "./notebookLoader";
 
+//builds the notebook cells based on the lines
 function buildCells(notebookLines, provNodes) {
     const activityNodes = provNodes.filter(n => n.type === "activity");
     const cellsMap = new Map();
@@ -35,6 +36,7 @@ function buildCells(notebookLines, provNodes) {
     );
 }
 
+//graph-notebook association
 export function useNotebookModel(notebookJson, provGraph) {
     const [lines, setLines] = useState([]);
     const [cells, setCells] = useState([]);
@@ -47,7 +49,6 @@ export function useNotebookModel(notebookJson, provGraph) {
             setCells([]);
             return;
         }
-
         try {
             setLoading(true);
 

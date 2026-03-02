@@ -6,7 +6,6 @@ export default function Sidebar({onOpenPanel}) {
     return (
         <Box
             w="48px"
-            bg="gray.900"
             color="white"
             display="flex"
             flexDirection="column"
@@ -21,54 +20,41 @@ export default function Sidebar({onOpenPanel}) {
                     icon={<Home size={18}/>}
                     aria-label="menu"
                     size="sm"
-                    bg="gray.700"
                     onClick={() => onOpenPanel("home")}
-                />
-                <IconButton
-                    icon={<Folder size={18}/>}
-                    aria-label="input"
-                    size="sm"
-                    bg="gray.700"
-                    onClick={() => onOpenPanel("input")}
                 />
                 <IconButton
                     icon={<Code2 size={18}/>}
                     aria-label="code"
                     size="sm"
-                    bg="gray.700"
                     onClick={() => onOpenPanel("code")}
                 />
                 <IconButton
                     icon={<Activity size={18}/>}
                     aria-label="timeline"
                     size="sm"
-                    bg="gray.700"
                     onClick={() => onOpenPanel("timeline")}
                 />
                 <IconButton
                     icon={<Layers size={18}/>}
                     aria-label="layers"
                     size="sm"
-                    bg="gray.700"
                     onClick={() => onOpenPanel("layers")}
                 />
                 <IconButton
                     aria-label="pattern"
                     size="sm"
-                    bg="gray.700"
                     onClick={() => onOpenPanel("pattern")}
                 />
                 <IconButton
                     icon={<InfoIcon boxSize={4}/>}
                     aria-label="settings"
                     size="sm"
-                    bg="gray.700"
                     onClick={() => onOpenPanel("info")}
                 />
 
             </VStack>
 
-            <IconButton icon={<SettingsIcon boxSize={4}/>} size="sm" aria-label="bottom-settings" bg="gray.700" onClick={() => onOpenPanel("settings")}/>
+            <IconButton icon={<SettingsIcon boxSize={4}/>} size="sm" aria-label="bottom-settings" onClick={() => onOpenPanel("settings")}/>
         </Box>
     );
 }

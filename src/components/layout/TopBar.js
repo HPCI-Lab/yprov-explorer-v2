@@ -1,10 +1,22 @@
-import {Flex, Input, IconButton, Box, Menu, Text, MenuButton, MenuList, MenuItem, Divider} from "@chakra-ui/react";
+import {
+    Flex,
+    Input,
+    IconButton,
+    Box,
+    Menu,
+    Text,
+    MenuButton,
+    MenuList,
+    MenuItem,
+    Divider,
+    useColorMode
+} from "@chakra-ui/react";
 import { SunIcon } from "@chakra-ui/icons";
 import { Image } from "@chakra-ui/react"
 import {useState} from "react";
 import controller from "../../graph/GraphController";
 import DatasetUpload from "../../inputs/DatasetUpload";
-import {ChevronDownIcon} from "lucide-react";
+import {MoonIcon} from "lucide-react";
 
 /*
 TopBar.js: Top bar component that contains main elements for navigation:
@@ -23,7 +35,6 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
             h="38px"
             align="center"
             justify="space-between"
-            bg="gray.900"
             color="white"
             borderBottom="1px solid"
             borderColor="whiteAlpha.200"
@@ -38,6 +49,7 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                         boxSize="26px"
                         objectFit="contain"
                         pointerEvents="none"
+                        borderRadius="md"
                     />
                 </Box>
 
@@ -77,7 +89,6 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                 <Input
                     size="sm"
                     placeholder="Search node..."
-                    bg="gray.800"
                     border="1px solid"
                     borderColor="whiteAlpha.200"
                     _placeholder={{ color: "whiteAlpha.500" }}
@@ -88,14 +99,17 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                     onKeyDown={e => e.key === "Enter" && handleSearch()}
                 />
             </Box>
-
             {/*Theme toggler*/}
             <Flex align="center" gap="1">
+                {/*
                 <IconButton
                     size="xs"
-                    icon={<SunIcon />}
                     aria-label="Toggle theme"
+                    onClick={toggleColorMode}
+                    icon={colorMode === "dark" ? <SunIcon /> : <MoonIcon />}
+                    variant="ghost"
                 />
+                */}
             </Flex>
         </Flex>
     );

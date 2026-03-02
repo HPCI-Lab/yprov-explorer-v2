@@ -72,7 +72,6 @@ export function FiltersSlider({title, values, group,}) {
                     variant="ghost"
                     onClick={() => group.setValue([])}
                 />
-
             </HStack>
 
             <Text fontSize="xs" mt="1" opacity={0.7}>
