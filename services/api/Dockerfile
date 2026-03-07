@@ -3,7 +3,7 @@ FROM tiagopeixoto/graph-tool-git:latest
 WORKDIR /app
 
 # Install pip and virtualenv
-RUN pacman -Sy --noconfirm python-pip python-virtualenv git
+RUN pacman -Sy --noconfirm python-pip python-virtualenv
 
 # Create a virtual environment
 RUN python -m venv /venv
