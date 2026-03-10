@@ -7,27 +7,55 @@ import {AddIcon, MinusIcon, SearchIcon} from "@chakra-ui/icons";
 import {useRef, useState} from "react";
 import { gutter, GutterMarker } from "@codemirror/view";
 
-class ProvenanceMarker extends GutterMarker {
-    toDOM() {
-        const el = document.createElement("div");
-        el.style.color = "#facc15";
-        el.style.fontSize = "10px";
-        el.style.lineHeight = "1";
-        el.style.marginLeft = "4px";
-        return el;
+/*
+CodeEditor.js: viewer of the notebook code. Receive lines and builds the cells. Shows the text editor.
+ */
+
+export default function CodeEditor({ lines, onLineClick  }){
+    //building the code to show, based on the lines
+    let code = [];
+    const codeLines = [];
+    for(let i = 0; i<lines.length; i++){
+        codeLines.push(lines[i].code);
     }
-}
+    code = codeLines.join("\n");
 
-const provenanceMarker = new ProvenanceMarker();
-
-export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
+    //states and ref for text editor size and update
     const [fontSize, setFontSize] = useState(14);
     const editorRef = useRef(null);
-    const code = lines
-        .filter(l => !l.isCellSeparator)
-        .map(l => l.content)
-        .join("\n");
 
+
+    //function for handling the text click
+    const lineClickExtension = EditorView.domEventHandlers({
+        mousedown: (event, view) => {
+            if (!onLineClick) {
+            }else{
+                const position = view.posAtCoords({
+                    x: event.clientX,
+                    y: event.clientY
+                });
+                if (position == null){
+
+                }else{
+                    const line = view.state.doc.lineAt(position);
+                    const editorLineNumber = line.number;
+                    const visibleLines = lines.filter(l => !l.isCellSeparator);
+                    const clicked = visibleLines[editorLineNumber - 1];
+                    if (!clicked){
+
+                    }else{
+                        view.dispatch({
+                            selection: { anchor: line.from },
+                            scrollIntoView: true,
+                        });
+                    }
+                    console.log(clicked.count);
+                    onLineClick(clicked.count);
+                }
+            }
+        }
+    });
+    //text editor theme
     const editorTheme = EditorView.theme({
         ".cm-gutters": {
             backgroundColor: "#1e1e1e",
@@ -46,49 +74,7 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
         },
     });
 
-    const lineClickExtension = EditorView.domEventHandlers({
-        mousedown: (event, view) => {
-            if (!onLineClick) return;
-
-            const pos = view.posAtCoords({
-                x: event.clientX,
-                y: event.clientY
-            });
-            if (pos == null) return;
-
-            const line = view.state.doc.lineAt(pos);
-            const editorLineNumber = line.number;
-
-            const visibleLines = lines.filter(l => !l.isCellSeparator);
-            const clicked = visibleLines[editorLineNumber - 1];
-            if (!clicked) return;
-
-            view.dispatch({
-                selection: { anchor: line.from },
-                scrollIntoView: true,
-            });
-
-            const hasProv = provenanceLines?.has(clicked.lineNumber);
-            if (!hasProv) {
-                console.log("Line without provenance:", clicked.lineNumber);
-            }
-            onLineClick(clicked.lineNumber);
-        }
-    });
-
-    const provenanceGutter = gutter({
-        class: "cm-provenance-gutter",
-        lineMarker: (view, line) => {
-            const visibleLines = lines.filter(l => !l.isCellSeparator);
-            const entry = visibleLines[line.number - 1];
-            if (!entry) return null;
-
-            return provenanceLines?.has(entry.lineNumber)
-                ? provenanceMarker
-                : null;
-        },
-    });
-
+    //main layout
     return (
         <Box
             w="100%"
@@ -99,16 +85,17 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
             gap="3"
             overflow="hidden"
         >
+            {/*search bar TO IMPLEMENT*/}
             <InputGroup size="sm">
                 <InputLeftElement pointerEvents="none">
-                    <SearchIcon color="whiteAlpha.600"/>
+                    <SearchIcon color="black"/>
                 </InputLeftElement>
                 <Input
-                    placeholder="Search in code…"
-                    bg="gray.750"
+                    placeholder="Search into the code..."
+                    bg="white"
                     color="black"
                     border="1px solid"
-                    borderColor="whiteAlpha.200"
+                    borderColor="black"
                     _placeholder={{color: "black"}}
                 />
             </InputGroup>
@@ -118,12 +105,11 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
                 bg="gray.750"
                 border="1px solid"
                 minH="0"
-                borderColor="whiteAlpha.200"
+                borderColor="black"
                 overflow="hidden"
                 display="flex"
                 flexDirection="column"
             >
-
                 <HStack
                     position="absolute"
                     top="0"
@@ -132,27 +118,19 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
                     height="28px"
                     px="2"
                     spacing={1}
-                    bg="gray.800"
+                    bg="white"
                     borderBottom="1px solid"
                     borderColor="whiteAlpha.200"
                     zIndex="10"
                 >
                     <IconButton
                         size="xs"
-                        variant="ghost"
-                        aria-label="search"
-                        icon={<SearchIcon color="black"/>}
-                    />
-                    <IconButton
-                        size="xs"
-                        variant="ghost"
                         aria-label="font minus"
                         icon={<MinusIcon color="black"/>}
                         onClick={() => setFontSize(v => Math.max(10, v - 2))}
                     />
                     <IconButton
                         size="xs"
-                        variant="ghost"
                         aria-label="font plus"
                         icon={<AddIcon color="black"/>}
                         onClick={() => setFontSize(v => v + 2)}
@@ -189,13 +167,13 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
                         },
                     }}
                 >
+                    {/*code mirror that contains the code*/}
                     <CodeMirror
                         value={code}
                         ref={editorRef}
                         theme={oneDark}
                         extensions={[
                             lineNumbers(),
-                            provenanceGutter,
                             python(),
                             editorTheme,
                             EditorView.editable.of(false),
@@ -213,26 +191,6 @@ export default function CodeEditor({ lines, provenanceLines, onLineClick  }){
                     />
                 </Box>
             </Box>
-        <Box
-            pt="2"
-            borderTop="1px solid"
-            borderColor="whiteAlpha.200"
-        >
-            {/*
-            <HStack justify="space-between">
-                <Box fontSize="xs" opacity={0.6}>
-                    Ready to associate with graph
-                </Box>
-
-                <IconButton
-                    size="sm"
-                    colorScheme="blue"
-                    icon={<AddIcon />}
-                    aria-label="associate"
-                />
-            </HStack>
-            */}
         </Box>
-    </Box>
     );
 }

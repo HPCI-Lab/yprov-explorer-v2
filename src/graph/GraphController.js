@@ -1,5 +1,6 @@
 /*
-GraphController.js: Controller for Graph API. Permits to call functions from the app
+GraphController.js: Controller for Graph API. Permits to call functions from the app.
+Managing the communication between UI and Graph
 */
 
 class GraphController {
@@ -15,10 +16,12 @@ class GraphController {
         highlightNodes: () => {}
     };
 
+    //set the data
     setGraphData = (graphData) => {
         this.graphData = graphData;
     }
 
+    //
     registerGraphAPI(api) {
         this.graphAPI = { ...this.graphAPI, ...api };
     }
@@ -49,7 +52,7 @@ class GraphController {
         this.graphAPI.highlightNodes(id);
     }
 
-    //seach api
+    //seach api based on the id
     searchNode(query) {
         if(!this.graphData || !query) return null;
 
@@ -70,7 +73,14 @@ class GraphController {
     }
     //Dask filtering api function
     getAvailableFilters() {
-        if (!this.graphData) return { cells: [], workers: [], chunks: [] };
+
+        if (!this.graphData){
+            return {
+                cells: [...cells],
+                workers: [...workers],
+                chunks: []
+            };
+        }
 
         const cells = new Set();
         const workers = new Set();
@@ -89,7 +99,6 @@ class GraphController {
             chunks: []
         };
     }
-
 }
 
 // eslint-disable-next-line import/no-anonymous-default-export

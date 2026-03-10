@@ -1,6 +1,5 @@
 import {Box, IconButton} from "@chakra-ui/react";
 import {useEffect, useRef, useState} from "react";
-import {d3Adapter} from "../../graph/d3Adapter";
 import controller from "../../graph/GraphController";
 import Graph from "../../graph/Graph";
 import { SettingsIcon, InfoIcon } from "@chakra-ui/icons";
@@ -13,19 +12,23 @@ as a container for all these components.
 */
 
 export default function GraphContainer({ graphData }) {
+    //graph states
     const [graph, setGraph] = useState(null);
     // State for the fullscreen mode (true if active, false otherwise)
     const [isFullscreen, setIsFullscreen] = useState(false);
+    //ref to container
     const frameRef = useRef(null);
     const [isInfoVisible, setIsInfoVisible] = useState(false); // State to control the visibility of the info panel
 
+    //use effect to manage graphdata changes
     useEffect(() => {
-        if (!graphData) return;
+        if (!graphData){
+            return;
+        }
         try {
-            const d3data = d3Adapter(graphData);
-            setGraph(d3data);
+            setGraph(graphData);
         } catch (err) {
-            console.error("Error adapting graph data:", err);
+            //console.error("Error adapting graph data:", err);
             setGraph(null);
         }
     }, [graphData]);
@@ -34,8 +37,9 @@ export default function GraphContainer({ graphData }) {
     // Function to toggle the fullscreen mode
     const toggleFullscreen = () => {
         const frame = frameRef.current;
-        if (!frame) return;
-
+        if (!frame){
+            return;
+        }
         if (!document.fullscreenElement) {
             frame.requestFullscreen();
         } else {
@@ -49,7 +53,7 @@ export default function GraphContainer({ graphData }) {
         return () => document.removeEventListener("fullscreenchange", handler);
     }, []);
 
-
+    //main container layout
     return (
         <Box
             w="100%"
@@ -61,6 +65,7 @@ export default function GraphContainer({ graphData }) {
             ref={frameRef}
             zIndex={isFullscreen ? 9999 : "auto"}
         >
+            {/*label settings*/}
             <IconButton
                 aria-label="Settings"
                 icon={<SettingsIcon />}
@@ -68,10 +73,10 @@ export default function GraphContainer({ graphData }) {
                 top="2"
                 left="3"
                 size="sm"
-                variant="ghost"
                 zIndex="10"
             />
 
+            {/*fullscreen mode*/}
             <IconButton
                 aria-label="Expand"
                 icon={<MdZoomOutMap />}
@@ -79,11 +84,11 @@ export default function GraphContainer({ graphData }) {
                 top="2"
                 right="3"
                 size="sm"
-                variant="ghost"
                 onClick={toggleFullscreen}
                 zIndex="10"
             />
 
+            {/*Info icon*/}
             <IconButton
                 aria-label="Info"
                 icon={<InfoIcon />}
@@ -91,7 +96,6 @@ export default function GraphContainer({ graphData }) {
                 bottom="2"
                 left="3"
                 size="sm"
-                variant="ghost"
                 zIndex="10"
             />
             <Box
@@ -103,6 +107,7 @@ export default function GraphContainer({ graphData }) {
                 color="gray.500"
                 id="graphCanvas"
             >
+                {/*graph render*/}
                 {graph && <Graph graph={graph} controller={controller} />}
             </Box>
         </Box>

@@ -24,8 +24,10 @@ TopBar.js: Top bar component that contains main elements for navigation:
 - theme toggler button for changing the theme on preferences
 */
 export default function TopBar({ dataset, onDatasetLoaded }) {
+    //query states
     const [query, setQuery] = useState("");
 
+    //calling the controller for the search
     const handleSearch = () => {
         controller.searchNode(query);
     };
@@ -91,8 +93,10 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                     placeholder="Search node..."
                     border="1px solid"
                     borderColor="whiteAlpha.200"
-                    _placeholder={{ color: "whiteAlpha.500" }}
-                    _hover={{ borderColor: "whiteAlpha.300" }}
+                    bg="white"
+                    color="black"
+                    _placeholder={{ color: "black" }}
+                    _hover={{ borderColor: "black" }}
                     _focus={{ borderColor: "blue.400" }}
                     value={query}
                     onChange={e => setQuery(e.target.value)}

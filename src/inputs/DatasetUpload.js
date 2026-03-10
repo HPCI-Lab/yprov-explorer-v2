@@ -1,7 +1,8 @@
 import { MenuItem } from "@chakra-ui/react";
-
+//function for reading the json
 function readFileAsJson(file) {
     return new Promise((resolve, reject) => {
+        //builds a reader file
         const reader = new FileReader();
         reader.onload = () => {
             try {
@@ -15,6 +16,7 @@ function readFileAsJson(file) {
     });
 }
 
+//function for uploading the data
 export default function DatasetUpload({ currentDataset, onDatasetLoaded }) {
     const handleUpload = async (event) => {
         const files = Array.from(event.target.files);
@@ -56,6 +58,7 @@ export default function DatasetUpload({ currentDataset, onDatasetLoaded }) {
         });
     };
 
+    //main layout
     return (
         <MenuItem as="label" bg="gray.900" cursor="pointer">
             Upload dataset

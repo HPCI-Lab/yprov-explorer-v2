@@ -1,9 +1,8 @@
 import {Box, Collapse, HStack, IconButton, useCheckboxGroup, VStack} from "@chakra-ui/react";
 import {useState, useEffect, useRef} from "react";
 import {ChevronLeftIcon} from "@chakra-ui/icons";
-import CodeEditor from "./Notebook/components/CodeEditor";
+import CodeEditor from "./Notebook/CodeEditor";
 import controller from "../../graph/GraphController";
-import parserNotebook from "../layout/Notebook/parserNotebook";
 import Filters from "./Notebook/components/Filters";
 import {FilterIcon} from "lucide-react";
 /*
@@ -12,83 +11,15 @@ Including the dask filters for the notebook.
  */
 
 export default function CodePanel({ graphData, notebook }) {
-    //filters arrays
     const cellGroup = useCheckboxGroup({ defaultValue: [] });
     const workerGroup = useCheckboxGroup({ defaultValue: [] });
     const chunkGroup = useCheckboxGroup({ defaultValue: [] });
     const availableFilters = controller.getAvailableFilters();
-    //use state for filter states
+    const [noProvenanceLine, setNoProvenanceLine] = useState(null);
+    const provenanceLines = useRef(new Set());
     const [filtersOpen, setFiltersOpen] = useState(false);
-    //cells array
-    const cellsWithProvenance = [];
-    //parsed lines and cells
-    const {lines, cells} = parserNotebook(notebook, graphData?.nodes || []);
-    //activity nodes array
-    const activityNodes = (graphData?.nodes || []).filter(
-        n => n.type === "activity"
-    );
 
-    //building the provenance cells
-    for(let i = 0; i < cells.length; i++) {
-        const cellsId = [];
-        //verifieng with the attributes
-        for(let j = 0; j < activityNodes.length; j++) {
-            if(cells[i].cellIndex === Number(activityNodes[j].attributes["yprov4wfs:jupyter_cell_index"])){
-                cellsId.push(activityNodes[j].id);
-            }
-        }
-        //building cells with provenance
-        if(cellsId.length > 0){
-            cellsWithProvenance.push({
-                ...cells[i],
-                hasProvenance: true,
-                provenanceNodeIds: cellsId
-            });
-        }else{
-            cellsWithProvenance.push({
-                ...cells[i],
-                hasProvenance: false,
-                provenanceNodeIds: cellsId
-            });
-        }
-    }
-
-    /* function for managing the click. Click the line -> finds the cell --> catch all nodes
-     It's a Demo: I recommend to improve the .json metadata to
-     include an attribute for pairing the notebook and the generated .json.
-     */
-    function handleClick(lineNumber) {
-        console.log(lineNumber);
-        if (!graphData){
-            return;
-        }
-        //finds the line
-        let line = null;
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i].count === lineNumber) {
-                line = lines[i];
-                console.log(line);
-            }
-        }
-        if (!line){
-            return;
-        }else{
-            //finds the cell from the line
-            let cell = null;
-            for (let i = 0; i < cellsWithProvenance.length; i++) {
-                if (cellsWithProvenance[i].cellIndex === line.index) {
-                    cell = cellsWithProvenance[i];
-                    console.log(cell);
-                }
-            }
-            if (cell && cell.provenanceNodeIds.length > 0) {
-                console.log(cell.provenanceNodeIds);
-                controller.highlightNodes(cell.provenanceNodeIds);
-            }
-        }
-    }
-
-    //use state fpr filters
+    //use state for filters
     useEffect(() => {
         if (!graphData || !notebook){
 
@@ -100,6 +31,62 @@ export default function CodePanel({ graphData, notebook }) {
             });
         }
     }, [cellGroup.value, workerGroup.value, chunkGroup.value, graphData]);
+
+    //notebook upload
+    const {lines, cells} = parseNotebook(notebook, graphData?.nodes || []);
+
+
+    useEffect(() => {
+        if (!graphData || !lines) return;
+        const set = new Set();
+
+        graphData.nodes.forEach(n => {
+            const a = n.attributes || {};
+            const start = Number(a["yprov4wfs:jupyter_cell_line_start"]);
+            const end   = Number(a["yprov4wfs:jupyter_cell_line_end"]);
+
+            if (!Number.isNaN(start) && !Number.isNaN(end)) {
+                for (let i = start; i <= end; i++) {
+                    set.add(i);
+                }
+            }
+        });
+
+        provenanceLines.current = set;
+    }, [graphData, lines]);
+
+    //DEMO
+    function handleLineClick(_, lineNumber) {
+        console.log("CLICKED LINE:", lineNumber);
+        if (!graphData) return;
+        const line = lines.find(l => l.lineNumber === lineNumber);
+        if (!line) return;
+        const cellIndex = line.cellIndex;
+        let matched = graphData.nodes.filter(n => {
+            const a = n.attributes || {};
+            const nodeCell = Number(a["yprov4wfs:jupyter_cell_index"]);
+            const start = Number(a["yprov4wfs:jupyter_cell_line_start"]);
+            const end   = Number(a["yprov4wfs:jupyter_cell_line_end"]);
+            return (
+                nodeCell === cellIndex &&
+                !Number.isNaN(start) &&
+                !Number.isNaN(end) &&
+                lineNumber >= start &&
+                lineNumber <= end
+            );
+        });
+        if (matched.length === 0) {
+            matched = graphData.nodes.filter(n =>
+                Number(n.attributes?.["yprov4wfs:jupyter_cell_index"]) === cellIndex
+            );
+        }
+        const ids = matched.map(n => n.id);
+        controller.highlightNodes(ids);
+        setNoProvenanceLine(
+            ids.length === 0 ? lineNumber : null
+        );
+        console.log("Highlight nodes:", ids);
+    }
 
     //Main layout
     return (
@@ -136,7 +123,7 @@ export default function CodePanel({ graphData, notebook }) {
                 </HStack>
             </Box>
             <Box flex="1" minH="0" position="relative" overflow="hidden">
-                <Collapse in={filtersOpen} bg="black">
+                <Collapse in={filtersOpen}>
                     <Box
                         position="absolute"
                         top="0"
@@ -160,9 +147,9 @@ export default function CodePanel({ graphData, notebook }) {
                 </Collapse>
                 <CodeEditor
                     lines={lines}
-                    onLineClick={handleClick}
+                    provenanceLines={provenanceLines.current}
+                    onLineClick={(lineNumber) => handleLineClick(null, lineNumber)}
                 />
-                {/*
                 {noProvenanceLine !== null && (
                     <Box
                         mt="2"
@@ -176,7 +163,6 @@ export default function CodePanel({ graphData, notebook }) {
                         No provenance information for line {noProvenanceLine}
                     </Box>
                 )}
-                */}
             </Box>
         </Box>
     );

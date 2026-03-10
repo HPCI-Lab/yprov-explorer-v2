@@ -11,14 +11,17 @@ searches are highlighted dynamically via the highlightMatches function.
 */
 
 export default function SideInfo() {
+    //nodes data
     const [nodeInfo, setNodeInfo] = useState(null);
 
+    //calling the controller for node information
     useEffect(() => {
         controller.onNodeClick((info) => {
             setNodeInfo(info);
         });
     }, []);
 
+    //managing the feature
     if (!nodeInfo) {
         return (
             <Box
@@ -33,7 +36,7 @@ export default function SideInfo() {
                                 Select a node to see the details
                             </Box>
                             <Box fontSize="xs" opacity={0.6}>
-                                Node · #
+                                Node
                             </Box>
                         </Box>
                     </HStack>
@@ -42,6 +45,7 @@ export default function SideInfo() {
         );
     }
 
+    //function that transform a link string in a text
     const renderLinks = (value) =>
         (value || "None").split(", ").map((link) => (
             <Box key={link} mt={1}>
@@ -63,6 +67,7 @@ export default function SideInfo() {
             </Box>
         ));
 
+    //info array, maps the labels with the function
     const infoItems = [
         { label: "Group", value: nodeInfo.group },
         { label: "ID", value: nodeInfo.id },
@@ -79,6 +84,7 @@ export default function SideInfo() {
         { label: "wasStartedBy", value: renderLinks(nodeInfo.wasStartedBy) },
     ];
 
+    //main layout
     return (
         <Flex flex="1" justify="center" gap="5">
             <VStack spacing={3} align="stretch" w="100%">
@@ -100,6 +106,7 @@ export default function SideInfo() {
                         </HStack>
                     </HStack>
                 </Box>
+                {/*search bar TO IMPLEMENT*/}
                 <InputGroup size="sm">
                     <InputLeftElement pointerEvents="none">
                         <SearchIcon color="whiteAlpha.600" />
@@ -112,6 +119,7 @@ export default function SideInfo() {
                         _placeholder={{ color: "black" }}
                     />
                 </InputGroup>
+                {/*Scrollable area*/}
                 <Box
                     overflowY="auto"
                     maxH="70vh"

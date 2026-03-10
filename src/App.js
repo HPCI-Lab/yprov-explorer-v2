@@ -19,7 +19,6 @@ function App() {
     //State for opening the code tab
     const [isCodePanelVisible, setIsCodePanelVisible] = useState(true);
 
-
     //Function for ovening the sidebar panel
     const onOpenPanel = (panel) => {
         if(panel === activePanel && isSidePanelOpen) {
@@ -36,22 +35,19 @@ function App() {
         setActivePanel(null);
     };
 
-
-//------------------------------------------------------------------------------------------
+    //state for graph data
     const [graphData, setGraphData] = useState(null);
-    //const [jsonContent, setJsonContent] = useState(null);
-    //const [graph, setGraph] = useState(null);
-
+    //state for dataset
     const [dataset, setDataset] = useState(null);
 
     const handleDatasetLoaded = ({ provJson, notebook }) => {
         setDataset({ provJson, notebook });
-
         const parsed = parseProvJSON(provJson);
         setGraphData(parsed);
         controller.setGraphData(parsed);
     };
 
+    //variable for checking if there is a notebook loaded
     const hasNotebook = !!dataset?.notebook;
 
     return (
@@ -67,11 +63,6 @@ function App() {
                     activePanel={activePanel}
                     isOpen={isSidePanelOpen}
                     onClose={onClosePanel}
-                    /*
-                    setGraphData={setGraphData}
-                    jsonContent={jsonContent}
-                    setJsonContent={setJsonContent}
-                     */
                 />
 
                 {/*Main content area*/}
@@ -80,14 +71,10 @@ function App() {
                     <GraphContainer graphData={graphData}/>
                     {isCodePanelVisible && hasNotebook &&(
                             <Resizable
-                                defaultSize={{
-                                    width: 400,
-                                }}
+                                defaultSize={{width: 400,}}
                                 minWidth={400}
                                 maxWidth={600}
-                                enable={{
-                                    left: true,
-                                }}
+                                enable={{left: true,}}
                                 handleStyles={{
                                     left: {
                                         width: "6px",

@@ -2,7 +2,7 @@ import {Box, Flex, Heading, Input, VStack, Tooltip, Text, Divider, HStack, Input
 import React, {useEffect, useState} from "react";
 import controller from "../../../../graph/GraphController"
 /*
-SidePattern
+SidePattern.js
 */
 
 export default function SideInfo() {
@@ -18,7 +18,7 @@ export default function SideInfo() {
                         <HStack>
                             <Box>
                                 <Box fontSize="md" fontWeight="semibold">
-                                    Pattern
+                                    Graph Patterns
                                 </Box>
                                 <Box fontSize="xs" opacity={0.6}>
                                 </Box>
