@@ -162,21 +162,6 @@ export default function CodePanel({ graphData, notebook }) {
                     lines={lines}
                     onLineClick={handleClick}
                 />
-                {/*
-                {noProvenanceLine !== null && (
-                    <Box
-                        mt="2"
-                        px="2"
-                        py="1"
-                        fontSize="xs"
-                        bg="yellow.500"
-                        color="black"
-                        borderRadius="md"
-                    >
-                        No provenance information for line {noProvenanceLine}
-                    </Box>
-                )}
-                */}
             </Box>
         </Box>
     );
