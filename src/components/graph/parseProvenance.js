@@ -11,6 +11,11 @@ parseProvenance(json):
     return { nodes, edges }
  */
 
+/**
+ * 
+ * @param {*} data 
+ * @returns 
+ */
 export default function parseProvenance(data) {
     //Initialization
     //node initiazilatzion
