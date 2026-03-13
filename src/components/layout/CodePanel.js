@@ -1,10 +1,10 @@
 import {Box, Collapse, HStack, IconButton, useCheckboxGroup, VStack} from "@chakra-ui/react";
 import {useState, useEffect, useRef} from "react";
 import {ChevronLeftIcon} from "@chakra-ui/icons";
-import CodeEditor from "./notebook/components/CodeEditor";
+import CodeEditor from "./Notebook/components/CodeEditor";
 import controller from "../graph/graphController";
-import parserNotebook from "./notebook/parserNotebook";
-import Filters from "./notebook/components/Filters";
+import parserNotebook from "./Notebook/parserNotebook";
+import Filters from "./Notebook/components/Filters";
 import {FilterIcon} from "lucide-react";
 /*
 CodePanel.js: contains the code editor for viewing cells code of the graph.
