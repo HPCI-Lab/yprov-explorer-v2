@@ -1,105 +1,150 @@
-import {Box, HStack, IconButton} from "@chakra-ui/react";
+import {Box, Collapse, HStack, IconButton, useCheckboxGroup, VStack} from "@chakra-ui/react";
 import {useState, useEffect, useRef} from "react";
 import {ChevronLeftIcon} from "@chakra-ui/icons";
-import CodeMirror from "@uiw/react-codemirror";
-import { EditorView } from "@codemirror/view";
-import { python } from "@codemirror/lang-python";
-import { oneDark } from "@codemirror/theme-one-dark";
-import { lineNumbers } from "@codemirror/view";
-import { Input, InputGroup, InputLeftElement } from "@chakra-ui/react";
-import { SearchIcon } from "@chakra-ui/icons";
-import { AddIcon, MinusIcon } from "@chakra-ui/icons";
-import CellList from "./Notebook/CellList";
-import CodeEditor from "./Notebook/CodeEditor";
-
-
+import CodeEditor from "./notebook/components/CodeEditor";
+import controller from "../graph/graphController";
+import parserNotebook from "./notebook/parserNotebook";
+import Filters from "./notebook/components/Filters";
+import {FilterIcon} from "lucide-react";
 /*
-CodePanel.js: contains the code editor for viewing cells code of the graph
+CodePanel.js: contains the code editor for viewing cells code of the graph.
+Including the dask filters for the notebook.
  */
-export default function CodePanel() {
-    const value = "test";
-    const selectedCodeIndex = useState(null);
-    const [selectedCellIndex, setSelectedCellIndex] = useState(null);
 
-    //-----Parsing Notebook------------
-    /*
-    const {
-        code,
-        loading,
-        error,
-    } = useNotebookProvenance(
-        "/dataset_mean.ipynb",
-        "/dataset_mean_jt.json"
+export default function CodePanel({ graphData, notebook }) {
+    //filters arrays
+    const cellGroup = useCheckboxGroup({ defaultValue: [] });
+    const workerGroup = useCheckboxGroup({ defaultValue: [] });
+    const chunkGroup = useCheckboxGroup({ defaultValue: [] });
+    const availableFilters = controller.getAvailableFilters();
+    //use state for filter states
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    //cells array
+    const cellsWithProvenance = [];
+    //parsed lines and cells
+    const {lines, cells} = parserNotebook(notebook, graphData?.nodes || []);
+    //activity nodes array
+    const activityNodes = (graphData?.nodes || []).filter(
+        n => n.type === "activity"
     );
 
+    //building the provenance cells
+    for(let i = 0; i < cells.length; i++) {
+        const cellsId = [];
+        //verifieng with the attributes
+        for(let j = 0; j < activityNodes.length; j++) {
+            if(cells[i].cellIndex === Number(activityNodes[j].attributes["yprov4wfs:jupyter_cell_index"])){
+                cellsId.push(activityNodes[j].id);
+            }
+        }
+        //building cells with provenance
+        if(cellsId.length > 0){
+            cellsWithProvenance.push({
+                ...cells[i],
+                hasProvenance: true,
+                provenanceNodeIds: cellsId
+            });
+        }else{
+            cellsWithProvenance.push({
+                ...cells[i],
+                hasProvenance: false,
+                provenanceNodeIds: cellsId
+            });
+        }
+    }
 
-    if (loading) return <div>Loading notebook…</div>;
-    if (error) return <div>Error loading notebook</div>;
-    */
+    /* function for managing the click. Click the line -> finds the cell --> catch all nodes
+     It's a Demo: I recommend to improve the .json metadata to
+     include an attribute for pairing the notebook and the generated .json.
+     */
+    function handleClick(lineNumber) {
+        console.log(lineNumber);
+        if (!graphData){
+            return;
+        }
+        //finds the line
+        let line = null;
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].count === lineNumber) {
+                line = lines[i];
+                console.log(line);
+            }
+        }
+        if (!line){
+            return;
+        }else{
+            //finds the cell from the line
+            let cell = null;
+            for (let i = 0; i < cellsWithProvenance.length; i++) {
+                if (cellsWithProvenance[i].cellIndex === line.index) {
+                    cell = cellsWithProvenance[i];
+                    console.log(cell);
+                }
+            }
+            if (cell && cell.provenanceNodeIds.length > 0) {
+                console.log(cell.provenanceNodeIds);
+                controller.highlightNodes(cell.provenanceNodeIds);
+            }
+        }
+    }
+
+    //use state fpr filters
+    useEffect(() => {
+        if (!graphData || !notebook){
+
+        }else{
+            controller.applyFilter?.({
+                cells: cellGroup.value,
+                workers: workerGroup.value,
+                chunks: chunkGroup.value,
+            });
+        }
+    }, [cellGroup.value, workerGroup.value, chunkGroup.value, graphData]);
+
+    //Main layout
     return (
-        <Box
-            w="100%"
-            h="100%"
-            minH="0"
-            bg="gray.700"
-            p="4"
-            color="white"
-            display="flex"
-            flexDirection="column"
-            gap="3"
-            overflow="hidden"
-        >
-            <Box
-                pb="2"
-                borderBottom="1px solid"
-                borderColor="whiteAlpha.200"
-            >
+        <Box w="100%" h="100%" minH="0" p="4" color="white" display="flex" flexDirection="column" gap="3" overflow="hidden">
+            <Box pb="2" borderBottom="1px solid" borderColor="white">
                 <HStack spacing={2} align="center">
                     <HStack>
-                        {selectedCellIndex !== null && (
-                            <IconButton
-                                aria-label="back"
-                                size="sm"
-                                icon={<ChevronLeftIcon />}
-                                variant="outline"
-                                borderColor="gray.500"
-                                color="white"
-                                _hover={{ bg: "gray.600" }}
-                                onClick={() => setSelectedCellIndex(null)}
-                            />
-                        )}
                         <Box>
                             <Box fontSize="md" fontWeight="semibold">
                                 Notebook Code
                             </Box>
-                            <Box fontSize="xs" opacity={0.6}>
-                                {selectedCellIndex === null
-                                    ? "Cells overview"
-                                    : `Cell ${selectedCellIndex}`}
-                            </Box>
                         </Box>
                     </HStack>
-                    <Box
-                        fontSize="xs"
-                        px="2"
-                        py="1"
-                        bg="yellow.500"
-                        color="black"
-                    >
-                        Unlinked
-                    </Box>
+                    <IconButton
+                        aria-label="Toggle filters"
+                        size="xs"
+                        icon={<FilterIcon size={20}/>}
+                        onClick={() => setFiltersOpen(v => !v)}
+                    />
                 </HStack>
             </Box>
-            <Box flex="1" minH="0" overflow="hidden">
-                {selectedCellIndex === null ? (
-                    <CellList
-                        onSelectCell={setSelectedCellIndex}
-                    />
-                ) : (
-                    <CodeEditor
-                        cellIndex={selectedCellIndex}
-                    />
-                )}
+            <Box flex="1" minH="0" position="relative" overflow="hidden">
+                <Collapse in={filtersOpen} bg="black">
+                    <Box
+                        position="absolute"
+                        top="0"
+                        left="0"
+                        right="0"
+                        bg="black"
+                        transition="width 0s linear"
+                        zIndex="100"
+                        borderBottom="1px solid"
+                        borderColor="white"
+                        p="3"
+                        boxShadow="lg"
+                    >
+                        <Filters
+                            available={availableFilters}
+                            cellGroup={cellGroup}
+                            workerGroup={workerGroup}
+                            chunkGroup={chunkGroup}
+                        />
+                    </Box>
+                </Collapse>
+                <CodeEditor lines={lines} onLineClick={handleClick}/>
             </Box>
         </Box>
     );

@@ -4,11 +4,59 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { python } from "@codemirror/lang-python";
 import { EditorView, lineNumbers } from "@codemirror/view";
 import {AddIcon, MinusIcon, SearchIcon} from "@chakra-ui/icons";
-import {useState} from "react";
+import {useRef, useState} from "react";
+import { gutter, GutterMarker } from "@codemirror/view";
 
-export default function CodeEditor({ cellIndex }){
+/*
+CodeEditor.js: viewer of the notebook code. Receive lines and builds the cells. Shows the text editor.
+ */
+
+export default function CodeEditor({ lines, onLineClick  }){
+    //building the code to show, based on the lines
+    let code = [];
+    const codeLines = [];
+    for(let i = 0; i<lines.length; i++){
+        codeLines.push(lines[i].code);
+    }
+    code = codeLines.join("\n");
+
+    //states and ref for text editor size and update
     const [fontSize, setFontSize] = useState(14);
+    const editorRef = useRef(null);
+    const [search, setSearch] = useState("");
 
+    //function for handling the text click of CodeMirror
+    const lineClickExtension = EditorView.domEventHandlers({
+        mousedown: (event, view) => {
+            if (!onLineClick) {
+            }else{
+                //calculating cursor position
+                const position = view.posAtCoords({
+                    x: event.clientX,
+                    y: event.clientY
+                });
+                if (position == null){
+
+                }else{
+                    //recover the lines
+                    const line = view.state.doc.lineAt(position);
+                    const editorLineNumber = line.number;
+                    //recover the lines and the clicked
+                    const visibleLines = lines.filter(l => !l.isCellSeparator);
+                    const clicked = visibleLines[editorLineNumber - 1];
+                    if (!clicked){
+//
+                    }else{
+                        //select the line
+                        view.dispatch({selection: { anchor: line.from }, scrollIntoView: true,});
+                    }
+                    console.log(clicked.count);
+                    onLineClick(clicked.count);
+                }
+            }
+        }
+    });
+    //text editor theme
     const editorTheme = EditorView.theme({
         ".cm-gutters": {
             backgroundColor: "#1e1e1e",
@@ -27,42 +75,26 @@ export default function CodeEditor({ cellIndex }){
         },
     });
 
-
+    //main layout
     return (
-        <Box
-            w="100%"
-            h="100%"
-            minH="0"
-            display="flex"
-            flexDirection="column"
-            gap="3"
-            overflow="hidden"
-        >
+        <Box w="100%" h="100%" minH="0" display="flex" flexDirection="column" gap="3" overflow="hidden">
+            {/*search bar TO IMPLEMENT*/}
             <InputGroup size="sm">
                 <InputLeftElement pointerEvents="none">
-                    <SearchIcon color="whiteAlpha.600"/>
+                    <SearchIcon color="black"/>
                 </InputLeftElement>
                 <Input
-                    placeholder="Search in code…"
-                    bg="gray.750"
+                    placeholder="Search into the code..."
+                    bg="white"
                     color="black"
                     border="1px solid"
-                    borderColor="whiteAlpha.200"
+                    borderColor="black"
                     _placeholder={{color: "black"}}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                 />
             </InputGroup>
-            <Box
-                flex="1"
-                position="relative"
-                bg="gray.900"
-                border="1px solid"
-                minH="0"
-                borderColor="whiteAlpha.200"
-                overflow="hidden"
-                display="flex"
-                flexDirection="column"
-            >
-
+            <Box flex="1" position="relative" bg="gray.750" border="1px solid" minH="0" borderColor="black" overflow="hidden" display="flex" flexDirection="column">
                 <HStack
                     position="absolute"
                     top="0"
@@ -71,27 +103,19 @@ export default function CodeEditor({ cellIndex }){
                     height="28px"
                     px="2"
                     spacing={1}
-                    bg="gray.900"
+                    bg="white"
                     borderBottom="1px solid"
-                    borderColor="whiteAlpha.200"
+                    borderColor="white"
                     zIndex="10"
                 >
                     <IconButton
                         size="xs"
-                        variant="ghost"
-                        aria-label="search"
-                        icon={<SearchIcon color="black"/>}
-                    />
-                    <IconButton
-                        size="xs"
-                        variant="ghost"
                         aria-label="font minus"
                         icon={<MinusIcon color="black"/>}
                         onClick={() => setFontSize(v => Math.max(10, v - 2))}
                     />
                     <IconButton
                         size="xs"
-                        variant="ghost"
                         aria-label="font plus"
                         icon={<AddIcon color="black"/>}
                         onClick={() => setFontSize(v => v + 2)}
@@ -100,7 +124,6 @@ export default function CodeEditor({ cellIndex }){
                 <Box
                     overflow="hidden"
                     flex="1"
-                    bg="gray.900"
                     width="100%"
                     minHeight="0"
                     border="1px gray.600"
@@ -129,14 +152,17 @@ export default function CodeEditor({ cellIndex }){
                         },
                     }}
                 >
+                    {/*code mirror that contains the code*/}
                     <CodeMirror
-                        value={`# Cell ${cellIndex}\n\nprint("Hello from cell ${cellIndex}")`}
+                        value={code}
+                        ref={editorRef}
                         theme={oneDark}
                         extensions={[
                             lineNumbers(),
                             python(),
                             editorTheme,
                             EditorView.editable.of(false),
+                            lineClickExtension,
                         ]}
                         basicSetup={{
                             highlightActiveLine: true,
@@ -150,24 +176,6 @@ export default function CodeEditor({ cellIndex }){
                     />
                 </Box>
             </Box>
-        <Box
-            pt="2"
-            borderTop="1px solid"
-            borderColor="whiteAlpha.200"
-        >
-            <HStack justify="space-between">
-                <Box fontSize="xs" opacity={0.6}>
-                    Ready to associate with graph
-                </Box>
-
-                <IconButton
-                    size="sm"
-                    colorScheme="blue"
-                    icon={<AddIcon />}
-                    aria-label="associate"
-                />
-            </HStack>
         </Box>
-    </Box>
     );
 }

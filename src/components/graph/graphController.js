@@ -1,29 +1,33 @@
 /*
-GraphController.js: Controller for Graph API. Permits to call functions from the app
+graphController.js: Controller for Graph API. Permits to call functions from the app.
+Managing the communication between UI and Graph
 */
 
 class GraphController {
-    nodeClickHandler = () => {};
     graphData = null;
+    nodeClickHandler = () => {};
 
     //Graoh api
-    API = {
+    graphAPI = {
         selectNode: () => {},
         focusNode: () => {},
         resetView: () => {},
-        applyFilter: () => {}
+        applyFilter: () => {},
+        highlightNodes: () => {}
     };
 
+    //set the data
     setGraphData = (graphData) => {
         this.graphData = graphData;
     }
 
+    //
     registerGraphAPI(api) {
         this.graphAPI = { ...this.graphAPI, ...api };
     }
 
     applyFilter(filter) {
-        this.graphAPI.applyFilter?.(filter);
+        this.graphAPI.applyFilter(filter);
     }
 
     //Graph to UI
@@ -44,33 +48,43 @@ class GraphController {
     resetView() {
         this.graphAPI.resetView();
     }
+    highlightNodes(id) {
+        this.graphAPI.highlightNodes(id);
+    }
 
-    //seach api
+    //seach api based on the id
     searchNode(query) {
-        if(!this.graphData || !query) return null;
+        if(!this.graphData || !query){
+            return null;
+        } else{
+            const q = String(query).toLowerCase();
+            const node = this.graphData.nodes.find(n =>
+                n.id.toLowerCase().includes(q) ||
+                n.label?.toLowerCase().includes(q)
+            );
+            if(!node){
+                return null;
+            } else{
+                this.selectNode(node.id);
+                this.focusNode(node.id);
+                this.emitNodeClick(node);
 
-        const q = String(query).toLowerCase();
-
-        const node = this.graphData.nodes.find(n =>
-            n.id.toLowerCase().includes(q) ||
-            n.label?.toLowerCase().includes(q)
-        );
-
-        if(!node) return null;
-
-        this.selectNode(node.id);
-        this.focusNode(node.id);
-        this.emitNodeClick(node);
-
-        return node;
+                return node;
+            }
+        }
     }
     //Dask filtering api function
     getAvailableFilters() {
-        if (!this.graphData) return { cells: [], workers: [], chunks: [] };
-
+        if (!this.graphData){
+            return {
+                cells: [...cells],
+                workers: [...workers],
+                chunks: []
+            };
+        }
+        //defines cells and workers
         const cells = new Set();
         const workers = new Set();
-
         this.graphData.nodes.forEach(n => {
             const a = n.attributes || {};
             if (a["yprov4wfs:jupyter_cell_index"])
@@ -85,7 +99,6 @@ class GraphController {
             chunks: []
         };
     }
-
 }
 
 // eslint-disable-next-line import/no-anonymous-default-export

@@ -6,14 +6,7 @@ Timeline.js: Timeline contains the main elements for graph animations:
  */
 export default function Timeline() {
     return (
-        <Box
-            h="70px"
-            bg="gray.800"
-            color="white"
-            display="flex"
-            alignItems="center"
-            p="4"
-        >
+        <Box h="70px" display="flex" alignItems="center" p="4">
             Timeline
         </Box>
     );
