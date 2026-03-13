@@ -1,5 +1,9 @@
 /*
-Graph.js: Generates the graph from the d3 Adapter and manage the functions and events from the GraphController
+Graph.js: The Graph.js file leverages the D3.js library to create an interactive graph based on
+JSON data. This graph displays nodes, representing entities and activities, and connections
+between them, with three types of relationships. Users can interact with nodes by clicking
+on them or dragging them, and they can zoom in on the entire graph. In addition, nodes can be
+highlighted and focused in response to external events (link label clicks).
 */
 
 import * as d3 from "d3";
@@ -11,7 +15,7 @@ export default function Graph({ graph, controller }) {
     let selectedNode = null;
 
     //Web worker for off thread simulation
-    const worker = new Worker(new URL("./d3Worker.js", import.meta.url), {
+    const worker = new Worker(new URL("./graphWorker.js", import.meta.url), {
         type: "module"
     });
 
@@ -36,7 +40,19 @@ export default function Graph({ graph, controller }) {
       Z
     `;
     }
+    // Function to create a self-loop path for the nodes that are connected to themselves
+    function createSelfLoopPath(d) {
+        const nodeRadius = 30;
+        const loopRadiusX = 90;
+        const loopRadiusY = 40;
 
+        const start = {
+            x: d.source.x,
+            y: d.source.y - nodeRadius,
+        };
+        return `M ${start.x},${start.y}
+            A ${loopRadiusX},${loopRadiusY} 0 1,1 ${start.x},${start.y + 1}`;
+    }
     // Function to create a rectangle path for the nodes (activities)
     function rectPath(width, height) {
         const x0 = -width / 2;
@@ -53,7 +69,6 @@ export default function Graph({ graph, controller }) {
       Z
     `;
     }
-
     // Function to create a house path for the nodes (agents)
     function housePath(size) {
         const half = size / 2;
@@ -67,8 +82,7 @@ export default function Graph({ graph, controller }) {
       Z
     `;
     }
-
-    //Graph initialization
+    //Graph initialization draw and updates the graph
     useEffect(() => {
         if (!graph) return;
         const width = window.innerWidth;
@@ -79,17 +93,31 @@ export default function Graph({ graph, controller }) {
             .attr("width", width)
             .attr("height", height);
 
+        // Create a group element for the graph elements
         const g = svg.append("g");
+        //marker based on links
         const markerTypes = [
             "used",
             "wasGeneratedBy",
             "wasDerivedFrom",
+            "wasInformedBy",
+            "hadMember",
+            "wasStartedBy",
+            "wasAssociatedWith",
+            "wasAttributedTo",
+            "plan",
         ];
 
         const markerColors = {
             used: "#FDED00",
             wasGeneratedBy: "red",
             wasDerivedFrom: "#00E572",
+            wasInformedBy: "#FFAA00",
+            hadMember: "#00AAFF",
+            wasStartedBy: "#AA00FF",
+            wasAssociatedWith: "#FF00FF",
+            wasAttributedTo: "#FF4500",
+            plan: "#1F1511",
         };
 
         const defs = svg.append("defs");
@@ -135,14 +163,11 @@ export default function Graph({ graph, controller }) {
 
         //Adaptive collision: start strong, fade out
         const initialCollideForce = simulation.force("collide");
-
         let tickCount = 0;
-        const MAX_COLLIDE_TICKS = 100; // dopo ~1-2s smettiamo
-
+        const MAX_COLLIDE_TICKS = 100;
         //Begins the simulation
         simulation.on("tick", () => {
             tickCount++;
-
             // Reducing collision during the time
             if (tickCount === MAX_COLLIDE_TICKS) {
                 simulation.force("collide", null);
@@ -154,35 +179,32 @@ export default function Graph({ graph, controller }) {
             .selectAll("line")
             .data(graph.links)
             .join("line")
-            .attr("stroke", d =>
-                d.type === "used" ? "#FDED00"
-                    : d.type === "wasGeneratedBy" ? "red"
-                        : d.type === "wasDerivedFrom" ? "#00E572"
-                            : "#999"
-            )
+            .attr("stroke", d => markerColors[d.type] || "#999")
             .attr("stroke-width", 2)
-            .attr("marker-end", d =>
-                markerTypes.includes(d.type)
-                    ? `url(#arrow-${d.type})`
-                    : null
-            );
+            .attr("marker-end", d => markerTypes.includes(d.type) ? `url(#arrow-${d.type})` : null);
 
         //Nodes drawing and properties
+        const node_color = {
+            entity:   "#00E572",
+            activity: "#9898fd",
+            agent:    "#FF5733",
+            default:  "#cccccc"
+        };
         const node = g.append("g")
             .selectAll("path")
             .data(graph.nodes)
             .join("path")
             .attr("stroke", "#000")
             .attr("stroke-width", 1.5)
-            .attr("fill", d =>
-                d.type === "entity" ? "#fdfd66"
-                    : d.type === "activity" ? "#9898fd"
-                        : "#FF5733"
-            )
+            .attr("fill", d => node_color[d.type] || node_color.default)
             .attr("d", d => {
-                if (d.type === "entity") return roundedRectPath(40, 30, 8);
-                if (d.type === "activity") return rectPath(40, 30);
-                return housePath(30);
+                if (d.type === "entity"){
+                    return roundedRectPath(40, 30, 8);
+                }else if (d.type === "activity"){
+                    return rectPath(40, 30);
+                }else{
+                    return housePath(30);
+                }
             })
             .call(d3.drag()
                 .on("start", event => {
@@ -202,16 +224,15 @@ export default function Graph({ graph, controller }) {
             );
 
         //Node labels
-        const MAX_NODE_LABEL = 18;
         const nodeLabel = g.append("g")
             .selectAll("text")
             .data(graph.nodes)
             .join("text")
             .attr("font-size", 12)
             .attr("text-anchor", "middle")
-            .attr("dy", 4) // centrato verticalmente
+            .attr("dy", 4)
             .text(d =>
-                d.label.length > MAX_NODE_LABEL
+                d.label.length > 18
                     ? d.label.slice(0, 10) + "..." + d.label.slice(-3)
                     : d.label
             )
@@ -249,44 +270,34 @@ export default function Graph({ graph, controller }) {
             updateVisibility();
         });
 
-        //Function visibility culling
+        //Function visibility culling for better performaces
         function updateVisibility() {
-            const transform = d3.zoomTransform(svg.node());
-            const scale = transform.k;
-
-            const bbox = svg.node().getBoundingClientRect();
-            const newWidth = bbox.width;
-            const newHeight = bbox.height;
-
-            //Limits of drawing
-            const minX = -transform.x / scale - 100;
-            const minY = -transform.y / scale - 100;
-            const maxX = (newWidth - transform.x) / scale + 100;
-            const maxY = (newHeight - transform.y) / scale + 100;
-
-            node.style("display", d =>
-                d.x >= minX && d.x <= maxX && d.y >= minY && d.y <= maxY
-                    ? "block" : "none");
-
-            nodeLabel.style("display", d =>
-                scale > 0.7 && d.x >= minX && d.x <= maxX && d.y >= minY && d.y <= maxY
-                    ? "block" : "none");
-
-            link.style("display", d =>
-                d.source.x >= minX && d.source.x <= maxX &&
-                d.source.y >= minY && d.source.y <= maxY &&
-                d.target.x >= minX && d.target.x <= maxX &&
-                d.target.y >= minY && d.target.y <= maxY
-                    ? "block" : "none");
-
-            linkLabel.style("display", d =>
-                scale > 1.2 &&
-                d.source.x >= minX && d.source.x <= maxX &&
-                d.source.y >= minY && d.source.y <= maxY &&
-                d.target.x >= minX && d.target.x <= maxX &&
-                d.target.y >= minY && d.target.y <= maxY
-                    ? "block" : "none");
-        }
+            const svgNode = svg.node();
+            if (!svgNode){
+                return;
+            }else {
+                const bounds = getLimits(svgNode);
+                const {scale} = bounds;
+                //nodes
+                node.style("display", d => inView(d.x, d.y, bounds) ? "inline" : "none");
+                //label management
+                nodeLabel.style("display", d =>
+                    scale > 0.7 && inView(d.x, d.y, bounds) ? "inline" : "none"
+                );
+                //links
+                link.style("display", d => {
+                    const sourceVisible = inView(d.source.x, d.source.y, bounds);
+                    const targetVisible = inView(d.target.x, d.target.y, bounds);
+                    return sourceVisible && targetVisible ? "inline" : "none";
+                });
+                //link label
+                linkLabel.style("display", d => {
+                    if (scale <= 1.2) return "none";
+                    return inView(d.source.x, d.source.y, bounds) &&
+                    inView(d.target.x, d.target.y, bounds) ? "inline" : "none";
+                });
+            }
+        };
 
         //Zoom rendering of labels, for performance managing
         zoom.on("zoom", event => {
@@ -341,10 +352,8 @@ export default function Graph({ graph, controller }) {
                     const attr = d.attributes || {};
                     const cell = attr["yprov4wfs:jupyter_cell_index"];
                     const worker = attr["yprov4wfs:processed_on"];
-
                     const cellMatch = cells.length === 0 || (cell && cells.includes(cell));
                     const workerMatch = workers.length === 0 || (worker && workers.includes(worker));
-
                     if(cellMatch && workerMatch ) {
                         return 1;
                     }else{
@@ -360,43 +369,60 @@ export default function Graph({ graph, controller }) {
             //highlighing the nodes based on the ids
             highlightNodes: (ids = []) => {
                 const idSet = new Set(ids);
+                //highlighting the nodes
                 node
                     .attr("opacity", d => {
-                        if (idSet.size === 0) return 1;
-                        return idSet.has(d.id) ? 1 : 0.15;
+                        if (idSet.size === 0){
+                            return 1;
+                        } else{
+                            return idSet.has(d.id) ? 1 : 0.15;
+                        }
                     })
                     .attr("stroke", d => {
-                        if (idSet.has(d.id)) return "#ffffff";
-                        return "#000";
+                        if (idSet.has(d.id)){
+                            return "#ffffff";
+                        }else{
+                            return "#000";
+                        }
                     })
                     .attr("stroke-width", d => {
-                        if (idSet.has(d.id)) return 3;
-                        return 1.5;
+                        if (idSet.has(d.id)){
+                            return 3;
+                        }else{
+                            return 1.5;
+                        }
                     });
-
+                //highlighting the node labels
                 nodeLabel
                     .attr("opacity", d => {
-                        if (idSet.size === 0) return 1;
-                        return idSet.has(d.id) ? 1 : 0.1;
+                        if (idSet.size === 0){
+                            return 1;
+                        }else{
+                            return idSet.has(d.id) ? 1 : 0.1;
+                        }
                     });
+                //highlighting the links
                 link
                     .attr("opacity", d => {
-                        if (idSet.size === 0) return 1;
-                        return idSet.has(d.source.id) || idSet.has(d.target.id)
-                            ? 1
-                            : 0.05;
+                        if (idSet.size === 0){
+                            return 1;
+                        }else{
+                            return idSet.has(d.source.id) || idSet.has(d.target.id) ? 1 : 0.05;
+                        }
                     })
                     .attr("stroke-width", d => {
-                        if (idSet.has(d.source.id) || idSet.has(d.target.id)) return 3;
-                        return 2;
+                        if (idSet.has(d.source.id) || idSet.has(d.target.id)){
+                            return 3;
+                        }else{
+                            return 2;
+                        }
                     });
             },
-
         });
 
         const linksData = graph.links;
-
         node.on("click", (event, d) => {
+            //node reset
             node.attr("stroke", "#000").attr("stroke-width", 1.5);
 
             //Highlighting the selected node
@@ -404,6 +430,7 @@ export default function Graph({ graph, controller }) {
                 .attr("stroke", "grey")
                 .attr("stroke-width", 5);
 
+            //zoom management
             const currentTransform = d3.zoomTransform(svg.node());
             const currentZoom = currentTransform.k;
             let targetZoom;
@@ -414,7 +441,6 @@ export default function Graph({ graph, controller }) {
             } else {
                 targetZoom = currentZoom * 1.2;
             }
-
             svg.transition().duration(600)
                 .call(
                     zoom.transform,
@@ -422,16 +448,14 @@ export default function Graph({ graph, controller }) {
                     translate(width / 2 - d.x * targetZoom, height / 2 - d.y * targetZoom)
                     .scale(targetZoom)
                 );
-
-
             //Graph info mapped to send to the sideInfo
             const group =
                 d.type === "entity" ? "Entity" :
                 d.type === "activity" ? "Activity" :
                 d.type === "agent" ? "Agent" : "Unknown";
-
             const typeInfo = d.attributes?.["prov:type"] || "Unknown";
 
+            //mapping the relations
             const relOut = (relType) =>
                 linksData
                     .filter(l => l.type === relType && l.source.id === d.id)
@@ -455,7 +479,6 @@ export default function Graph({ graph, controller }) {
             const generated        = relIn("wasGeneratedBy");
             const wasUsedBy        = relIn("used");
             const derives          = relIn("wasDerivedFrom");
-
             controller.emitNodeClick({
                 id: d.id,
                 group,
@@ -475,22 +498,19 @@ export default function Graph({ graph, controller }) {
             });
         });
 
-        //Function for redrawing
-        function redraw() {
-            link
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
-            node
-                .attr("cx", d => d.x)
-                .attr("cy", d => d.y);
-            nodeLabel
-                .attr("x", d => d.x)
-                .attr("y", d => d.y);
-            linkLabel
-                .attr("x", d => (d.source.x + d.target.x) / 2)
-                .attr("y", d => (d.source.y + d.target.y) / 2);
+        //Function for redrawing at every simulation update
+        function redraw(mode = "all") {
+            switch (mode) {
+                case "links":
+                    updateLinkPositions(link, linkLabel);
+                    break;
+                case "nodes":
+                    updateNodePositions(node, nodeLabel);
+                    break;
+                default:
+                    updateLinkPositions(link, linkLabel);
+                    updateNodePositions(node, nodeLabel);
+            }
             updateVisibility();
         }
 
@@ -505,15 +525,18 @@ export default function Graph({ graph, controller }) {
 
         worker.onmessage = (event) => {
             const msg = event.data;
-
             if (msg.type === "tick") {
-                msg.nodes.forEach(updated => {
-                    const n = graph.nodes.find(n => n.id === updated.id);
-                    if (!n) return;
-                    n.x = updated.x;
-                    n.y = updated.y;
-                });
-                redraw();   //graph make the redrawing
+                for (const updatedNode of msg.nodes) {
+                    const node = graph.nodes.find(n => n.id === updatedNode.id);
+                    if (!node){
+                        continue;
+                    }else{
+                        node.x = updatedNode.x;
+                        node.y = updatedNode.y;
+                    }
+                }
+            }else{
+                return;
             }
         };
 
@@ -525,11 +548,10 @@ export default function Graph({ graph, controller }) {
             svg.attr("width", newWidth).attr("height", newHeight);
             svg.call(zoom.transform, d3.zoomIdentity);
             simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
-
+            //redraw and updating
             redraw();
             updateVisibility();
         }
-
         window.addEventListener("resize", handleResize);
 
         return () => {
@@ -542,4 +564,78 @@ export default function Graph({ graph, controller }) {
         <svg ref={ref} style={{ width: "100%", height: "100%" }}></svg>
     );
 }
+
+//function for managing the viewport
+function inView(x, y, bounds, offset = 100) {
+    const leftLimit = bounds.minX - offset;
+    const rightLimit = bounds.maxX + offset;
+    const topLimit = bounds.minY - offset;
+    const bottomLimit = bounds.maxY + offset;
+    if (x < leftLimit || x > rightLimit) {
+        return false;
+    }
+    if (y < topLimit || y > bottomLimit) {
+        return false;
+    }
+    return true;
+}
+
+//function for getting the limits and updating the visibility
+function getLimits(svgElement) {
+    const transform = d3.zoomTransform(svgElement);
+    //dimensions of the browser
+    const viewport = svgElement.getBoundingClientRect();
+    const w = viewport.width;
+    const h = viewport.height;
+    const k = transform.k;
+    //limits based on the zoom
+    const minX = -transform.x / k;
+    const minY = -transform.y / k;
+    const maxX = (w - transform.x) / k;
+    const maxY = (h - transform.y) / k;
+    //building the limits
+    const limits = {
+        minX: minX,
+        minY: minY,
+        maxX: maxX,
+        maxY: maxY,
+        scale: k
+    };
+    return limits;
+}
+
+//update function for redraw function
+function updateLinkPositions(link, linkLabel) {
+    link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+    linkLabel
+        .attr("x", d => {
+            const midX = (d.source.x + d.target.x) / 2;
+            return midX;
+        })
+        .attr("y", d => {
+            const midY = (d.source.y + d.target.y) / 2;
+            return midY;
+        });
+}
+
+//update node function used in redraw function
+function updateNodePositions(node, nodeLabel) {
+    node.attr("transform", d => {
+        if (d.x && d.y) {
+            return `translate(${d.x},${d.y})`;
+        }
+        return "";
+    });
+    nodeLabel
+        .attr("x", d => d.x)
+        .attr("y", d => d.y);
+}
+
+
+
+
 

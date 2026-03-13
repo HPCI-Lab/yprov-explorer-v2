@@ -23,13 +23,14 @@ export default function CodeEditor({ lines, onLineClick  }){
     //states and ref for text editor size and update
     const [fontSize, setFontSize] = useState(14);
     const editorRef = useRef(null);
+    const [search, setSearch] = useState("");
 
-
-    //function for handling the text click
+    //function for handling the text click of CodeMirror
     const lineClickExtension = EditorView.domEventHandlers({
         mousedown: (event, view) => {
             if (!onLineClick) {
             }else{
+                //calculating cursor position
                 const position = view.posAtCoords({
                     x: event.clientX,
                     y: event.clientY
@@ -37,17 +38,17 @@ export default function CodeEditor({ lines, onLineClick  }){
                 if (position == null){
 
                 }else{
+                    //recover the lines
                     const line = view.state.doc.lineAt(position);
                     const editorLineNumber = line.number;
+                    //recover the lines and the clicked
                     const visibleLines = lines.filter(l => !l.isCellSeparator);
                     const clicked = visibleLines[editorLineNumber - 1];
                     if (!clicked){
-
+//
                     }else{
-                        view.dispatch({
-                            selection: { anchor: line.from },
-                            scrollIntoView: true,
-                        });
+                        //select the line
+                        view.dispatch({selection: { anchor: line.from }, scrollIntoView: true,});
                     }
                     console.log(clicked.count);
                     onLineClick(clicked.count);
@@ -76,15 +77,7 @@ export default function CodeEditor({ lines, onLineClick  }){
 
     //main layout
     return (
-        <Box
-            w="100%"
-            h="100%"
-            minH="0"
-            display="flex"
-            flexDirection="column"
-            gap="3"
-            overflow="hidden"
-        >
+        <Box w="100%" h="100%" minH="0" display="flex" flexDirection="column" gap="3" overflow="hidden">
             {/*search bar TO IMPLEMENT*/}
             <InputGroup size="sm">
                 <InputLeftElement pointerEvents="none">
@@ -97,19 +90,11 @@ export default function CodeEditor({ lines, onLineClick  }){
                     border="1px solid"
                     borderColor="black"
                     _placeholder={{color: "black"}}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                 />
             </InputGroup>
-            <Box
-                flex="1"
-                position="relative"
-                bg="gray.750"
-                border="1px solid"
-                minH="0"
-                borderColor="black"
-                overflow="hidden"
-                display="flex"
-                flexDirection="column"
-            >
+            <Box flex="1" position="relative" bg="gray.750" border="1px solid" minH="0" borderColor="black" overflow="hidden" display="flex" flexDirection="column">
                 <HStack
                     position="absolute"
                     top="0"
@@ -120,7 +105,7 @@ export default function CodeEditor({ lines, onLineClick  }){
                     spacing={1}
                     bg="white"
                     borderBottom="1px solid"
-                    borderColor="whiteAlpha.200"
+                    borderColor="white"
                     zIndex="10"
                 >
                     <IconButton

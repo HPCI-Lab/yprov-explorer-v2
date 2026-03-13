@@ -1,4 +1,4 @@
-/*d3Worker.js: web worker used to compute the d3-force position on a different thread and
+/*graphWorker.js: web worker used to compute the d3-force position on a different thread and
 sending back to draw the graph.
 !NEEDS IMPROVEMENTS
 */

@@ -17,7 +17,7 @@ function readFileAsJson(file) {
 }
 
 //function for uploading the data
-export default function DatasetUpload({ currentDataset, onDatasetLoaded }) {
+export default function UploadData({ currentDataset, onDatasetLoaded }) {
     const handleUpload = async (event) => {
         const files = Array.from(event.target.files);
 
@@ -45,13 +45,14 @@ export default function DatasetUpload({ currentDataset, onDatasetLoaded }) {
             alert("Please upload a provenance JSON file.");
             return;
         }
-
         //json uploaded (eith or without notebook)
         const provJson = await readFileAsJson(provFile);
-        const notebookJson = notebookFile
-            ? await readFileAsJson(notebookFile)
-            : currentDataset?.notebook ?? null;
-
+        let notebookJson = null;
+        if (notebookFile) {
+            notebookJson = await readFileAsJson(notebookFile);
+        } else if (currentDataset?.notebook) {
+            notebookJson = currentDataset.notebook;
+        }
         onDatasetLoaded({
             provJson,
             notebook: notebookJson
@@ -60,16 +61,20 @@ export default function DatasetUpload({ currentDataset, onDatasetLoaded }) {
 
     //main layout
     return (
-        <MenuItem as="label" bg="gray.900" cursor="pointer">
-            Upload dataset
-            <input
-                type="file"
-                accept=".json,.ipynb"
-                multiple
-                hidden
-                onChange={handleUpload}
-            />
+        <>
+        <MenuItem as="label" bg="black" cursor="pointer">
+            Upload data (.json o .ipynb)
+            <input type="file" accept=".json,.ipynb" multiple hidden onChange={handleUpload}/>
         </MenuItem>
+        {/*To implement*/}
+        <MenuItem bg="black">
+            Upload from URL
+        </MenuItem>
+        {/*To implement*/}
+        <MenuItem bg="black">
+            Upload from API
+        </MenuItem>
+        </>
     );
 }
 

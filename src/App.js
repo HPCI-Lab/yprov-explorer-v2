@@ -7,8 +7,8 @@ import GraphContainer from "./components/layout/GraphContainer";
 import Timeline from "./components/layout/Timeline";
 import React, {useEffect, useState} from "react";
 import {Resizable} from "re-resizable";
-import controller from "./graph/GraphController";
-import parseProvJSON from "./graph/parseProvenance";
+import controller from "./components/graph/graphController";
+import parserProvenance , {adapter} from "./components/graph/parseProvenance";
 
 
 function App() {
@@ -40,16 +40,19 @@ function App() {
     //state for dataset
     const [dataset, setDataset] = useState(null);
 
+    //function for managing the upload
     const handleDatasetLoaded = ({ provJson, notebook }) => {
         setDataset({ provJson, notebook });
-        const parsed = parseProvJSON(provJson);
-        setGraphData(parsed);
-        controller.setGraphData(parsed);
+        const parsed = parserProvenance(provJson);
+        const adapt = adapter(parsed);
+        setGraphData(adapt);
+        controller.setGraphData(adapt);
     };
 
     //variable for checking if there is a notebook loaded
     const hasNotebook = !!dataset?.notebook;
 
+    //Main layout
     return (
         <Flex direction="column" h="100vh" w="100vw" bg="black" color="white">
             {/* Top navigation bar for search and others*/}
@@ -59,11 +62,7 @@ function App() {
                 {/* Sidebar */}
                 <Sidebar onOpenPanel={onOpenPanel}/>
                 {/*Panel manager for helping the panels opening*/}
-                <SidePanelManager
-                    activePanel={activePanel}
-                    isOpen={isSidePanelOpen}
-                    onClose={onClosePanel}
-                />
+                <SidePanelManager activePanel={activePanel} isOpen={isSidePanelOpen} onClose={onClosePanel}/>
 
                 {/*Main content area*/}
                 <Flex flex="1" position="relative" overflow="hidden" minWidth={0} minH="0">
@@ -91,10 +90,7 @@ function App() {
                             >
                                 {/*Code panel for viewing the code*/}
                                 {hasNotebook && (
-                                    <CodePanel
-                                        graphData={graphData}
-                                        notebook={dataset?.notebook}
-                                    />
+                                    <CodePanel graphData={graphData} notebook={dataset?.notebook}/>
                                 )}
                             </Resizable>
                         )

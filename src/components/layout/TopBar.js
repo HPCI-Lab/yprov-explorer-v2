@@ -14,8 +14,8 @@ import {
 import { SunIcon } from "@chakra-ui/icons";
 import { Image } from "@chakra-ui/react"
 import {useState} from "react";
-import controller from "../../graph/GraphController";
-import DatasetUpload from "../../inputs/DatasetUpload";
+import controller from "../graph/graphController";
+import UploadData from "../upload/UploadData";
 import {MoonIcon} from "lucide-react";
 
 /*
@@ -32,27 +32,14 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
         controller.searchNode(query);
     };
 
+    //Main layout
     return (
-        <Flex
-            h="38px"
-            align="center"
-            justify="space-between"
-            color="white"
-            borderBottom="1px solid"
-            borderColor="whiteAlpha.200"
-            px="3"
-        >
+        <Flex h="38px" align="center" justify="space-between" color="white" borderBottom="1px solid" borderColor="black" px="3">
             {/*Logo container*/}
             <Flex align="center" gap="4">
                 {/* Logo */}
                 <Box w="26px" h="26px">
-                    <Image
-                        src="logo.png"
-                        boxSize="26px"
-                        objectFit="contain"
-                        pointerEvents="none"
-                        borderRadius="md"
-                    />
+                    <Image src="logo.png" boxSize="26px" objectFit="contain" pointerEvents="none" borderRadius="md"/>
                 </Box>
 
                 {/* File menu */}
@@ -64,24 +51,16 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                         px="2"
                         py="1"
                         borderRadius="sm"
-                        _hover={{ bg: "whiteAlpha.100" }}
-                        _expanded={{ bg: "whiteAlpha.200" }}
+                        _hover={{ bg: "gray" }}
+                        _expanded={{ bg: "gray" }}
                     >
                         File
                     </MenuButton>
 
-                    <MenuList
-                        bg="gray.900"
-                        borderColor="whiteAlpha.200"
-                        minW="180px"
-                        fontSize="sm"
-                    >
-                        <DatasetUpload
-                            currentDataset={dataset}
-                            onDatasetLoaded={onDatasetLoaded}
-                        />
+                    <MenuList bg="black" borderColor="white" minW="180px" fontSize="sm">
+                        <UploadData currentDataset={dataset} onDatasetLoaded={onDatasetLoaded}/>
                         <Divider />
-                        <MenuItem bg="gray.900">Close</MenuItem>
+                        <MenuItem bg="black">Close</MenuItem>
                     </MenuList>
                 </Menu>
             </Flex>
@@ -92,7 +71,7 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                     size="sm"
                     placeholder="Search node..."
                     border="1px solid"
-                    borderColor="whiteAlpha.200"
+                    borderColor="white"
                     bg="white"
                     color="black"
                     _placeholder={{ color: "black" }}

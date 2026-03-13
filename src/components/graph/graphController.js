@@ -1,11 +1,11 @@
 /*
-GraphController.js: Controller for Graph API. Permits to call functions from the app.
+graphController.js: Controller for Graph API. Permits to call functions from the app.
 Managing the communication between UI and Graph
 */
 
 class GraphController {
-    nodeClickHandler = () => {};
     graphData = null;
+    nodeClickHandler = () => {};
 
     //Graoh api
     graphAPI = {
@@ -54,26 +54,27 @@ class GraphController {
 
     //seach api based on the id
     searchNode(query) {
-        if(!this.graphData || !query) return null;
+        if(!this.graphData || !query){
+            return null;
+        } else{
+            const q = String(query).toLowerCase();
+            const node = this.graphData.nodes.find(n =>
+                n.id.toLowerCase().includes(q) ||
+                n.label?.toLowerCase().includes(q)
+            );
+            if(!node){
+                return null;
+            } else{
+                this.selectNode(node.id);
+                this.focusNode(node.id);
+                this.emitNodeClick(node);
 
-        const q = String(query).toLowerCase();
-
-        const node = this.graphData.nodes.find(n =>
-            n.id.toLowerCase().includes(q) ||
-            n.label?.toLowerCase().includes(q)
-        );
-
-        if(!node) return null;
-
-        this.selectNode(node.id);
-        this.focusNode(node.id);
-        this.emitNodeClick(node);
-
-        return node;
+                return node;
+            }
+        }
     }
     //Dask filtering api function
     getAvailableFilters() {
-
         if (!this.graphData){
             return {
                 cells: [...cells],
@@ -81,10 +82,9 @@ class GraphController {
                 chunks: []
             };
         }
-
+        //defines cells and workers
         const cells = new Set();
         const workers = new Set();
-
         this.graphData.nodes.forEach(n => {
             const a = n.attributes || {};
             if (a["yprov4wfs:jupyter_cell_index"])

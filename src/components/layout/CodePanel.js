@@ -1,10 +1,10 @@
 import {Box, Collapse, HStack, IconButton, useCheckboxGroup, VStack} from "@chakra-ui/react";
 import {useState, useEffect, useRef} from "react";
 import {ChevronLeftIcon} from "@chakra-ui/icons";
-import CodeEditor from "./Notebook/components/CodeEditor";
-import controller from "../../graph/GraphController";
-import parserNotebook from "../layout/Notebook/parserNotebook";
-import Filters from "./Notebook/components/Filters";
+import CodeEditor from "./notebook/components/CodeEditor";
+import controller from "../graph/graphController";
+import parserNotebook from "./notebook/parserNotebook";
+import Filters from "./notebook/components/Filters";
 import {FilterIcon} from "lucide-react";
 /*
 CodePanel.js: contains the code editor for viewing cells code of the graph.
@@ -103,22 +103,8 @@ export default function CodePanel({ graphData, notebook }) {
 
     //Main layout
     return (
-        <Box
-            w="100%"
-            h="100%"
-            minH="0"
-            p="4"
-            color="white"
-            display="flex"
-            flexDirection="column"
-            gap="3"
-            overflow="hidden"
-        >
-            <Box
-                pb="2"
-                borderBottom="1px solid"
-                borderColor="whiteAlpha.200"
-            >
+        <Box w="100%" h="100%" minH="0" p="4" color="white" display="flex" flexDirection="column" gap="3" overflow="hidden">
+            <Box pb="2" borderBottom="1px solid" borderColor="white">
                 <HStack spacing={2} align="center">
                     <HStack>
                         <Box>
@@ -146,7 +132,7 @@ export default function CodePanel({ graphData, notebook }) {
                         transition="width 0s linear"
                         zIndex="100"
                         borderBottom="1px solid"
-                        borderColor="whiteAlpha.300"
+                        borderColor="white"
                         p="3"
                         boxShadow="lg"
                     >
@@ -158,10 +144,7 @@ export default function CodePanel({ graphData, notebook }) {
                         />
                     </Box>
                 </Collapse>
-                <CodeEditor
-                    lines={lines}
-                    onLineClick={handleClick}
-                />
+                <CodeEditor lines={lines} onLineClick={handleClick}/>
             </Box>
         </Box>
     );

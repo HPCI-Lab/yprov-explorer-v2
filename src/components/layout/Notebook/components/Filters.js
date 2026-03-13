@@ -21,44 +21,16 @@ export default function FiltersPanel({available, cellGroup, workerGroup, chunkGr
     //main layout
     return (
         <VStack align="stretch" spacing={4}>
-            <FiltersSlider
-                title="Filter by cell"
-                values={cells}
-                group={cellGroup}
-            />
-            <Filters
-                title="Filter by workers"
-                label="Workers"
-                values={workers}
-                group={workerGroup}
-            />
-            <FiltersSlider
-                title="Filter by chunks"
-                values={chunks}
-                group={chunkGroup}
-            />
+            <FiltersSlider title="Filter by cell" values={cells} group={cellGroup}/>
+            <Filters title="Filter by workers" label="Workers" values={workers} group={workerGroup}/>
+            <FiltersSlider title="Filter by chunks" values={chunks} group={chunkGroup}/>
         </VStack>
 
         /* MENU FILTER
         <VStack align="stretch" spacing={4}>
-            <Filters
-                title="Filter by cell"
-                label="Cells"
-                values={cells}
-                group={cellGroup}
-            />
-            <Filters
-                title="Filter by workers"
-                label="Workers"
-                values={workers}
-                group={workerGroup}
-            />
-            <Filters
-                title="Filter by chunks"
-                label="Chunks"
-                values={chunks}
-                group={chunkGroup}
-            />
+            <Filters title="Filter by cell" label="Cells" values={cells} group={cellGroup}/>
+            <Filters title="Filter by workers" label="Workers" values={workers} group={workerGroup}/>
+            <Filters title="Filter by chunks" label="Chunks" values={chunks} group={chunkGroup}/>
         </VStack>
          */
     );
@@ -76,21 +48,9 @@ function Filters({ title, label, values, group }) {
                     {label}
                 </MenuButton>
                 <MenuList minW="100%" bg="white">
-                    <MenuOptionGroup
-                        type="checkbox"
-                        value={group.value}
-                        onChange={group.setValue}
-                        color="black"
-                        bg="white"
-                    >
+                    <MenuOptionGroup type="checkbox" value={group.value} onChange={group.setValue} color="black" bg="white">
                         {values.map(value => (
-                            <MenuItemOption
-                                key={value}
-                                value={value}
-                                color="black"
-                                bg="white"
-                                minW="100%"
-                            >
+                            <MenuItemOption key={value} value={value} color="black" bg="white" minW="100%">
                                 {value}
                             </MenuItemOption>
                         ))}
@@ -132,42 +92,17 @@ function FiltersSlider({title, values, group,}) {
             </Text>
 
             <HStack spacing={3}>
-                <IconButton
-                    size="sm"
-                    icon={<MinusIcon />}
-                    aria-label="decrease"
-                    onClick={() => setIndex(index - 1)}
-                    isDisabled={index === 0}
-                />
+                <IconButton size="sm" icon={<MinusIcon />} aria-label="decrease" onClick={() => setIndex(index - 1)} isDisabled={index === 0}/>
 
-                <Slider
-                    value={index}
-                    min={0}
-                    max={max}
-                    step={1}
-                    onChange={setIndex}
-                    flex="1"
-                >
+                <Slider value={index} min={0} max={max} step={1} onChange={setIndex} flex="1">
                     <SliderTrack>
                         <SliderFilledTrack />
                     </SliderTrack>
                     <SliderThumb />
                 </Slider>
 
-                <IconButton
-                    size="sm"
-                    icon={<AddIcon />}
-                    aria-label="increase"
-                    onClick={() => setIndex(index + 1)}
-                    isDisabled={index === max}
-                />
-                <IconButton
-                    size="sm"
-                    icon={<RepeatIcon />}
-                    aria-label="reset"
-                    variant="ghost"
-                    onClick={() => group.setValue([])}
-                />
+                <IconButton size="sm" icon={<AddIcon />} aria-label="increase" onClick={() => setIndex(index + 1)} isDisabled={index === max}/>
+                <IconButton size="sm" icon={<RepeatIcon />} aria-label="reset" variant="ghost" onClick={() => group.setValue([])}/>
             </HStack>
 
             <Text fontSize="xs" mt="1" opacity={0.7}>

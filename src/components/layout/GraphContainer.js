@@ -1,7 +1,7 @@
 import {Box, IconButton} from "@chakra-ui/react";
 import {useEffect, useRef, useState} from "react";
-import controller from "../../graph/GraphController";
-import Graph from "../../graph/Graph";
+import controller from "../graph/graphController";
+import Graph from "../graph/Graph";
 import { SettingsIcon, InfoIcon } from "@chakra-ui/icons";
 import { MdZoomOutMap } from "react-icons/md";
 /*
@@ -55,21 +55,13 @@ export default function GraphContainer({ graphData }) {
 
     //main container layout
     return (
-        <Box
-            w="100%"
-            h="100%"
-            flex="1"
-            bg="white"
-            position="relative"
-            overflow="hidden"
-            ref={frameRef}
-            zIndex={isFullscreen ? 9999 : "auto"}
-        >
+        <Box w="100%" h="100%" flex="1" bg="white" position="relative" overflow="hidden" ref={frameRef} zIndex={isFullscreen ? 9999 : "auto"}>
             {/*label settings*/}
             <IconButton
                 aria-label="Settings"
                 icon={<SettingsIcon />}
                 position="absolute"
+                color="black"
                 top="2"
                 left="3"
                 size="sm"
@@ -81,6 +73,7 @@ export default function GraphContainer({ graphData }) {
                 aria-label="Expand"
                 icon={<MdZoomOutMap />}
                 position="absolute"
+                color="black"
                 top="2"
                 right="3"
                 size="sm"
@@ -93,6 +86,7 @@ export default function GraphContainer({ graphData }) {
                 aria-label="Info"
                 icon={<InfoIcon />}
                 position="absolute"
+                color="black"
                 bottom="2"
                 left="3"
                 size="sm"
@@ -104,7 +98,6 @@ export default function GraphContainer({ graphData }) {
                 left="0%"
                 width="100%"
                 height="100%"
-                color="gray.500"
                 id="graphCanvas"
             >
                 {/*graph render*/}
