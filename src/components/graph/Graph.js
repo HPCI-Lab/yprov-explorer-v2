@@ -163,6 +163,7 @@ export default function Graph({ graph, controller }) {
 
         //Adaptive collision: start strong, fade out
         const initialCollideForce = simulation.force("collide");
+        /* Codice mai eseguito, stiamo dichiarando un listener sotto e questo viene scartato
         let tickCount = 0;
         const MAX_COLLIDE_TICKS = 100;
         //Begins the simulation
@@ -173,6 +174,7 @@ export default function Graph({ graph, controller }) {
                 simulation.force("collide", null);
             }
         });
+        */
 
         //Draw links
         const link = g.append("g")
@@ -270,31 +272,38 @@ export default function Graph({ graph, controller }) {
             updateVisibility();
         });
 
+        const VISIBILITY_UPDATE_INTERVAL_MS = 100;
+        let lastVisibilityUpdate = 0;
+
         //Function visibility culling for better performaces
-        function updateVisibility() {
+        function updateVisibility(force = false) {
+            if (!force && Date.now() < lastVisibilityUpdate + VISIBILITY_UPDATE_INTERVAL_MS) return;
+            lastVisibilityUpdate = Date.now(); //permette di ridurre le chiamate alla funzione
+
             const svgNode = svg.node();
             if (!svgNode){
                 return;
             }else {
                 const bounds = getLimits(svgNode);
                 const {scale} = bounds;
+                graph.nodes.forEach(n => { 
+                    n._visible = inView(n.x, n.y, bounds);
+                });
+
                 //nodes
-                node.style("display", d => inView(d.x, d.y, bounds) ? "inline" : "none");
+                node.style("display", d => d._visible ? "inline" : "none");
                 //label management
                 nodeLabel.style("display", d =>
-                    scale > 0.7 && inView(d.x, d.y, bounds) ? "inline" : "none"
+                    scale > 0.7 && d._visible ? "inline" : "none"
                 );
                 //links
                 link.style("display", d => {
-                    const sourceVisible = inView(d.source.x, d.source.y, bounds);
-                    const targetVisible = inView(d.target.x, d.target.y, bounds);
-                    return sourceVisible && targetVisible ? "inline" : "none";
+                    return d.source._visible || d.target._visible ? "inline" : "none";
                 });
                 //link label
                 linkLabel.style("display", d => {
                     if (scale <= 1.2) return "none";
-                    return inView(d.source.x, d.source.y, bounds) &&
-                    inView(d.target.x, d.target.y, bounds) ? "inline" : "none";
+                    return d.source._visible || d.target._visible ? "inline" : "none";
                 });
             }
         };
@@ -303,18 +312,12 @@ export default function Graph({ graph, controller }) {
         zoom.on("zoom", event => {
             g.attr("transform", event.transform);
             updateVisibility();
-            const scale = event.transform.k;
-            nodeLabel.style("display", scale > 0.7 ? "block" : "none");
-            linkLabel.style("display", scale > 1.2 ? "block" : "none");
+        }).on("end", _ => {
+            updateVisibility(true); //zoom forzato, è importante, stiamo espandendo o riducendo la viewport
         });
 
         //simulation managing for performance
         simulation.on("end", () => {
-            graph.nodes.forEach(n => {
-                n.fx = n.x;
-                n.fy = n.y;
-            });
-            simulation.force("collide", null);
             simulation.stop();
         });
 
@@ -550,7 +553,6 @@ export default function Graph({ graph, controller }) {
             simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
             //redraw and updating
             redraw();
-            updateVisibility();
         }
         window.addEventListener("resize", handleResize);
 
