@@ -183,6 +183,8 @@ export default function Graph({ graph, controller }) {
             .join("line")
             .attr("stroke", d => markerColors[d.type] || "#999")
             .attr("stroke-width", 2)
+            .style("pointer-events", "none")
+            .style("user-select", "none")
             .attr("marker-end", d => markerTypes.includes(d.type) ? `url(#arrow-${d.type})` : null);
 
         //Nodes drawing and properties
@@ -424,13 +426,16 @@ export default function Graph({ graph, controller }) {
         });
 
         const linksData = graph.links;
-        node.on("click", (event, d) => {
+        svg.on("click", (event) => {
+            if (event.target == event.currentTarget) return; //Se viene selezionato l'svg stesso (currentTarget) non continuo
+            let n = d3.select(event.target), //Seleziono l'elemento desiderato
+                d = n.datum(); //Estraggo il nodo dall'elemento selezionato
+            console.log(event.target);
             //node reset
             node.attr("stroke", "#000").attr("stroke-width", 1.5);
 
             //Highlighting the selected node
-            d3.select(event.currentTarget)
-                .attr("stroke", "grey")
+            n.attr("stroke", "grey")
                 .attr("stroke-width", 5);
 
             //zoom management
