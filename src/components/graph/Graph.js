@@ -12,6 +12,7 @@ import {scale} from "framer-motion";
 
 export default function Graph({ graph, controller }) {
     const ref = useRef(null);
+    const simulation = useRef(null);
     let selectedNode = null;
 
     //Web worker for off thread simulation
@@ -89,6 +90,7 @@ export default function Graph({ graph, controller }) {
         const height = window.innerHeight;
 
         d3.select(ref.current).selectAll("*").remove();
+        simulation.current?.stop();
         const svg = d3.select(ref.current)
             .attr("width", width)
             .attr("height", height);
@@ -149,7 +151,7 @@ export default function Graph({ graph, controller }) {
         });
 
         //D3 FORCE Configuration
-        const simulation = d3.forceSimulation(graph.nodes)
+        simulation.current = d3.forceSimulation(graph.nodes)
             .force("link",
                 d3.forceLink(graph.links)
                     .id(d => d.id)
@@ -162,7 +164,7 @@ export default function Graph({ graph, controller }) {
             .alphaDecay(0.005);
 
         //Adaptive collision: start strong, fade out
-        const initialCollideForce = simulation.force("collide");
+        const initialCollideForce = simulation.current.force("collide");
         /* Codice mai eseguito, stiamo dichiarando un listener sotto e questo viene scartato
         let tickCount = 0;
         const MAX_COLLIDE_TICKS = 100;
@@ -212,7 +214,7 @@ export default function Graph({ graph, controller }) {
             })
             .call(d3.drag()
                 .on("start", event => {
-                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    if (!event.active) simulation.current.alphaTarget(0.3).restart();
                     event.subject.fx = event.x;
                     event.subject.fy = event.y;
                 })
@@ -221,7 +223,7 @@ export default function Graph({ graph, controller }) {
                     event.subject.fy = event.y;
                 })
                 .on("end", event => {
-                    if (!event.active) simulation.alphaTarget(0);
+                    if (!event.active) simulation.current.alphaTarget(0);
                     event.subject.fx = null;
                     event.subject.fy = null;
                 })
@@ -258,7 +260,7 @@ export default function Graph({ graph, controller }) {
             .style("user-select", "none");
 
         //Tick update, managing the visibility for performaces
-        simulation.on("tick", () => {
+        simulation.current.on("tick", () => {
             link
                 .attr("x1", d => d.source.x)
                 .attr("y1", d => d.source.y)
@@ -319,8 +321,8 @@ export default function Graph({ graph, controller }) {
         });
 
         //simulation managing for performance
-        simulation.on("end", () => {
-            simulation.stop();
+        simulation.current.on("end", () => {
+            simulation.current.stop();
         });
 
         //Register API to Controller, creates a public API for the graph
@@ -430,7 +432,6 @@ export default function Graph({ graph, controller }) {
             if (event.target == event.currentTarget) return; //Se viene selezionato l'svg stesso (currentTarget) non continuo
             let n = d3.select(event.target), //Seleziono l'elemento desiderato
                 d = n.datum(); //Estraggo il nodo dall'elemento selezionato
-            console.log(event.target);
             //node reset
             node.attr("stroke", "#000").attr("stroke-width", 1.5);
 
@@ -555,7 +556,7 @@ export default function Graph({ graph, controller }) {
 
             svg.attr("width", newWidth).attr("height", newHeight);
             svg.call(zoom.transform, d3.zoomIdentity);
-            simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+            simulation.current.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
             //redraw and updating
             redraw();
         }
