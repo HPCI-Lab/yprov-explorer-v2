@@ -411,10 +411,17 @@ export default function Graph({ graph, controller }) {
 
         const linksData = graph.links;
         svg.on("click", (event) => {
-            if (event.target == event.currentTarget) return; //Se viene selezionato l'svg stesso (currentTarget) non continuo
+            if (event.target == event.currentTarget) 
+            {
+                //node reset
+                node.classed("svg-node-selected", false);
+                //inspector reset
+                controller.emitNodeClick({id: null});
+                return; //Se viene selezionato l'svg stesso (currentTarget) non continuo
+            }
+
             let n = d3.select(event.target), //Seleziono l'elemento desiderato
                 d = n.datum(); //Estraggo il nodo dall'elemento selezionato
-            //node reset
             node.classed("svg-node-selected", false);
 
             //Highlighting the selected node
