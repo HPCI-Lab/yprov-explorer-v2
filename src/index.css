@@ -17,3 +17,77 @@ code {
   height: 100vh;
 }
 
+.svg-text {
+  fill: black;
+  text-anchor: middle;
+}
+
+.svg-text-10 {
+  font-size: 10;
+}
+
+.svg-text-12 {
+  font-size: 12;
+}
+
+.svg-link{
+  stroke-width: 2;
+}
+
+.svg-link-default { stroke: #999; }
+
+.svg-link-used { stroke: #FDED00; }
+
+.svg-link-wasGeneratedBy { stroke: red; }
+
+.svg-link-wasDerivedFrom { stroke: #00E572; }
+
+.svg-link-wasInformedBy { stroke: #FFAA00; }
+
+.svg-link-hadMember { stroke: #00AAFF; }
+
+.svg-link-wasStartedBy { stroke: #AA00FF; }
+
+.svg-link-wasAssociatedWith { stroke: #FF00FF; }
+
+.svg-link-wasAttributedTo { stroke: #FF4500; }
+
+.svg-link-plan { stroke: #1F1511; }
+
+/* classi CSS per la punta delle frecce */
+
+.svg-marker-used { fill: #FDED00; }
+
+.svg-marker-wasGeneratedBy { fill: red; }
+
+.svg-marker-wasDerivedFrom { fill: #00E572; }
+
+.svg-marker-wasInformedBy { fill: #FFAA00; }
+
+.svg-marker-hadMember { fill: #00AAFF; }
+
+.svg-marker-wasStartedBy { fill: #AA00FF; }
+
+.svg-marker-wasAssociatedWith { fill: #FF00FF; }
+
+.svg-marker-wasAttributedTo { fill: #FF4500; }
+
+.svg-marker-plan { fill: #1F1511; }
+
+.svg-node {
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+.svg-node-default { fill: #cccccc; }
+
+.svg-node-agent { fill: #FF5733; }
+
+.svg-node-activity { fill: #9898fd; }
+
+.svg-node-entity { fill: #00E572; }
+
+.svg-node-selected {
+  stroke-width: 5 !important;
+  stroke: grey !important;
+}
