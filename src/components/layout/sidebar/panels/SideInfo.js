@@ -27,7 +27,7 @@ export default function SideInfo() {
     }, []);
 
     //managing the feature
-    if (!nodeInfo) {
+    if (!nodeInfo || nodeInfo.id == null) {
         return (
             <Box pb="2" borderBottom="1px solid" borderColor="whiteAlpha.200">
                 <HStack spacing={2} align="center">
