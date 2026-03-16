@@ -23,6 +23,15 @@ TopBar.js: Top bar component that contains main elements for navigation:
 - searchbar for searching the nodes on the graph
 - theme toggler button for changing the theme on preferences
 */
+
+/**
+ *
+ * @param {Object} dataset - data file
+ * @param {Object} onDatasetLoaded - current dataset
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 export default function TopBar({ dataset, onDatasetLoaded }) {
     //query states
     const [query, setQuery] = useState("");
@@ -41,7 +50,6 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                 <Box w="26px" h="26px">
                     <Image src="logo.png" boxSize="26px" objectFit="contain" pointerEvents="none" borderRadius="md"/>
                 </Box>
-
                 {/* File menu */}
                 <Menu>
                     <MenuButton
@@ -56,7 +64,6 @@ export default function TopBar({ dataset, onDatasetLoaded }) {
                     >
                         File
                     </MenuButton>
-
                     <MenuList bg="black" borderColor="white" minW="180px" fontSize="sm">
                         <UploadData currentDataset={dataset} onDatasetLoaded={onDatasetLoaded}/>
                         <Divider />

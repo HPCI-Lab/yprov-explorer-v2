@@ -15,9 +15,18 @@ import {AddIcon, MinusIcon, RepeatIcon} from "@chakra-ui/icons";
 * Filters.js: main component layout for dasks filters
 * */
 
+/**
+ *
+ * @param {Object} available - available filters
+ * @param {Object} cellGroup - cells
+ * @param {Object} workerGroup - worker
+ * @param {Object} chunkGroup - chuncks
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 export default function FiltersPanel({available, cellGroup, workerGroup, chunkGroup,}) {
     const { cells, workers, chunks } = available;
-
     //main layout
     return (
         <VStack align="stretch" spacing={4}>
@@ -25,7 +34,6 @@ export default function FiltersPanel({available, cellGroup, workerGroup, chunkGr
             <Filters title="Filter by workers" label="Workers" values={workers} group={workerGroup}/>
             <FiltersSlider title="Filter by chunks" values={chunks} group={chunkGroup}/>
         </VStack>
-
         /* MENU FILTER
         <VStack align="stretch" spacing={4}>
             <Filters title="Filter by cell" label="Cells" values={cells} group={cellGroup}/>
@@ -82,7 +90,6 @@ function FiltersSlider({title, values, group,}) {
         const clamped = Math.max(0, Math.min(max, i));
         group.setValue([values[clamped]]);
     };
-
     if (values.length === 0) return null;
 
     return (
@@ -90,21 +97,19 @@ function FiltersSlider({title, values, group,}) {
             <Text fontSize="md" fontWeight="semibold" mb="2">
                 {title}
             </Text>
-
             <HStack spacing={3}>
+                {/*seacrhc bar*/}
                 <IconButton size="sm" icon={<MinusIcon />} aria-label="decrease" onClick={() => setIndex(index - 1)} isDisabled={index === 0}/>
-
+                {/*slider*/}
                 <Slider value={index} min={0} max={max} step={1} onChange={setIndex} flex="1">
                     <SliderTrack>
                         <SliderFilledTrack />
                     </SliderTrack>
                     <SliderThumb />
                 </Slider>
-
                 <IconButton size="sm" icon={<AddIcon />} aria-label="increase" onClick={() => setIndex(index + 1)} isDisabled={index === max}/>
                 <IconButton size="sm" icon={<RepeatIcon />} aria-label="reset" variant="ghost" onClick={() => group.setValue([])}/>
             </HStack>
-
             <Text fontSize="xs" mt="1" opacity={0.7}>
                 Selected: {values[index]}
             </Text>

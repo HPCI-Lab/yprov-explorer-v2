@@ -10,6 +10,14 @@ import * as d3 from "d3";
 import { useEffect, useRef } from "react";
 import {scale} from "framer-motion";
 
+/**
+ *
+ * @param graph
+ * @param controller
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 export default function Graph({ graph, controller }) {
     const ref = useRef(null);
     let selectedNode = null;
@@ -19,69 +27,6 @@ export default function Graph({ graph, controller }) {
         type: "module"
     });
 
-    function roundedRectPath(width, height, radius) {
-        // Define the corner points of the rectangle with rounded corners
-        const x0 = -width / 2;
-        const x1 = width / 2;
-        const y0 = -height / 2;
-        const y1 = height / 2;
-
-        // Return the path for the rounded rectangle
-        return `
-      M ${x0 + radius},${y0}
-      H ${x1 - radius}
-      A ${radius},${radius} 0 0 1 ${x1},${y0 + radius}
-      V ${y1 - radius}
-      A ${radius},${radius} 0 0 1 ${x1 - radius},${y1}
-      H ${x0 + radius}
-      A ${radius},${radius} 0 0 1 ${x0},${y1 - radius}
-      V ${y0 + radius}
-      A ${radius},${radius} 0 0 1 ${x0 + radius},${y0}
-      Z
-    `;
-    }
-    // Function to create a self-loop path for the nodes that are connected to themselves
-    function createSelfLoopPath(d) {
-        const nodeRadius = 30;
-        const loopRadiusX = 90;
-        const loopRadiusY = 40;
-
-        const start = {
-            x: d.source.x,
-            y: d.source.y - nodeRadius,
-        };
-        return `M ${start.x},${start.y}
-            A ${loopRadiusX},${loopRadiusY} 0 1,1 ${start.x},${start.y + 1}`;
-    }
-    // Function to create a rectangle path for the nodes (activities)
-    function rectPath(width, height) {
-        const x0 = -width / 2;
-        const x1 = width / 2;
-        const y0 = -height / 2;
-        const y1 = height / 2;
-
-        // Return the path for the rectangle
-        return `
-      M ${x0},${y0}
-      L ${x1},${y0}
-      L ${x1},${y1}
-      L ${x0},${y1}
-      Z
-    `;
-    }
-    // Function to create a house path for the nodes (agents)
-    function housePath(size) {
-        const half = size / 2;
-
-        return `
-      M ${-half},0
-      L ${-half},${half}
-      L ${half},${half}
-      L ${half},0
-      L 0,${-half}
-      Z
-    `;
-    }
     //Graph initialization draw and updates the graph
     useEffect(() => {
         if (!graph) return;
@@ -143,9 +88,9 @@ export default function Graph({ graph, controller }) {
         svg.call(zoom);
 
         //Random positions
-        graph.nodes.forEach(n => {
-            n.x = Math.random() * width;
-            n.y = Math.random() * height;
+        graph.nodes.forEach(node => {
+            node.x = Math.random() * width;
+            node.y = Math.random() * height;
         });
 
         //D3 FORCE Configuration
@@ -565,6 +510,71 @@ export default function Graph({ graph, controller }) {
     return (
         <svg ref={ref} style={{ width: "100%", height: "100%" }}></svg>
     );
+}
+
+function roundedRectPath(width, height, radius) {
+    // Define the corner points of the rectangle with rounded corners
+    const x0 = -width / 2;
+    const x1 = width / 2;
+    const y0 = -height / 2;
+    const y1 = height / 2;
+
+    // Return the path for the rounded rectangle
+    return `
+      M ${x0 + radius},${y0}
+      H ${x1 - radius}
+      A ${radius},${radius} 0 0 1 ${x1},${y0 + radius}
+      V ${y1 - radius}
+      A ${radius},${radius} 0 0 1 ${x1 - radius},${y1}
+      H ${x0 + radius}
+      A ${radius},${radius} 0 0 1 ${x0},${y1 - radius}
+      V ${y0 + radius}
+      A ${radius},${radius} 0 0 1 ${x0 + radius},${y0}
+      Z
+    `;
+}
+
+// Function to create a self-loop path for the nodes that are connected to themselves
+function createSelfLoopPath(d) {
+    const nodeRadius = 30;
+    const loopRadiusX = 90;
+    const loopRadiusY = 40;
+
+    const start = {
+        x: d.source.x,
+        y: d.source.y - nodeRadius,
+    };
+    return `M ${start.x},${start.y}
+            A ${loopRadiusX},${loopRadiusY} 0 1,1 ${start.x},${start.y + 1}`;
+}
+// Function to create a rectangle path for the nodes (activities)
+function rectPath(width, height) {
+    const x0 = -width / 2;
+    const x1 = width / 2;
+    const y0 = -height / 2;
+    const y1 = height / 2;
+
+    // Return the path for the rectangle
+    return `
+      M ${x0},${y0}
+      L ${x1},${y0}
+      L ${x1},${y1}
+      L ${x0},${y1}
+      Z
+    `;
+}
+// Function to create a house path for the nodes (agents)
+function housePath(size) {
+    const half = size / 2;
+
+    return `
+      M ${-half},0
+      L ${-half},${half}
+      L ${half},${half}
+      L ${half},0
+      L 0,${-half}
+      Z
+    `;
 }
 
 //function for managing the viewport

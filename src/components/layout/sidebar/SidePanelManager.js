@@ -8,18 +8,23 @@ import React from "react";
 /*
 SidePanelManager.js: panel manager for managing all the feature panels
  */
+/**
+ *
+ * @param {Object} activePanel - panel manager
+ * @param {boolean} isOpen
+ * @param {Object} selectedNode - current node function
+ * @param {Object} setSelectedNode - select node function
+ * @param {Object} setHighlightedNode - highlighting node function
+ * @param {Object} graphData - data
+ * @param {Object} searchQuery - query function
+ * @param {Object} handleSearch - search function
+ * @param {Object} findNodeDetails - node info function
+ * @returns {Element}
+ * @constructor
+ */
 
-export default function SidePanelManager({
-                                             activePanel,
-                                             isOpen,
-                                             selectedNode,
-                                             setSelectedNode,
-                                             setHighlightedNode,
-                                             graphData,
-                                             searchQuery,
-                                             handleSearch,
-                                             findNodeDetails,
-                                         }) {
+export default function SidePanelManager({activePanel,isOpen,selectedNode,setSelectedNode,setHighlightedNode,
+                                             graphData,searchQuery,handleSearch,findNodeDetails,}) {
     const renderPanel = () => {
         //switching the panel
         switch (activePanel) {
@@ -31,7 +36,6 @@ export default function SidePanelManager({
                 searchQuery={searchQuery}
                 onHighlightNode={(nodeId) => {
                     setHighlightedNode(nodeId);
-
                     // Fetch updated node details for the label
                     const nodeDetails = findNodeDetails(nodeId, graphData);
                     if (nodeDetails) setSelectedNode(nodeDetails);

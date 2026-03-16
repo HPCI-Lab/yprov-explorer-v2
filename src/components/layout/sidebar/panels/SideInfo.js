@@ -10,6 +10,12 @@ Highlight the corresponding text within the information shown in the NodeInfo la
 searches are highlighted dynamically via the highlightMatches function.
 */
 
+/**
+ *
+ * @returns {Element}
+ * @constructor
+ */
+
 export default function SideInfo() {
     //nodes data
     const [nodeInfo, setNodeInfo] = useState(null);
