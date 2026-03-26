@@ -1,43 +1,99 @@
-import { Flex, Input, IconButton } from "@chakra-ui/react";
+import {
+    Flex,
+    Input,
+    IconButton,
+    Box,
+    Menu,
+    Text,
+    MenuButton,
+    MenuList,
+    MenuItem,
+    Divider,
+    useColorMode
+} from "@chakra-ui/react";
 import { SunIcon } from "@chakra-ui/icons";
 import { Image } from "@chakra-ui/react"
+import {useState} from "react";
+import controller from "../graph/graphController";
+import UploadData from "../upload/UploadData";
+import {MoonIcon} from "lucide-react";
+
 /*
 TopBar.js: Top bar component that contains main elements for navigation:
 - searchbar for searching the nodes on the graph
 - theme toggler button for changing the theme on preferences
 */
-export default function TopBar() {
+export default function TopBar({ dataset, onDatasetLoaded }) {
+    //query states
+    const [query, setQuery] = useState("");
+
+    //calling the controller for the search
+    const handleSearch = () => {
+        controller.searchNode(query);
+    };
+
+    //Main layout
     return (
-        <Flex
-            h="60px"
-            align="center"
-            justify="space-between"
-            bg="black"
-            color="white"
-            borderRight="5px solid black"
-            borderBottom="5px solid black"
-        >
+        <Flex h="38px" align="center" justify="space-between" color="white" borderBottom="1px solid" borderColor="black" px="3">
             {/*Logo container*/}
-            <Flex align="center" justify="center" w="70px">
-                <Image src="logo.png" boxSize="40px" borderRadius="xl" aspectRatio={16 / 9} borderLeft="5px white"/>
+            <Flex align="center" gap="4">
+                {/* Logo */}
+                <Box w="26px" h="26px">
+                    <Image src="logo.png" boxSize="26px" objectFit="contain" pointerEvents="none" borderRadius="md"/>
+                </Box>
+
+                {/* File menu */}
+                <Menu>
+                    <MenuButton
+                        as={Text}
+                        fontSize="sm"
+                        cursor="pointer"
+                        px="2"
+                        py="1"
+                        borderRadius="sm"
+                        _hover={{ bg: "gray" }}
+                        _expanded={{ bg: "gray" }}
+                    >
+                        File
+                    </MenuButton>
+
+                    <MenuList bg="black" borderColor="white" minW="180px" fontSize="sm">
+                        <UploadData currentDataset={dataset} onDatasetLoaded={onDatasetLoaded}/>
+                        <Divider />
+                        <MenuItem bg="black">Close</MenuItem>
+                    </MenuList>
+                </Menu>
             </Flex>
-            <Flex flex="1" justify="center" gap="5"  mx="20px">
-                {/*Search bar*/}
+
+            <Box flex="1" maxW="420px">
+            {/*Search bar*/}
                 <Input
-                    placeholder="Search"
-                    w="50%"
+                    size="sm"
+                    placeholder="Search node..."
+                    border="1px solid"
+                    borderColor="white"
                     bg="white"
-                    borderRadius="xl"
-                    _placeholder={{ color: "gray.400" }}
+                    color="black"
+                    _placeholder={{ color: "black" }}
+                    _hover={{ borderColor: "black" }}
+                    _focus={{ borderColor: "blue.400" }}
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleSearch()}
                 />
-            </Flex>
+            </Box>
             {/*Theme toggler*/}
-            <IconButton
-                icon={<SunIcon />}
-                aria-label="Toggle theme"
-                bg="gray.700"
-                borderRadius="xl"
-            />
+            <Flex align="center" gap="1">
+                {/*
+                <IconButton
+                    size="xs"
+                    aria-label="Toggle theme"
+                    onClick={toggleColorMode}
+                    icon={colorMode === "dark" ? <SunIcon /> : <MoonIcon />}
+                    variant="ghost"
+                />
+                */}
+            </Flex>
         </Flex>
     );
 }

@@ -1,9 +1,11 @@
-import {Box, Flex, Heading, HStack, VStack} from "@chakra-ui/react";
-import React from "react";
+import {Box, Flex, Heading, Input, VStack, Tooltip, Text, Divider, HStack, InputGroup, InputLeftElement} from "@chakra-ui/react";
+import React, {useEffect, useState} from "react";
+import controller from "../../../graph/graphController"
 /*
-SideSetting.js: Other settings panel
- */
-export default function SideSettings() {
+SidePattern.js
+*/
+
+export default function SideInfo() {
     return (
         <Flex flex="1" justify="center" gap="5">
             <VStack spacing={3} align="stretch" w="100%">
@@ -12,7 +14,7 @@ export default function SideSettings() {
                         <HStack>
                             <Box>
                                 <Box fontSize="md" fontWeight="semibold">
-                                    Settings
+                                    Graph Patterns
                                 </Box>
                                 <Box fontSize="xs" opacity={0.6}>
                                 </Box>

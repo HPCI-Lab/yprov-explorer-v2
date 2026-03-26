@@ -1,92 +1,107 @@
-import { Box } from "@chakra-ui/react";
-import {useState} from "react";
-import Graph from "../old/Graph/Graph";
+import {Box, IconButton} from "@chakra-ui/react";
+import {useEffect, useRef, useState} from "react";
+import controller from "../graph/graphController";
+import Graph from "../graph/Graph";
+import { SettingsIcon, InfoIcon } from "@chakra-ui/icons";
+import { MdZoomOutMap } from "react-icons/md";
 /*
 GraphContainer.js: Main component that contains the graph and its
 related components. Such as Graph (graph), GraphSettings (make labels visible or not),
 FullscreenButton (set fullscreen) and GraphInfo (graph information). Behaves
 as a container for all these components.
 */
-export default function GraphContainer({ onNodeClick, highlightedNode, graphData }) {
-        // State to control the visibility of node labels, initially not visible (false).
-        const [showNodeLabelsState, setShowNodeLabelsState] = useState(true);
-        // State to control the visibility of link labels, initially not visible (false).
-        const [showLinkLabels, setShowLinkLabels] = useState(true);
-        // State to control the visibility of "used" links, initially not visible (false).
-        const [showUsedLinks, setShowUsedLinks] = useState(false);
-        // State to control the visibility of "wasDerivedFrom" links, initially not visible (false).
-        const [showWasDerivedFromLinks, setShowWasDerivedFromLinks] = useState(false);
-        // State to control the visibility of "wasGeneratedBy" links, initially not visible (false).
-        const [showWasGeneratedByLinks, setShowWasGeneratedByLinks] = useState(false);
-        // State to control the visibility of "wasInformedBy" links, initially not visible (false).
-        const [showWasInformedByLinks, setShowWasInformedByLinks] = useState(false);
-        // State to control the visibility of "wasAssociatedWith" links, initially not visible (false).
-        const [showWasAssociatedWithLinks, setShowWasAssociatedWithLinks] =
-            useState(false);
-        // State to control the visibility of "wasStartedBy" links, initially not visible (false).
-        const [showWasStartedByLinks, setShowWasStartedByLinks] = useState(false);
-        // State to control the visibility of "hadMember" links, initially not visible (false).
-        const [showHadMemberLinks, setShowHadMemberLinks] = useState(false);
-        // State to control the visibility of "wasAttributedTo" links, initially not visible (false).
-        const [showWasAttributedToLinks, setShowWasAttributedToLinks] =
-            useState(false);
-        // State for the distance between nodes
-        const [nodeDistance, setNodeDistance] = useState(180);
-        // State for the repulsion between nodes
-        const [nodeRepulsion, setNodeRepulsion] = useState(-300);
-        // State for the node collision
-        const [nodeCollision, setNodeCollision] = useState(40);
-        // State for the alpha decay
-        const [alphaDecay, setAlphaDecay] = useState(0.005);
 
-        // State to store the graph statistics (total nodes, activity count, entity count).
-        const [graphStats, setGraphStats] = useState({
-            totalNodes: 0,
-            activityCount: 0,
-            entityCount: 0,
-        });
+export default function GraphContainer({ graphData }) {
+    //graph states
+    const [graph, setGraph] = useState(null);
+    // State for the fullscreen mode (true if active, false otherwise)
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    //ref to container
+    const frameRef = useRef(null);
+    const [isInfoVisible, setIsInfoVisible] = useState(false); // State to control the visibility of the info panel
 
+    //use effect to manage graphdata changes
+    useEffect(() => {
+        if (!graphData){
+            return;
+        }
+        try {
+            setGraph(graphData);
+        } catch (err) {
+            //console.error("Error adapting graph data:", err);
+            setGraph(null);
+        }
+    }, [graphData]);
+
+
+    // Function to toggle the fullscreen mode
+    const toggleFullscreen = () => {
+        const frame = frameRef.current;
+        if (!frame){
+            return;
+        }
+        if (!document.fullscreenElement) {
+            frame.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    useEffect(() => {
+        const handler = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener("fullscreenchange", handler);
+        return () => document.removeEventListener("fullscreenchange", handler);
+    }, []);
+
+    //main container layout
     return (
-        <Box
-            flex="1"
-            bg="white"
-            borderRadius="xl"
-            position="relative"
-            overflow="hidden"
-            id="graphFrame"
-        >
+        <Box w="100%" h="100%" flex="1" bg="white" position="relative" overflow="hidden" ref={frameRef} zIndex={isFullscreen ? 9999 : "auto"}>
+            {/*label settings*/}
+            <IconButton
+                aria-label="Settings"
+                icon={<SettingsIcon />}
+                position="absolute"
+                color="black"
+                top="2"
+                left="3"
+                size="sm"
+                zIndex="10"
+            />
+
+            {/*fullscreen mode*/}
+            <IconButton
+                aria-label="Expand"
+                icon={<MdZoomOutMap />}
+                position="absolute"
+                color="black"
+                top="2"
+                right="3"
+                size="sm"
+                onClick={toggleFullscreen}
+                zIndex="10"
+            />
+
+            {/*Info icon*/}
+            <IconButton
+                aria-label="Info"
+                icon={<InfoIcon />}
+                position="absolute"
+                color="black"
+                bottom="2"
+                left="3"
+                size="sm"
+                zIndex="10"
+            />
             <Box
                 position="absolute"
                 top="0%"
                 left="0%"
                 width="100%"
                 height="100%"
-                transform="translate(-50%, -50%)"
-                color="gray.500"
-                borderRadius="xl"
                 id="graphCanvas"
-
             >
-                <Graph
-                    onNodeClick={onNodeClick}
-                    highlightedNode={highlightedNode}
-                    showNodeLabels={showNodeLabelsState}
-                    showLinkLabels={showLinkLabels}
-                    graphData={graphData}
-                    onGraphStats={setGraphStats}
-                    showUsedLinks={showUsedLinks}
-                    showWasDerivedFromLinks={showWasDerivedFromLinks}
-                    showWasGeneratedByLinks={showWasGeneratedByLinks}
-                    showWasInformedByLinks={showWasInformedByLinks}
-                    showWasAssociatedWithLinks={showWasAssociatedWithLinks}
-                    showWasStartedByLinks={showWasStartedByLinks}
-                    showHadMemberLinks={showHadMemberLinks}
-                    showWasAttributedToLinks={showWasAttributedToLinks}
-                    nodeDistance={nodeDistance}
-                    nodeRepulsion={nodeRepulsion}
-                    nodeCollision={nodeCollision}
-                    alphaDecay={alphaDecay}
-                />
+                {/*graph render*/}
+                {graph && <Graph graph={graph} controller={controller} />}
             </Box>
         </Box>
     );
