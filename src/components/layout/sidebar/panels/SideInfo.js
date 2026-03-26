@@ -12,7 +12,7 @@ searches are highlighted dynamically via the highlightMatches function.
 
 /**
  *
- * @returns {Element}
+ * @returns {JSX.Element}
  * @constructor
  */
 

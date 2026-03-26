@@ -541,7 +541,13 @@ function createSelfLoopPath(d) {
     return `M ${start.x},${start.y}
             A ${loopRadiusX},${loopRadiusY} 0 1,1 ${start.x},${start.y + 1}`;
 }
-// Function to create a rectangle path for the nodes (activities)
+
+/**
+ * Function to create a rectangle path for the nodes (activities)
+ * @param {number} width 
+ * @param {number} height 
+ * @returns {String} Path for the rectangle
+ */
 function rectPath(width, height) {
     const x0 = -width / 2;
     const x1 = width / 2;

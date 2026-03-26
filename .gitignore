@@ -50,3 +50,7 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Docs
+docs/
+out/
