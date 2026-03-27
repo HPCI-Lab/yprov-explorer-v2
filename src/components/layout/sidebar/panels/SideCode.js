@@ -6,7 +6,7 @@ export default function SideCode() {
     return (
         <Box color="white">
             <Heading size="md" mb="4">Code Setting Panel</Heading>
-            <p>Contenuto della sezione Input...</p>
+            <p>Contenuto della sezione Code...</p>
         </Box>
     );
 }

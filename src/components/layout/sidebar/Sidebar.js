@@ -1,6 +1,6 @@
 import { Box, VStack, IconButton } from "@chakra-ui/react";
 import { SettingsIcon, InfoIcon  } from "@chakra-ui/icons";
-import { Home, Layers  } from "lucide-react";
+import { Home, Code2, Activity, Layers  } from "lucide-react";
 
 /*
 Sidebar.js: represent the sidebar with the icons
@@ -13,6 +13,8 @@ export default function Sidebar({onOpenPanel}) {
             <VStack spacing="2">
                 <IconButton icon={<Home size={18}/>} aria-label="menu" size="sm" onClick={() => onOpenPanel("home")}/>
                 <IconButton icon={<Layers size={18}/>} aria-label="layers" size="sm" onClick={() => onOpenPanel("layers")}/>
+                <IconButton icon={<Code2 boxSize={4}/>} aria-label="code" size="sm" onClick={() => onOpenPanel("code")}/>
+                <IconButton icon={<Activity boxSize={4}/>} aria-label="timeline" size="sm" onClick={() => onOpenPanel("timeline")}/>
                 <IconButton aria-label="pattern" size="sm" onClick={() => onOpenPanel("pattern")}/>
                 <IconButton icon={<InfoIcon boxSize={4}/>} aria-label="settings" size="sm" onClick={() => onOpenPanel("info")}/>
             </VStack>

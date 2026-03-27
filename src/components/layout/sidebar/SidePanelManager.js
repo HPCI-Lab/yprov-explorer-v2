@@ -16,8 +16,6 @@ export default function SidePanelManager({
                                              activePanel,
                                              isOpen,
                                              setGraphData,
-                                             jsonContent,
-                                             setJsonContent,
                                              selectedNode,
                                              setSelectedNode,
                                              setHighlightedNode,
@@ -28,15 +26,32 @@ export default function SidePanelManager({
                                              activities,
                                              animationState,
                                              currentFileName,
-                                             setCurrentFileName,
                                              jsonLabelRef
                                          }) {
     const renderPanel = () => {
         //switching the panel
         switch (activePanel) {
             //case "home": return;
-            case "layers": return <SideLayers/>;
+            case "layers": return <SideLayers
+                mainGraphData={graphData}
+                mainFileName={currentFileName}
+                setGraphData={setGraphData}
+                updateJsonLabel={(json, name) =>
+                    jsonLabelRef.current?.updateJson(json, name)
+                }
+            />;
             case "pattern": return <SidePattern/>;
+            case "timeline": return <SideTimeline
+                activities={activities}
+                currentIndex={animationState.currentIndex}
+                currentTime={animationState.currentTime}
+                subset={animationState.subset}
+                onHighlightNode={(nodeId) => {
+                    setHighlightedNode(nodeId);
+                    const nodeDetails = findNodeDetails(nodeId, graphData);
+                    if (nodeDetails) setSelectedNode(nodeDetails);
+                }}
+            />;
             case "info": return <NodeInfo
                 nodeInfo={selectedNode}
                 searchQuery={searchQuery}
@@ -50,6 +65,7 @@ export default function SidePanelManager({
                 onSearch={handleSearch}
             />;
             case "settings": return <SideSettings/>;
+            case "code": return <SideCode/>;
             default: return null;
         }
     };
@@ -69,68 +85,7 @@ export default function SidePanelManager({
             zIndex={10}
             p={isOpen ? "4" : "0"}
         >
-            {/* {renderPanel()} */}
-            
-            {/* INPUT PANEL */}
-            <Box display={activePanel === "input" ? "block" : "none"} h="100%">
-                <SideInput
-                    ref={jsonLabelRef}
-                    setGraphData={setGraphData}
-                    setCurrentFileName={setCurrentFileName}
-                />
-            </Box>
-
-            {/* CODE PANEL */}
-            <Box display={activePanel === "code" ? "block" : "none"} h="100%">
-                <SideCode />
-            </Box>
-
-            {/* TIMELINE PANEL */}
-            <Box display={activePanel === "timeline" ? "block" : "none"} h="100%">
-                <SideTimeline
-                    activities={activities}
-                    currentIndex={animationState.currentIndex}
-                    currentTime={animationState.currentTime}
-                    subset={animationState.subset}
-                    onHighlightNode={(nodeId) => {
-                        setHighlightedNode(nodeId);
-                        const nodeDetails = findNodeDetails(nodeId, graphData);
-                        if (nodeDetails) setSelectedNode(nodeDetails);
-                    }}
-                />
-            </Box>
-
-            {/* LAYERS PANEL */}
-            <Box display={activePanel === "layers" ? "block" : "none"} h="100%">
-                <SideLayers
-                    mainGraphData={graphData}
-                    mainFileName={currentFileName}
-                    setGraphData={setGraphData}
-                    updateJsonLabel={(json, name) =>
-                        jsonLabelRef.current?.updateJson(json, name)
-                    }
-                />
-            </Box>
-
-            {/* INFO PANEL */}
-            <Box display={activePanel === "info" ? "block" : "none"} h="100%">
-                <SideInfo
-                    nodeInfo={selectedNode}
-                    searchQuery={searchQuery}
-                    onHighlightNode={(nodeId) => {
-                        setHighlightedNode(nodeId);
-                        const nodeDetails = findNodeDetails(nodeId, graphData);
-                        if (nodeDetails) setSelectedNode(nodeDetails);
-                    }}
-                    onSearch={handleSearch}
-                />
-            </Box>
-
-            {/* SETTINGS PANEL */}
-            <Box display={activePanel === "settings" ? "block" : "none"} h="100%">
-                <SideSettings />
-            </Box>
-
+            {renderPanel()}
         </Box>
     );
 }
