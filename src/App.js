@@ -5,10 +5,11 @@ import TopBar from "./components/layout/TopBar";
 import CodePanel from "./components/layout/CodePanel";
 import GraphContainer from "./components/layout/GraphContainer";
 import Timeline from "./components/layout/Timeline";
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {Resizable} from "re-resizable";
 import { unifiedFileLoader } from "./server/unified-loader";
 import 'bootstrap-icons/font/bootstrap-icons.css';
+
 
 function App() {
     //State for sidebar activation

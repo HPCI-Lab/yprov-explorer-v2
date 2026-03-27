@@ -1,6 +1,6 @@
 import { Box, Heading} from "@chakra-ui/react";
 /*
-SideInfo.js: Info panel
+SideHome.js: Info panel
  */
 export default function SideHome() {
     return (

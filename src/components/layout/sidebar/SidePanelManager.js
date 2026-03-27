@@ -4,9 +4,9 @@ import SideCode from "./panels/SideCode";
 import SideTimeline from "./panels/SideTimeline";
 import SideLayers from "./panels/SideLayers"
 import SideInfo from "./panels/SideInfo";
+import SidePattern from "./panels/SidePattern";
 import SideSettings from "./panels/SideSettings";
 import NodeInfo from "./panels/SideInfo";
-import React from "react";
 
 /*
 SidePanelManager.js: panel manager for managing all the feature panels
@@ -31,45 +31,30 @@ export default function SidePanelManager({
                                              setCurrentFileName,
                                              jsonLabelRef
                                          }) {
-    // const renderPanel = () => {
-    //     switch (activePanel) {
-    //         //case "home": return;
-    //         case "input": return <SideInput setGraphData={setGraphData} jsonContent={jsonContent} setJsonContent={setJsonContent}/>;
-    //         case "code": return <SideCode/>;
-    //         case "timeline": return <SideTimeline
-    //             activities={activities}
-    //             currentIndex={animationState.currentIndex}
-    //             currentTime={animationState.currentTime}
-    //             subset={animationState.subset}
-    //             onHighlightNode={(nodeId) => {
-    //                 setHighlightedNode(nodeId);
-    //                 const nodeDetails = findNodeDetails(nodeId, graphData);
-    //                 if (nodeDetails) setSelectedNode(nodeDetails);
-    //             }}
-	//     />;
-    //         case "layers": return <SideLayers
-    //             mainGraphData={graphData}
-    //             mainFileName={currentFileName}
-    //             setGraphData={setGraphData}
-    //             updateJsonLabel={(json, name) => jsonLabelRef.current?.updateJson(json, name)}
-	//     />;
-    //         case "info": return <NodeInfo
-    //             nodeInfo={selectedNode}
-    //             searchQuery={searchQuery}
-    //             onHighlightNode={(nodeId) => {
-    //                 setHighlightedNode(nodeId);
+    const renderPanel = () => {
+        //switching the panel
+        switch (activePanel) {
+            //case "home": return;
+            case "layers": return <SideLayers/>;
+            case "pattern": return <SidePattern/>;
+            case "info": return <NodeInfo
+                nodeInfo={selectedNode}
+                searchQuery={searchQuery}
+                onHighlightNode={(nodeId) => {
+                    setHighlightedNode(nodeId);
 
-    //                 // Fetch updated node details for the label
-    //                 const nodeDetails = findNodeDetails(nodeId, graphData);
-    //                 if (nodeDetails) setSelectedNode(nodeDetails);
-    //             }}
-    //             onSearch={handleSearch}
-    //         />;
-    //         case "settings": return <SideSettings/>;
-    //         default: return null;
-    //     }
-    // };
+                    // Fetch updated node details for the label
+                    const nodeDetails = findNodeDetails(nodeId, graphData);
+                    if (nodeDetails) setSelectedNode(nodeDetails);
+                }}
+                onSearch={handleSearch}
+            />;
+            case "settings": return <SideSettings/>;
+            default: return null;
+        }
+    };
 
+    //main layout
     return (
         <Box
             position="absolute"
