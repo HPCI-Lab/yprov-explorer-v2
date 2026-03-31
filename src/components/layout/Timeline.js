@@ -7,6 +7,8 @@ import "./animation.css";
 import { GIFEncoder, quantize, applyPalette } from "gifenc";
 import { Box, Button } from "@chakra-ui/react";
 
+import controller from "../graph/graphController";
+
 const Timeline = ({ activities = [], linksByActivityRef, onIndexChange }) => {
   // --- Playback and slider state ---
   const [isPlaying, setIsPlaying] = useState(false);
@@ -207,6 +209,10 @@ const Timeline = ({ activities = [], linksByActivityRef, onIndexChange }) => {
     if (allLinksRef.current) allLinksRef.current.style?.("opacity", 0);
     d3.selectAll("[id^='node-label-']").style("opacity", 0);
     d3.selectAll("[id^='link-label-']").style("opacity", 0);
+
+    //Conflitto con il precedente sistema: stiamo cercando di selezionare i nodi
+    //d3 direttamente saltando il graphController. Molto sconsigliabile e non più funzionante
+    //e' necessario creare una API per interfacciare questa branch con graphController
 
     acts.forEach((act) => {
       const actOpacity = getActivityOpacity(act, effectiveTime, subsetStart, subsetEnd);

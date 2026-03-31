@@ -56,18 +56,6 @@ export default function GraphContainer({ graphData }) {
     //main container layout
     return (
         <Box w="100%" h="100%" flex="1" bg="white" position="relative" overflow="hidden" ref={frameRef} zIndex={isFullscreen ? 9999 : "auto"}>
-            {/*label settings*/}
-            <IconButton
-                aria-label="Settings"
-                icon={<SettingsIcon />}
-                position="absolute"
-                color="black"
-                top="2"
-                left="3"
-                size="sm"
-                zIndex="10"
-            />
-
             {/*fullscreen mode*/}
             <IconButton
                 aria-label="Expand"
@@ -80,18 +68,7 @@ export default function GraphContainer({ graphData }) {
                 onClick={toggleFullscreen}
                 zIndex="10"
             />
-
-            {/*Info icon*/}
-            <IconButton
-                aria-label="Info"
-                icon={<InfoIcon />}
-                position="absolute"
-                color="black"
-                bottom="2"
-                left="3"
-                size="sm"
-                zIndex="10"
-            />
+            
             <Box
                 position="absolute"
                 top="0%"

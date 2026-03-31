@@ -321,10 +321,8 @@ export default function Graph({ graph, controller }) {
         //Register API to Controller, creates a public API for the graph
         controller.registerGraphAPI({
             selectNode: (id) => {
-                node.attr("stroke", "#000").attr("stroke-width", 1.5);
-                node.filter(d => d.id === id)
-                    .attr("stroke", "#fff")
-                    .attr("stroke-width", 3);
+                let selected = node.filter(d => d.id === id);
+                onNodeClick({ currentTarget: selected.node()}, selected.datum());
             },
             focusNode: (id) => {
                 const n = graph.nodes.find(x => x.id === id);
@@ -421,7 +419,10 @@ export default function Graph({ graph, controller }) {
         });
 
         const linksData = graph.links;
-        node.on("click", (event, d) => {
+        node.on("click", onNodeClick);
+        
+        function onNodeClick(event, d)
+        {
             //node reset
             node.attr("stroke", "#000").attr("stroke-width", 1.5);
 
@@ -496,7 +497,7 @@ export default function Graph({ graph, controller }) {
                 derives,
                 attributes: d.attributes
             });
-        });
+        };
 
         //Function for redrawing at every simulation update
         function redraw(mode = "all") {

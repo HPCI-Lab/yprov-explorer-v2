@@ -48,8 +48,8 @@ export default function SidePanelManager({
                 subset={animationState.subset}
                 onHighlightNode={(nodeId) => {
                     setHighlightedNode(nodeId);
-                    const nodeDetails = findNodeDetails(nodeId, graphData);
-                    if (nodeDetails) setSelectedNode(nodeDetails);
+                    //const nodeDetails = findNodeDetails(nodeId, graphData);
+                    //if (nodeDetails) setSelectedNode(nodeDetails);
                 }}
             />;
             case "info": return <NodeInfo
@@ -59,8 +59,8 @@ export default function SidePanelManager({
                     setHighlightedNode(nodeId);
 
                     // Fetch updated node details for the label
-                    const nodeDetails = findNodeDetails(nodeId, graphData);
-                    if (nodeDetails) setSelectedNode(nodeDetails);
+                    //const nodeDetails = findNodeDetails(nodeId, graphData);
+                    //if (nodeDetails) setSelectedNode(nodeDetails);
                 }}
                 onSearch={handleSearch}
             />;
@@ -76,14 +76,15 @@ export default function SidePanelManager({
             position="absolute"
             top="0"
             bottom="0"
-            left="70px"
+            left="48px"
             w={isOpen ? "325px" : "0px"}
             overflow="hidden"
             bg="gray.800"
             borderRadius="xl"
-            transition="none"
+            transition="all 0.3s ease"
             zIndex={10}
             p={isOpen ? "4" : "0"}
+            opacity={isOpen ? 1 : 0}
         >
             {renderPanel()}
         </Box>

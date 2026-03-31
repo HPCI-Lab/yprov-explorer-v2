@@ -5,7 +5,7 @@ import controller from "../../../graph/graphController"
 SidePattern.js
 */
 
-export default function SideInfo() {
+export default function SidePattern() {
     return (
         <Flex flex="1" justify="center" gap="5">
             <VStack spacing={3} align="stretch" w="100%">

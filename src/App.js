@@ -19,6 +19,8 @@ function App() {
     const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
     //State for opening the code tab
     const [isCodePanelVisible, setIsCodePanelVisible] = useState(true);
+    //String for managing the timeline filename
+    const [currentFileName, setCurrentFileName] = useState("main.json");
 
 
     const [animationState, setAnimationState] = useState({ currentIndex: 0, currentTime: 0 });
@@ -40,25 +42,29 @@ function App() {
         setActivePanel(null);
     };
 
+    //state for the raw graph data
+    const [rawGraphData, setRawGraphData] = useState(null);
     //state for graph data
     const [graphData, setGraphData] = useState(null);
     //state for dataset
     const [dataset, setDataset] = useState(null);
 
     //function for managing the upload
-    const handleDatasetLoaded = ({ provJson, notebook }) => {
+    const handleDatasetLoaded = ({ provJson, notebook, filename }) => {
         setDataset({ provJson, notebook });
         const parsed = parserProvenance(provJson);
         const adapt = adapter(parsed);
+        if (filename != null) setCurrentFileName(filename);
         setGraphData(adapt);
+        setRawGraphData(provJson);
         controller.setGraphData(adapt);
     };
 
     // Build activities array once graphData loaded
     const activities = useMemo(() => {
-      if (!graphData || !graphData.activity) return [];
+      if (!rawGraphData || !rawGraphData.activity) return [];
 
-      const arr = Object.entries(graphData.activity).map(([id, a], index) => ({
+      const arr = Object.entries(rawGraphData.activity).map(([id, a], index) => ({
         id,
         start: a["prov:startTime"] ? new Date(a["prov:startTime"]).getTime() : null,
         end: a["prov:endTime"] ? new Date(a["prov:endTime"]).getTime() : null,
@@ -92,48 +98,48 @@ function App() {
 
       // Assign sorted order index (0..n-1)
       return arr.map((a, i) => ({ ...a, index: i }));
-    }, [graphData]);
+    }, [rawGraphData]);
 
     // Build linksByActivityRef whenever graphData changes
     useEffect(() => {
-      if (!graphData) return;
+      if (!rawGraphData) return;
 
       const mkLinkId = (type, relKey) => `link-${type}-${relKey}`;
       const list = [];
 
       // wasDerivedFrom produced three link entries per relKey
-      Object.entries(graphData.wasDerivedFrom || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.wasDerivedFrom || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("wasDerivedFrom", relKey), actId: rel["prov:activity"], entId: rel["prov:usedEntity"] });
         list.push({ id: mkLinkId("wasGeneratedBy-fromWDF", relKey), actId: rel["prov:activity"], entId: rel["prov:generatedEntity"] });
         list.push({ id: mkLinkId("used-fromWDF", relKey), actId: rel["prov:activity"], entId: rel["prov:usedEntity"] });
       });
 
-      Object.entries(graphData.wasGeneratedBy || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.wasGeneratedBy || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("wasGeneratedBy", relKey), actId: rel["prov:activity"], entId: rel["prov:entity"] });
       });
 
-      Object.entries(graphData.used || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.used || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("used", relKey), actId: rel["prov:activity"], entId: rel["prov:entity"] });
       });
 
-      Object.entries(graphData.wasInformedBy || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.wasInformedBy || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("wasInformedBy", relKey), actId: rel["prov:informed"], entId: rel["prov:informant"] });
       });
 
-      Object.entries(graphData.hadMember || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.hadMember || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("hadMember", relKey), actId: rel["prov:collection"], entId: rel["prov:entity"] });
       });
 
-      Object.entries(graphData.wasStartedBy || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.wasStartedBy || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("wasStartedBy", relKey), actId: rel["prov:activity"], entId: rel["prov:trigger"] });
       });
 
-      Object.entries(graphData.wasAssociatedWith || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.wasAssociatedWith || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("wasAssociatedWith", relKey), actId: rel["prov:activity"], entId: rel["prov:agent"] });
         if (rel["prov:plan"]) list.push({ id: mkLinkId("plan", relKey), actId: rel["prov:activity"], entId: rel["prov:plan"] });
       });
 
-      Object.entries(graphData.wasAttributedTo || {}).forEach(([relKey, rel]) => {
+      Object.entries(rawGraphData.wasAttributedTo || {}).forEach(([relKey, rel]) => {
         list.push({ id: mkLinkId("wasAttributedTo", relKey), actId: rel["prov:entity"], entId: rel["prov:agent"] });
       });
 
@@ -146,7 +152,7 @@ function App() {
       });
 
       linksByActivityRef.current = newLinksByActivity;
-    }, [graphData]);
+    }, [rawGraphData]);
 
     //variable for checking if there is a notebook loaded
     const hasNotebook = !!dataset?.notebook;
@@ -160,7 +166,9 @@ function App() {
                 {/* Sidebar */}
                 <Sidebar onOpenPanel={onOpenPanel}/>
                 {/*Panel manager for helping the panels opening*/}
-                <SidePanelManager activePanel={activePanel} isOpen={isSidePanelOpen} onClose={onClosePanel}/>
+                <SidePanelManager graphData={graphData} setGraphData={setGraphData} activePanel={activePanel} 
+                  isOpen={isSidePanelOpen} onClose={onClosePanel} currentFileName={currentFileName} 
+                  animationState={animationState} activities={activities} setHighlightedNode={(id) => controller.selectNode(id)}/>
 
                 {/*Main content area*/}
                 <Flex flex="1" position="relative" overflow="hidden" minWidth={0} minH="0">
