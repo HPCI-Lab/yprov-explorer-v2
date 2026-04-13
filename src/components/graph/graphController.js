@@ -1,10 +1,18 @@
-/*
-graphController.js: Controller for Graph API. Permits to call functions from the app.
-Managing the communication between UI and Graph
-*/
+/** @typedef {import('../../interfaces/GraphInterface.js').GraphNode} GraphNode */
+/** @typedef {import('../../interfaces/GraphInterface.js').GraphEdge} GraphEdge */
+/** @typedef {import('../../interfaces/GraphInterface.js').GraphData} GraphData */
+/** @typedef {import('../../interfaces/GraphInterface.js').GraphInterface} GraphInterface */
 
+/**
+ * graphController.js: Controller for Graph API. Permits to call functions from the app.
+ * Managing the communication between UI and Graph
+ * @implements {GraphInterface}
+*/
 class GraphController {
-    graphData = null;
+    
+    /** @type { GraphData } */
+    graphData;
+
     nodeClickHandler = () => {};
 
     //Graoh api
@@ -16,16 +24,29 @@ class GraphController {
         highlightNodes: () => {}
     };
 
-    //set the data
+    /**
+     * Sets the graph data used by the controller.
+     * @param {GraphData} graphData - The graph data to be set.
+     * @returns {void}
+     */
     setGraphData = (graphData) => {
         this.graphData = graphData;
     }
 
-    //
+    /**
+     * Registers the graph API methods.
+     * @param {Object} api - The graph API methods to register.
+     * @returns {void}
+     */
     registerGraphAPI(api) {
         this.graphAPI = { ...this.graphAPI, ...api };
     }
 
+    /**
+     * Applies a filter to the graph.
+     * @param {Object} filter - The filter to apply.
+     * @returns {void}
+     */
     applyFilter(filter) {
         this.graphAPI.applyFilter(filter);
     }
