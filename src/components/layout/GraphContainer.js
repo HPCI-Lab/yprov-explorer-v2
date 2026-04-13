@@ -11,6 +11,13 @@ FullscreenButton (set fullscreen) and GraphInfo (graph information). Behaves
 as a container for all these components.
 */
 
+/**
+ *
+ * @param {Object} graphData - data
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 export default function GraphContainer({ graphData }) {
     //graph states
     const [graph, setGraph] = useState(null);

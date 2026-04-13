@@ -5,6 +5,13 @@ import { Home, Code2, Activity, Layers  } from "lucide-react";
 /*
 Sidebar.js: represent the sidebar with the icons
  */
+/**
+ *
+ * @param {Object} onOpenPanel
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 export default function Sidebar({onOpenPanel}) {
     //main layout
     return (

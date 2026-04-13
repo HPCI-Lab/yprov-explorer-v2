@@ -5,7 +5,7 @@
     "moduleResolution": "nodenext",
     "sourceMap": true,
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "jsx": "react-jsx"
   },
   "exclude": [

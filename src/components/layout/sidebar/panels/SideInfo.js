@@ -10,6 +10,12 @@ Highlight the corresponding text within the information shown in the NodeInfo la
 searches are highlighted dynamically via the highlightMatches function.
 */
 
+/**
+ *
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 export default function SideInfo() {
     //nodes data
     const [nodeInfo, setNodeInfo] = useState(null);
@@ -21,7 +27,7 @@ export default function SideInfo() {
     }, []);
 
     //managing the feature
-    if (!nodeInfo) {
+    if (!nodeInfo || nodeInfo.id == null) {
         return (
             <Box pb="2" borderBottom="1px solid" borderColor="whiteAlpha.200">
                 <HStack spacing={2} align="center">

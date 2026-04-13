@@ -3,7 +3,7 @@ Versione in inglese [qui](README_ENG.md)
 ---
 
 
-# yProv Explorer
+# yProv Explorer v2
 
 Un potente strumento web basato su **React** e **D3.js** per visualizzare e interagire con grafici di Provenance. Permette di caricare dati da file JSON o URL, e offre funzioni interattive per l’esplorazione di grafici di grandi dimensioni, con diverse opzioni di personalizzazione e condivisione.
 

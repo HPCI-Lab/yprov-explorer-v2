@@ -1,7 +1,7 @@
 /*
-Provenance Model: it's used to represent the provenance and, from it, will be generated the graph.
-Structure:
-parseProvenance(json):
+* Provenance Model: it's used to represent the provenance and, from it, will be generated the graph.
+* Structure:
+ parseProvenance(json):
     initialize nodes []
     initialize edges []
     parse entity
@@ -10,7 +10,10 @@ parseProvenance(json):
     parse relations
     return { nodes, edges }
  */
-
+ /**
+ * @param {*} data - json file
+ * @returns {{nodes:Object[],links:Object[],nodeRelations:Object}} - provenance objects
+ */
 export default function parseProvenance(data) {
     //Initialization
     //node initiazilatzion

@@ -10,8 +10,17 @@ import * as d3 from "d3";
 import { useEffect, useRef } from "react";
 import {scale} from "framer-motion";
 
+/**
+ *
+ * @param graph
+ * @param controller
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 export default function Graph({ graph, controller }) {
     const ref = useRef(null);
+    const simulation = useRef(null);
     let selectedNode = null;
 
     //Web worker for off thread simulation
@@ -19,69 +28,6 @@ export default function Graph({ graph, controller }) {
         type: "module"
     });
 
-    function roundedRectPath(width, height, radius) {
-        // Define the corner points of the rectangle with rounded corners
-        const x0 = -width / 2;
-        const x1 = width / 2;
-        const y0 = -height / 2;
-        const y1 = height / 2;
-
-        // Return the path for the rounded rectangle
-        return `
-      M ${x0 + radius},${y0}
-      H ${x1 - radius}
-      A ${radius},${radius} 0 0 1 ${x1},${y0 + radius}
-      V ${y1 - radius}
-      A ${radius},${radius} 0 0 1 ${x1 - radius},${y1}
-      H ${x0 + radius}
-      A ${radius},${radius} 0 0 1 ${x0},${y1 - radius}
-      V ${y0 + radius}
-      A ${radius},${radius} 0 0 1 ${x0 + radius},${y0}
-      Z
-    `;
-    }
-    // Function to create a self-loop path for the nodes that are connected to themselves
-    function createSelfLoopPath(d) {
-        const nodeRadius = 30;
-        const loopRadiusX = 90;
-        const loopRadiusY = 40;
-
-        const start = {
-            x: d.source.x,
-            y: d.source.y - nodeRadius,
-        };
-        return `M ${start.x},${start.y}
-            A ${loopRadiusX},${loopRadiusY} 0 1,1 ${start.x},${start.y + 1}`;
-    }
-    // Function to create a rectangle path for the nodes (activities)
-    function rectPath(width, height) {
-        const x0 = -width / 2;
-        const x1 = width / 2;
-        const y0 = -height / 2;
-        const y1 = height / 2;
-
-        // Return the path for the rectangle
-        return `
-      M ${x0},${y0}
-      L ${x1},${y0}
-      L ${x1},${y1}
-      L ${x0},${y1}
-      Z
-    `;
-    }
-    // Function to create a house path for the nodes (agents)
-    function housePath(size) {
-        const half = size / 2;
-
-        return `
-      M ${-half},0
-      L ${-half},${half}
-      L ${half},${half}
-      L ${half},0
-      L 0,${-half}
-      Z
-    `;
-    }
     //Graph initialization draw and updates the graph
     useEffect(() => {
         if (!graph) return;
@@ -89,6 +35,7 @@ export default function Graph({ graph, controller }) {
         const height = window.innerHeight;
 
         d3.select(ref.current).selectAll("*").remove();
+        simulation.current?.stop();
         const svg = d3.select(ref.current)
             .attr("width", width)
             .attr("height", height);
@@ -108,18 +55,6 @@ export default function Graph({ graph, controller }) {
             "plan",
         ];
 
-        const markerColors = {
-            used: "#FDED00",
-            wasGeneratedBy: "red",
-            wasDerivedFrom: "#00E572",
-            wasInformedBy: "#FFAA00",
-            hadMember: "#00AAFF",
-            wasStartedBy: "#AA00FF",
-            wasAssociatedWith: "#FF00FF",
-            wasAttributedTo: "#FF4500",
-            plan: "#1F1511",
-        };
-
         const defs = svg.append("defs");
 
         markerTypes.forEach(type => {
@@ -133,7 +68,7 @@ export default function Graph({ graph, controller }) {
                 .attr("orient", "auto-start-reverse")
                 .append("path")
                 .attr("d", "M0,-5L10,0L0,5")
-                .attr("fill", markerColors[type]);
+                .classed("svg-marker-" + type, true);
         });
 
         //Zoom management
@@ -143,13 +78,13 @@ export default function Graph({ graph, controller }) {
         svg.call(zoom);
 
         //Random positions
-        graph.nodes.forEach(n => {
-            n.x = Math.random() * width;
-            n.y = Math.random() * height;
+        graph.nodes.forEach(node => {
+            node.x = Math.random() * width;
+            node.y = Math.random() * height;
         });
 
         //D3 FORCE Configuration
-        const simulation = d3.forceSimulation(graph.nodes)
+        simulation.current = d3.forceSimulation(graph.nodes)
             .force("link",
                 d3.forceLink(graph.links)
                     .id(d => d.id)
@@ -162,7 +97,8 @@ export default function Graph({ graph, controller }) {
             .alphaDecay(0.005);
 
         //Adaptive collision: start strong, fade out
-        const initialCollideForce = simulation.force("collide");
+        const initialCollideForce = simulation.current.force("collide");
+        /* Codice mai eseguito, stiamo dichiarando un listener sotto e questo viene scartato
         let tickCount = 0;
         const MAX_COLLIDE_TICKS = 100;
         //Begins the simulation
@@ -173,30 +109,25 @@ export default function Graph({ graph, controller }) {
                 simulation.force("collide", null);
             }
         });
+        */
 
         //Draw links
         const link = g.append("g")
             .selectAll("line")
             .data(graph.links)
             .join("line")
-            .attr("stroke", d => markerColors[d.type] || "#999")
-            .attr("stroke-width", 2)
-            .attr("marker-end", d => markerTypes.includes(d.type) ? `url(#arrow-${d.type})` : null);
+            .attr("class", d => "svg-link svg-link-"+(d.type || "default"))
+            .style("pointer-events", "none")
+            .style("user-select", "none");
+        const MAX_NODES_BEFORE_MARKERS_HIDDEN = 1000;
+        if (graph.nodes.length < MAX_NODES_BEFORE_MARKERS_HIDDEN) 
+            link.attr("marker-end", d => markerTypes.includes(d.type) ? `url(#arrow-${d.type})` : null);
 
-        //Nodes drawing and properties
-        const node_color = {
-            entity:   "#00E572",
-            activity: "#9898fd",
-            agent:    "#FF5733",
-            default:  "#cccccc"
-        };
         const node = g.append("g")
             .selectAll("path")
             .data(graph.nodes)
             .join("path")
-            .attr("stroke", "#000")
-            .attr("stroke-width", 1.5)
-            .attr("fill", d => node_color[d.type] || node_color.default)
+            .attr("class", d => "svg-node svg-node-"+(d.type || "default"))
             .attr("d", d => {
                 if (d.type === "entity"){
                     return roundedRectPath(40, 30, 8);
@@ -208,7 +139,7 @@ export default function Graph({ graph, controller }) {
             })
             .call(d3.drag()
                 .on("start", event => {
-                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    if (!event.active) simulation.current.alphaTarget(0.3).restart();
                     event.subject.fx = event.x;
                     event.subject.fy = event.y;
                 })
@@ -217,7 +148,7 @@ export default function Graph({ graph, controller }) {
                     event.subject.fy = event.y;
                 })
                 .on("end", event => {
-                    if (!event.active) simulation.alphaTarget(0);
+                    if (!event.active) simulation.current.alphaTarget(0);
                     event.subject.fx = null;
                     event.subject.fy = null;
                 })
@@ -228,8 +159,6 @@ export default function Graph({ graph, controller }) {
             .selectAll("text")
             .data(graph.nodes)
             .join("text")
-            .attr("font-size", 12)
-            .attr("text-anchor", "middle")
             .attr("dy", 4)
             .text(d =>
                 d.label.length > 18
@@ -237,7 +166,7 @@ export default function Graph({ graph, controller }) {
                     : d.label
             )
             .attr("pointer-events", "none")
-            .attr("fill", "#000")
+            .classed("svg-text svg-text-12", true)
             .style("user-select", "none");
 
         //Link labels
@@ -245,16 +174,14 @@ export default function Graph({ graph, controller }) {
             .selectAll("text")
             .data(graph.links)
             .join("text")
-            .attr("font-size", 10)
-            .attr("text-anchor", "middle")
             .attr("dy", -5)
             .text(d => d.type)
             .attr("pointer-events", "none")
-            .attr("fill", "#000")
+            .classed("svg-text svg-text-10", true)
             .style("user-select", "none");
 
         //Tick update, managing the visibility for performaces
-        simulation.on("tick", () => {
+        simulation.current.on("tick", () => {
             link
                 .attr("x1", d => d.source.x)
                 .attr("y1", d => d.source.y)
@@ -270,31 +197,43 @@ export default function Graph({ graph, controller }) {
             updateVisibility();
         });
 
+        const VISIBILITY_UPDATE_INTERVAL_MS = 100;
+        const MAX_NODE_DISTANCE_BEFORE_CULLING = 100;
+        let lastVisibilityUpdate = 0;
+
         //Function visibility culling for better performaces
-        function updateVisibility() {
+        function updateVisibility(force = false) {
+            if (!force && Date.now() < lastVisibilityUpdate + VISIBILITY_UPDATE_INTERVAL_MS) return;
+            lastVisibilityUpdate = Date.now(); //permette di ridurre le chiamate alla funzione
+
             const svgNode = svg.node();
             if (!svgNode){
                 return;
             }else {
                 const bounds = getLimits(svgNode);
                 const {scale} = bounds;
+                const leftLimit = bounds.minX - MAX_NODE_DISTANCE_BEFORE_CULLING;
+                const rightLimit = bounds.maxX + MAX_NODE_DISTANCE_BEFORE_CULLING;
+                const topLimit = bounds.minY - MAX_NODE_DISTANCE_BEFORE_CULLING;
+                const bottomLimit = bounds.maxY + MAX_NODE_DISTANCE_BEFORE_CULLING;
+                graph.nodes.forEach(n => { 
+                    n._visible = inView(n.x, n.y, leftLimit, rightLimit, topLimit, bottomLimit);
+                });
+
                 //nodes
-                node.style("display", d => inView(d.x, d.y, bounds) ? "inline" : "none");
+                node.style("display", d => d._visible ? "inline" : "none");
                 //label management
                 nodeLabel.style("display", d =>
-                    scale > 0.7 && inView(d.x, d.y, bounds) ? "inline" : "none"
+                    scale > 0.7 && d._visible ? "inline" : "none"
                 );
                 //links
                 link.style("display", d => {
-                    const sourceVisible = inView(d.source.x, d.source.y, bounds);
-                    const targetVisible = inView(d.target.x, d.target.y, bounds);
-                    return sourceVisible && targetVisible ? "inline" : "none";
+                    return d.source._visible || d.target._visible ? "inline" : "none";
                 });
                 //link label
                 linkLabel.style("display", d => {
                     if (scale <= 1.2) return "none";
-                    return inView(d.source.x, d.source.y, bounds) &&
-                    inView(d.target.x, d.target.y, bounds) ? "inline" : "none";
+                    return d.source._visible || d.target._visible ? "inline" : "none";
                 });
             }
         };
@@ -303,26 +242,21 @@ export default function Graph({ graph, controller }) {
         zoom.on("zoom", event => {
             g.attr("transform", event.transform);
             updateVisibility();
-            const scale = event.transform.k;
-            nodeLabel.style("display", scale > 0.7 ? "block" : "none");
-            linkLabel.style("display", scale > 1.2 ? "block" : "none");
+        }).on("end", _ => {
+            updateVisibility(true); //zoom forzato, è importante, stiamo espandendo o riducendo la viewport
         });
 
         //simulation managing for performance
-        simulation.on("end", () => {
-            graph.nodes.forEach(n => {
-                n.fx = n.x;
-                n.fy = n.y;
-            });
-            simulation.force("collide", null);
-            simulation.stop();
+        simulation.current.on("end", () => {
+            simulation.current.stop();
         });
 
+        //E' necessario riadattare anche queste chiamate usando classi CSS -> le classi sono presenti in "src/index.css"
         //Register API to Controller, creates a public API for the graph
         controller.registerGraphAPI({
             selectNode: (id) => {
                 let selected = node.filter(d => d.id === id);
-                onNodeClick({ currentTarget: selected.node()}, selected.datum());
+                onNodeClick({ target: selected.node(), currentTarget: null});
             },
             focusNode: (id) => {
                 const n = graph.nodes.find(x => x.id === id);
@@ -419,17 +353,26 @@ export default function Graph({ graph, controller }) {
         });
 
         const linksData = graph.links;
-        node.on("click", onNodeClick);
-        
-        function onNodeClick(event, d)
+        svg.on("click", onNodeClick);
+
+        //Usata dal metodo delle API "selectNode" per evitare ridondanza di codice
+        function onNodeClick(event)
         {
-            //node reset
-            node.attr("stroke", "#000").attr("stroke-width", 1.5);
+            //node reset - fatto sempre in ogni caso
+            node.classed("svg-node-selected", false);
+
+            if (event.target == event.currentTarget) 
+            {
+                //inspector reset - deseleziona l'ultimo nodo selezionato
+                controller.emitNodeClick({id: null});
+                return; //Se viene selezionato l'svg stesso (currentTarget) non continuo
+            }
+
+            let n = d3.select(event.target), //Seleziono l'elemento desiderato (cliccato / chiamato da API)
+                d = n.datum(); //Estraggo il nodo dall'elemento selezionato
 
             //Highlighting the selected node
-            d3.select(event.currentTarget)
-                .attr("stroke", "grey")
-                .attr("stroke-width", 5);
+            n.classed("svg-node-selected", true);
 
             //zoom management
             const currentTransform = d3.zoomTransform(svg.node());
@@ -548,10 +491,9 @@ export default function Graph({ graph, controller }) {
 
             svg.attr("width", newWidth).attr("height", newHeight);
             svg.call(zoom.transform, d3.zoomIdentity);
-            simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+            simulation.current.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
             //redraw and updating
             redraw();
-            updateVisibility();
         }
         window.addEventListener("resize", handleResize);
 
@@ -566,12 +508,79 @@ export default function Graph({ graph, controller }) {
     );
 }
 
+function roundedRectPath(width, height, radius) {
+    // Define the corner points of the rectangle with rounded corners
+    const x0 = -width / 2;
+    const x1 = width / 2;
+    const y0 = -height / 2;
+    const y1 = height / 2;
+
+    // Return the path for the rounded rectangle
+    return `
+      M ${x0 + radius},${y0}
+      H ${x1 - radius}
+      A ${radius},${radius} 0 0 1 ${x1},${y0 + radius}
+      V ${y1 - radius}
+      A ${radius},${radius} 0 0 1 ${x1 - radius},${y1}
+      H ${x0 + radius}
+      A ${radius},${radius} 0 0 1 ${x0},${y1 - radius}
+      V ${y0 + radius}
+      A ${radius},${radius} 0 0 1 ${x0 + radius},${y0}
+      Z
+    `;
+}
+
+// Function to create a self-loop path for the nodes that are connected to themselves
+function createSelfLoopPath(d) {
+    const nodeRadius = 30;
+    const loopRadiusX = 90;
+    const loopRadiusY = 40;
+
+    const start = {
+        x: d.source.x,
+        y: d.source.y - nodeRadius,
+    };
+    return `M ${start.x},${start.y}
+            A ${loopRadiusX},${loopRadiusY} 0 1,1 ${start.x},${start.y + 1}`;
+}
+
+/**
+ * Function to create a rectangle path for the nodes (activities)
+ * @param {number} width 
+ * @param {number} height 
+ * @returns {String} Path for the rectangle
+ */
+function rectPath(width, height) {
+    const x0 = -width / 2;
+    const x1 = width / 2;
+    const y0 = -height / 2;
+    const y1 = height / 2;
+
+    // Return the path for the rectangle
+    return `
+      M ${x0},${y0}
+      L ${x1},${y0}
+      L ${x1},${y1}
+      L ${x0},${y1}
+      Z
+    `;
+}
+// Function to create a house path for the nodes (agents)
+function housePath(size) {
+    const half = size / 2;
+
+    return `
+      M ${-half},0
+      L ${-half},${half}
+      L ${half},${half}
+      L ${half},0
+      L 0,${-half}
+      Z
+    `;
+}
+
 //function for managing the viewport
-function inView(x, y, bounds, offset = 100) {
-    const leftLimit = bounds.minX - offset;
-    const rightLimit = bounds.maxX + offset;
-    const topLimit = bounds.minY - offset;
-    const bottomLimit = bounds.maxY + offset;
+function inView(x, y, leftLimit, rightLimit, topLimit, bottomLimit) {
     if (x < leftLimit || x > rightLimit) {
         return false;
     }

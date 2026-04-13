@@ -11,7 +11,9 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import controller from "./components/graph/graphController";
 import parserProvenance , {adapter} from "./components/graph/parseProvenance";
 
+import { upload_log } from './logging.js'; //Database data log manager
 
+//main app function
 function App() {
    //State for sidebar activation
     const [activePanel, setActivePanel] = useState(null);
@@ -50,14 +52,19 @@ function App() {
     const [dataset, setDataset] = useState(null);
 
     //function for managing the upload
-    const handleDatasetLoaded = ({ provJson, notebook, filename }) => {
+    const handleDatasetLoaded = ({ provJson, notebook, filename, filesize }) => {
         setDataset({ provJson, notebook });
-        const parsed = parserProvenance(provJson);
-        const adapt = adapter(parsed);
-        if (filename != null) setCurrentFileName(filename);
-        setGraphData(adapt);
-        setRawGraphData(provJson);
-        controller.setGraphData(adapt);
+        if (filename != null)
+        { 
+          const parsed = parserProvenance(provJson);
+          const adapt = adapter(parsed);
+          setGraphData(adapt);
+          setRawGraphData(provJson);
+          controller.setGraphData(adapt);
+          setCurrentFileName(filename);
+          
+          upload_log(filename, filesize); //inserice i dati nel database
+        }
     };
 
     // Build activities array once graphData loaded
@@ -161,7 +168,6 @@ function App() {
         <Flex direction="column" h="100vh" w="100vw" bg="black" color="white">
             {/* Top navigation bar for search and others*/}
             <TopBar dataset={dataset} onDatasetLoaded={handleDatasetLoaded} />
-
             <Flex flex="1" position="relative" bg="black" minH="0">
                 {/* Sidebar */}
                 <Sidebar onOpenPanel={onOpenPanel}/>

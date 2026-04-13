@@ -9,6 +9,13 @@ import {FilterIcon} from "lucide-react";
 CodePanel.js: contains the code editor for viewing cells code of the graph.
 Including the dask filters for the notebook.
  */
+/**
+ *
+ * @param {Object} graphData - data
+ * @param {Object} notebook - notebook file
+ * @returns {JSX.Element}
+ * @constructor
+ */
 
 export default function CodePanel({ graphData, notebook }) {
     //filters arrays
@@ -24,7 +31,7 @@ export default function CodePanel({ graphData, notebook }) {
     const {lines, cells} = parserNotebook(notebook, graphData?.nodes || []);
     //activity nodes array
     const activityNodes = (graphData?.nodes || []).filter(
-        n => n.type === "activity"
+        node => node.type === "activity"
     );
 
     //building the provenance cells

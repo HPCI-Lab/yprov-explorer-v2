@@ -21,7 +21,7 @@ onmessage = (event) => {
         .on("tick", () => {
             postMessage({
                 type: "tick",
-                nodes: nodes.map(n => ({ id: n.id, x: n.x, y: n.y }))
+                nodes: nodes.map(node => ({ id: node.id, x: node.x, y: node.y }))
             });
         })
         .on("end", () => {

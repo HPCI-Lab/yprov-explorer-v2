@@ -55,3 +55,7 @@ coverage/
 services/database/data/
 services/metabase/data/metabase.db/metabase.db.trace.db
 !services/.env
+
+# Docs
+docs/
+out/

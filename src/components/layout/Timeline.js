@@ -1,11 +1,24 @@
 // Animation.js
 // Custom 3-thumb slider animation for activities with opacity hierarchy, free-moving thumbs, real-time and fixed playback, GIF export
 
+/*
+Timeline.js: Timeline contains the main elements for graph animations:
+- contains the multi-level player for playing animations
+- contains cells player
+ */
+
+/**
+ *
+ * @returns {JSX.Element}
+ * @constructor
+ */
+
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import * as d3 from "d3";
 import "./animation.css";
 import { GIFEncoder, quantize, applyPalette } from "gifenc";
 import { Box, Button } from "@chakra-ui/react";
+
 
 import controller from "../graph/graphController";
 

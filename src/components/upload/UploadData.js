@@ -36,7 +36,8 @@ export default function UploadData({ currentDataset, onDatasetLoaded }) {
             onDatasetLoaded({
                 provJson: currentDataset.provJson,
                 notebook: notebookJson,
-                filename: null
+                filename: null, //se il nootebook viene caricato dopo, questo non ha importanza
+                filesize: null
             });
             return;
         }
@@ -57,7 +58,8 @@ export default function UploadData({ currentDataset, onDatasetLoaded }) {
         onDatasetLoaded({
             provJson,
             notebook: notebookJson,
-            filename: provFile.name
+            filename: provFile.name,
+            filesize: provFile.size
         });
     };
 

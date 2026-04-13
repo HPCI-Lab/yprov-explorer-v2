@@ -10,20 +10,27 @@ import { gutter, GutterMarker } from "@codemirror/view";
 /*
 CodeEditor.js: viewer of the notebook code. Receive lines and builds the cells. Shows the text editor.
  */
+/**ù
+ *
+ * @param {Object[]} lines - lines
+ * @param {Object} onLineClick - clicked line
+ * @returns {JSX.Element}
+ * @constructor
+ */
 
 export default function CodeEditor({ lines, onLineClick  }){
     //building the code to show, based on the lines
     let code = [];
     const codeLines = [];
-    for(let i = 0; i<lines.length; i++){
-        codeLines.push(lines[i].code);
-    }
-    code = codeLines.join("\n");
-
     //states and ref for text editor size and update
     const [fontSize, setFontSize] = useState(14);
     const editorRef = useRef(null);
     const [search, setSearch] = useState("");
+    //building the code
+    for(let i = 0; i<lines.length; i++){
+        codeLines.push(lines[i].code);
+    }
+    code = codeLines.join("\n");
 
     //function for handling the text click of CodeMirror
     const lineClickExtension = EditorView.domEventHandlers({
@@ -42,7 +49,7 @@ export default function CodeEditor({ lines, onLineClick  }){
                     const line = view.state.doc.lineAt(position);
                     const editorLineNumber = line.number;
                     //recover the lines and the clicked
-                    const visibleLines = lines.filter(l => !l.isCellSeparator);
+                    const visibleLines = lines.filter(line => !line.isCellSeparator);
                     const clicked = visibleLines[editorLineNumber - 1];
                     if (!clicked){
 //
